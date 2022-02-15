@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport">
+  <meta content="width=device-width, initial-scale=1">
+  <meta http-equiv="Content-Type">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
+  <link rel="stylesheet" href="https://code.getmdl.io/1.3.0/material.indigo-pink.min.css">
+  <script defer src="https://code.getmdl.io/1.3.0/material.min.js"></script>
+  <link href="https://unpkg.com/tabulator-tables@4.5.1/dist/css/tabulator.css" rel="stylesheet">
+  <script type="text/javascript" src="https://unpkg.com/tabulator-tables@4.5.1/dist/js/tabulator.js"></script>
+  <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/css/bootstrap.min.css" rel="stylesheet"
+    integrity="sha384-9aIt2nRpC12Uk9gS9baDl411NQApFmC26EwAOH8WgZl5MYYxFfc+NcPb1dKGj7Sk" crossorigin="anonymous">
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+  <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/js/bootstrap.min.js"
+    integrity="sha384-OgVRvuATP1z7JjHLkuOU7Xw704+h835Lr+6QL9UvYjZE3Ipu6Tp75j7Bh/kR0JKI"
+    crossorigin="anonymous"></script>
+  <script src="mkfiles_extendKeys.js"></script>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/jsoneditor/7.0.4/jsoneditor.css" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/viewerjs/1.3.7/viewer.css" rel="stylesheet">
+  <!-- <link rel="stylesheet" href="mkfiles.css"> -->
+  <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
+<script defer src="vendors-node_modules_css-loader_dist_runtime_api_js-node_modules_css-loader_dist_runtime_sour-90cbcc.bundle.js"></script><script defer src="main.bundle.js"></script></head>
+
+<body>
+
+  <div class="mdl-layout mdl-js-layout mdl-layout--fixed-header">
+    <header class="mdl-layout__header">
+      <div class="mdl-layout__header-row">
+        <!-- TITLE -->
+        <span class="mdl-layout-title">MKFILES</span>
+
+        <!-- Add spacer to align navigation to the right -->
+        <div class="mdl-layout-spacer"></div>
+
+        <!-- NAVIGATION -->
+        <nav class="mdl-navigation">
+          <a class="mdl-navigation__link" id="quick-link-home" href=""><b>home</b></a>
+          <a class="mdl-navigation__link" id="quick-link-params" href=""><b>agentparams</b></a>
+          <a class="mdl-navigation__link" id="quick-link-paramstorage" href=""><b>paramstorage</b></a>
+          <a class="mdl-navigation__link" id="quick-link-sceneparams" href=""><b>sceneparams</b></a>
+          <a class="mdl-navigation__link" id="quick-link-marmosets" href="">marmosets</a>
+          <a class="mdl-navigation__link" id="quick-link-dailydata" href="">dailydata</a>
+
+          <label class="mdl-switch mdl-js-switch mdl-js-ripple-effect" for="rfid-switch">
+            <input type="checkbox" id="rfid-switch" class="mdl-switch__input">
+            <span class="mdl-switch__label" id="rfid-switch-span" style="color:red; font-weight: bolder;">RFID
+              OFF</span>
+          </label>
+        </nav>
+
+      </div> <!-- mdl-layout__header-row -->
+
+    </header> <!-- mdl-layout__header -->
+
+    <main class="mdl-layout__content">
+      <div class="page-content mdl-grid">
+
+
+
+        <!-- MKQUERY CARD -->
+        <div id="mkquery-card"
+          class="mdl-card mdl-shadow--2dp mdl-cell mdl-cell--12-col mdl-cell--8-col-tablet mdl-cell--4-col-phone">
+
+          <form id="mkquery-form">
+
+            <select class="selector" id="qry-loc-selector">
+              <option disabled selected>Query Location</option>
+              <optgroup label="Firestore/DB" id='firestore-optgroup'>
+                <option value="marmosets">firestore/marmosets</option>
+                <option value="mkturkdata">firestore/mkturkdata</option>
+                <option value="mkdailydata">firestore/mkdailydata</option>
+                <!-- <option value="mkdailydatatest">firestore/mkdailydatatest</option> -->
+                <option value="objects">firestore/objects</option>
+                <option value="devices">firestore/devices</option>
+                <option value="eyecalibrations">firestore/eyecalibrations</option>
+                <option value="mkscale">firestore/mkscale</option>
+                <option value="mturkhits">firestore/mturkhits</option>
+                <option value="mturkusers">firestore/mturkusers</option>
+                <option value="mturkdata">firestore/mturkdata</option>
+              </optgroup>
+              <optgroup label="Cloud Storage" id='storage-optgroup'>
+                <option value="mkturkfiles">gcs/mkturkfiles</option>
+                <option value="mkturkfiles_mturk">gcs/mkturkfiles_mturk</option>
+              </optgroup>
+              <optgroup label="BigQuery" id='bigquery-optgroup'>
+
+              </optgroup>
+            </select>
+
+            <select class="selector" id="field-selector">
+              <option disabled selected>Field Value</option>
+            </select>
+
+            <select class="selector" id="quick-plot-x">
+              <option disabled selected>Quick Plot x-axis</option>
+            </select>
+
+            <select class="selector" id="quick-plot-y">
+              <option disabled selected>Quick Plot y-axis</option>
+            </select>
+
+            <button type="button" class="mdl-button mdl-js-button mdl-button--raised mdl-js-ripple-effect"
+              id="plot-btn">Quick Plot</button>
+
+            <button type="submit" class="mdl-button mdl-js-button mdl-button--raised mdl-js-ripple-effect"
+              id="go-btn">Go</button>
+            <input type="text" class="mdl-textfield__input keyword-input" id="keyword-input-0">
+            <input type="text" class="mdl-textfield__input keyword-input" id="keyword-input-1">
+            <input type="text" class="mdl-textfield__input keyword-input" id="keyword-input-2">
+
+          </form>
+
+
+        </div> <!-- mkquery-card -->
+
+        <div class="mdl-card mdl-shadow--2dp mdl-cell mdl-cell--6-col mdl-cell--4-col-tablet mdl-cell--2-col-phone"
+          id="finder-card">
+
+          <div id="finder-div">
+            <div id="finder-controls">
+              <button type="button" class="mdl-button mdl-js-button mdl-button--raised mdl-js-ripple-effect"
+                id="back-btn" disabled>
+                <i class="material-icons">keyboard_arrow_left</i>
+              </button>
+              <button type="button" class="mdl-button mdl-js-button mdl-button--raised mdl-js-ripple-effect"
+                id="forward-btn" disabled>
+                <i class="material-icons">keyboard_arrow_right</i>
+              </button>
+              <input type="search" class="mdl-textfield__input keyword-input" id="filter-value" placeholder="search">
+              <button type="button" class="mdl-button mdl-js-button mdl-button--raised mdl-js-ripple-effect"
+                id="show-images-btn" disabled>
+                <i class="material-icons">slideshow</i>
+              </button>
+              <p id="num-image-slider-p">
+                <input type="range" class="mdl-slider mdl-js-slider" min="1" max="10" value="1" step="1"
+                  id="num-image-slider">
+              </p>
+              <p id="path-name-span">Path:</p>
+
+            </div>
+            <div id="finder"></div>
+            <div id="finder-controls-2">
+              <button type="button" class="mdl-button mdl-js-button mdl-button--raised mdl-js-ripple-effect"
+                id="upload-file">
+                <i class="material-icons">cloud_upload</i>
+              </button>
+              <button type="button" class="mdl-button mdl-js-button mdl-button--raised mdl-js-ripple-effect"
+                id="download-file">
+                <i class="material-icons">cloud_download</i>
+              </button>
+            </div>
+          </div>
+
+          <div id="chart-div"></div>
+
+        </div> <!-- finder card -->
+
+        <div class="mdl-card mdl-shadow--2dp mdl-cell mdl-cell--6-col mdl-cell--4-col-tablet mdl-cell--2-col-phone"
+          id="media-card">
+          <div id="editor-div">
+            <form action="#" id="file-name-form">
+              <div class="mdl-textfield mdl-js-textfield mdl-textfield--expandable" id="file-name-div">
+                <input class="mdl-textfield__input" type="text" id="file-name-input">
+              </div>
+              <button type="button" class="mdl-button mdl-js-button mdl-button--raised mdl-js-ripple-effect"
+                id="file-rename-btn">Rename</button>
+              <button type="button" class="mdl-button mdl-js-button mdl-button--raised mdl-js-ripple-effect"
+                id="file-dup-btn">Duplicate</button>
+              <dialog class="mdl-dialog" id="file-dup-modal">
+                <h5 class="mdl-dialog__title">Duplicate File</h5>
+                <div class="mdl-dialog__content">
+                  <div class="mdl-textfield mdl-js-textfield">
+                    <input class="mdl-textfield__input" type="text" id="dup-file-name">
+                  </div>
+                </div>
+                <div class="mdl-dialog__actions">
+                  <button type="button" class="mdl-button save" id="save-dup-file-btn">Save</button>
+                  <button type="button" class="mdl-button close" id="cancel-dup-file-btn">Cancel</button>
+                </div>
+              </dialog>
+
+              <dialog class="mdl-dialog" id="filename-modal">
+                <h5 class="mdl-dialog__title"></h5>
+                <div class="mdl-textfield mdl-js-textfield">
+                  <input class="mdl-textfield__input filename-input" type="text">
+                </div>
+                <div class="mdl-dialog__action">
+                  <button type="button" class="mdl-button sv">Save</button>
+                  <button type="button" class="mdl-button cl">Close</button>
+                </div>
+              </dialog>
+
+
+            </form>
+            <div id="editor"></div>
+            <div id="button-box">
+              <button type="button" class="mdl-button mdl-js-button mdl-button--raised mdl-js-ripple-effect"
+                id="update-btn">UPDATE</button>
+              <button type="button" class="mdl-button mdl-js-button mdl-button--raised mdl-js-ripple-effect"
+                id="active-btn">Make Active</button>
+              <button type="button" class="mdl-button mdl-js-button mdl-button--raised mdl-js-ripple-effect"
+                id="store-param-btn">Store</button>
+              <button type="button" class="mdl-button mdl-js-button mdl-button--raised mdl-js-ripple-effect"
+                id="render-btn">Render</button>
+              <div id="param-gen-btn-box">
+                <button type="button" class="mdl-button mdl-js-button mdl-button--raised mdl-js-ripple-effect"
+                  id="generate-btn" value="generate">Vectorize Param</button>
+                <button type="button" class="mdl-button mdl-js-button mdl-button--raised mdl-js-ripple-effect"
+                  id="expand-btn" value="expand">Expand Param</button>
+              </div>
+              <!-- <button type="button" class="mdl-button mdl-js-button mdl-button--raised mdl-js-ripple-effect" id="generate-btn" value="generate">Vectorize Param</button> -->
+              <!-- <button type="button" class="mdl-button mdl-js-button mdl-button--raised mdl-js-ripple-effect" id="expand-btn" value="expand">Expand Param</button> -->
+              <button type="button" class="mdl-button mdl-js-button mdl-button--raised mdl-js-ripple-effect"
+                id="save-scene-param-btn">Save Param</button>
+            </div>
+          </div>
+
+          <div id="image-canvas-div">
+            <ul id="image-canvas"></ul>
+          </div>
+
+          <div id="dat-gui-div">
+            <canvas id="three-canvas"></canvas>
+            <div id="dat-container"></div>
+          </div>
+
+
+        </div>
+
+      </div> <!-- page-content -->
+    </main> <!-- mdl-layout__content-->
+
+  </div> <!-- mdl-layout mdl-js-layout mdl-layout--fixed-header -->
+
+  <script src="./mkfiles_rfid.js"></script>
+
+</body>
+
+</html>
