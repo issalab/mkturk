@@ -31,7 +31,7 @@ module.exports = {
     }),
   ],
   output: {
-    path: path.resolve(__dirname, '../../public/liveplot3'),
+    path: path.resolve(__dirname, '../../public/liveplot'),
     filename: '[name].bundle.js',
   },
   module: {

@@ -31,12 +31,6 @@ export class Liveplot {
   public agentClientRef: firebase.database.Reference;
 
   constructor(elemObj: any) {
-    this.wkr = new Worker('worker.js');
-    this.wkr.postMessage({ msg: 'hello to worker' });
-    this.wkr.onmessage = (evt: MessageEvent) => {
-      console.log('message arrived');
-      console.log(evt.data);
-    };
     this.elemObjs = elemObj;
     this.file = {
       path: DATA_PATH,
@@ -179,10 +173,6 @@ export class Liveplot {
     this.file.ver = metadata.generation;
     this.file.dateSaved = new Date(metadata.updated);
     console.log(this.file.dateSaved);
-
-    // this.file.data.CurrentDate = (
-    //   new Date(this.file.data.CurrentDate).valueOf()
-    // );
 
     if (this.file.fileChanged) {
       this.charts.initializeChartData(this.file, {

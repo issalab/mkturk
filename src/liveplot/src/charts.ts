@@ -578,7 +578,7 @@ export class Charts {
     this.realtimeDataTable.addColumn('number', 'curY');
     this.realtimeDataTable.addColumn({ type: 'string', role: 'style' });
 
-    this.rewardDataTable.addColumn('string', 'reard size');
+    this.rewardDataTable.addColumn('string', 'reward size');
     this.rewardDataTable.addColumn('number', 'nrewards');
 
     this.choiceDataTable.addColumn('string', 'choice');
@@ -589,6 +589,7 @@ export class Charts {
 
     this.healthDataTable.addColumn('number', 'trial');
     this.healthDataTable.addColumn('number', 'sample command');
+    this.healthDataTable.addColumn('number', 'sample command off');
     this.healthDataTable.addColumn('number', 'tdisplay_last');
     this.healthDataTable.addColumn('number', 'tdisplay_first');
     this.healthDataTable.addColumn('number', 'eye interval');
@@ -1489,38 +1490,19 @@ export class Charts {
 
   private loadRewardData(data: LiveplotDataType) {
     this.rewardDataTable.removeRows(0, this.rewardDataTable.getNumberOfRows());
-    let NRewardMax = [];
-    for (let i = 0; i < data.NRewardMax; i++) {
-      NRewardMax.push(i.toString());
-    }
-    // NRewardMax.unshift('-1');
 
-    for (let i = 0; i < _.size(NRewardMax); i++) {
-      this.rewardDataTable.addRow([NRewardMax[i], 0]);
+    let nrewardArr: number[] = [];
+
+    for (let i = 0; i <= data.NRewardMax; i++) {
+      nrewardArr.push(0);
     }
 
-    let NDiffReward = _.fill(Array(_.size(NRewardMax)), 0);
+    data.NReward.forEach((elem: number) => {
+      nrewardArr[elem]++;
+    });
 
-    for (let i = 0; i < _.size(data.NReward); i++) {
-      if (data.Response[i] == -1) {
-        NDiffReward[0]++;
-        this.rewardDataTable.setValue(
-          0,
-          1,
-          NDiffReward[0] / _.size(data.NReward)
-        );
-      } else {
-        for (let j = 1; j < _.size(NRewardMax); j++) {
-          if (data.NReward[i].toString() == NRewardMax[j]) {
-            NDiffReward[j]++;
-          }
-          this.rewardDataTable.setValue(
-            j,
-            1,
-            NDiffReward[j] / _.size(data.NReward)
-          );
-        }
-      }
+    for (let i = 0; i < nrewardArr.length; i++) {
+      this.rewardDataTable.addRow([i.toString(), nrewardArr[i]]);
     }
   }
 
@@ -1535,6 +1517,7 @@ export class Charts {
         let dt: any;
         let dt2: any;
         let sampleCmdInterval: any;
+        let sampleCmdOffInterval: any;
         let eyeTrackerSampleInterval: any;
 
         try {
@@ -1578,72 +1561,38 @@ export class Charts {
         }
 
         try {
+          if (
+            data.SampleCommandOffReturnTime[i] == null ||
+            data.SampleCommandOffReturnTime[i] < 0 ||
+            data.SampleCommandOffReturnTime[i] === undefined
+          ) {
+            sampleCmdOffInterval = null;
+          } else {
+            sampleCmdOffInterval =
+              data.SampleCommandOffReturnTime[i] - data.EndTime[i];
+          }
+        } catch {
+          sampleCmdOffInterval = null;
+        }
+
+        try {
           eyeTrackerSampleInterval = data.EyetrackerSampleInterval[i];
         } catch {
           eyeTrackerSampleInterval = null;
         }
 
         this.healthDataTable.addRows([
-          [i, sampleCmdInterval, dt, dt2, eyeTrackerSampleInterval],
+          [
+            i,
+            sampleCmdInterval,
+            sampleCmdOffInterval,
+            dt,
+            dt2,
+            eyeTrackerSampleInterval,
+          ],
         ]);
       }
     }
-
-    // if (data.Eye.TrackEye > 0 && data.RewardStage > 0) {
-    //   // EYETRACKING
-    //   let lastIdx = Object.keys(data.TSequenceActualClip).length - 1;
-
-    //   for (let i = 0; i < data.TSequenceActualClip[lastIdx].length; i++) {
-    //     let dt: any;
-    //     let dt2: any;
-
-    //     if (data.TSequenceActualClip[lastIdx][i] < 0) {
-    //       dt = null;
-    //     } else {
-    //       dt =
-    //         data.TSequenceActualClip[lastIdx][i] -
-    //         data.TSequenceDesiredClip[lastIdx][i];
-    //       dt = Math.abs(Math.round(dt));
-    //     }
-
-    //     if (data.TSequenceActualClip[1][i] < 0) {
-    //       dt2 = null;
-    //     } else {
-    //       dt2 =
-    //         data.TSequenceActualClip[1][i] - data.TSequenceDesiredClip[1][i];
-    //       dt2 = Math.abs(Math.round(dt2));
-    //     }
-
-    //     let sampleCmdInterval: any;
-    //     if (
-    //       data.SampleCommandReturnTime[i] == null ||
-    //       data.SampleCommandReturnTime[i] < 0 ||
-    //       data.SampleCommandReturnTime[i] === undefined
-    //     ) {
-    //       sampleCmdInterval = null;
-    //     } else {
-    //       sampleCmdInterval =
-    //         data.SampleCommandReturnTime[i] - data.SampleStartTime[i];
-    //     }
-
-    //     this.healthDataTable.addRows([
-    //       [i, sampleCmdInterval, dt, dt2, data.EyetrackerSampleInterval[i]],
-    //     ]);
-    //   }
-    // } else if (data.Eye.TrackEye == 0 && data.RewardStage > 0) {
-    //   let lastIdx = Object.keys(data.TSequenceActualClip).length - 1;
-    //   for (let i = 0; i < data.TSequenceActualClip[lastIdx].length; i++) {
-    //     let dt =
-    //       data.TSequenceActualClip[lastIdx][i] -
-    //       data.TSequenceDesiredClip[lastIdx][i];
-    //     dt = Math.abs(Math.round(dt));
-
-    //     let dt2 =
-    //       data.TSequenceActualClip[1][i] - data.TSequenceDesiredClip[1][i];
-    //     dt2 = Math.abs(Math.round(dt2));
-    //     this.healthDataTable.addRows([[i, null, dt, dt2, null]]);
-    //   }
-    // }
   }
 
   private drawPerformancePlot(file: FileType) {
