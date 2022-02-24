@@ -1157,6 +1157,9 @@ function updateSingleFrame3D(
   gridindex,
   cubeTexture
 ) {
+  var scenecenterX = ENV.XGridCenter[gridindex];
+  var scenecenterY = ENV.YGridCenter[gridindex];
+
   //==== TURN OFF ALL ITEMS
   for (let sceneElem in scene[taskscreen]["children"]) {
     scene[taskscreen]["children"][sceneElem].visible = false;
@@ -1569,8 +1572,6 @@ function updateSingleFrame3D(
       else {
         objects.visible = false;
       } //ELSE !visible
-      var scenecenterX = ENV.XGridCenter[gridindex];
-      var scenecenterY = ENV.YGridCenter[gridindex];
 
       var box = scene[taskscreen].getObjectByName(
         obj + "_" + taskscreen + "_" + classlabel + "_" + "boxhelper"
