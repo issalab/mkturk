@@ -1001,6 +1001,7 @@ async function addToScene(taskscreen) {
             new THREE.MeshPhysicalMaterial({
               map: new THREE.Texture(),
               color: "",
+              transparent: true,
             })
           );
         }
@@ -1010,6 +1011,7 @@ async function addToScene(taskscreen) {
             new THREE.MeshBasicMaterial({
               map: new THREE.Texture(),
               color: "",
+              transparent: true,
             })
           );
         }
