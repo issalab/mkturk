@@ -153,6 +153,8 @@ export class Charts {
   private vitals: any;
   private nTrials: number;
 
+  private fd: any;
+
   constructor(elemObj: any) {
     this.elemObject = elemObj;
     this.realtimePlotActive = false;
@@ -190,6 +192,7 @@ export class Charts {
     this.objPerfDataTable = new google.visualization.DataTable();
     this.realtimeDataTable = new google.visualization.DataTable();
     this.rtData = {};
+    this.fd = '';
   }
 
   public async setupCharts() {
@@ -601,6 +604,7 @@ export class Charts {
     let fileData: LiveplotDataType;
     if (!_.isUndefined(file.data)) {
       fileData = file.data;
+      this.fd = file.data;
     } else {
       throw 'file.data is Undefined';
     }
@@ -628,6 +632,11 @@ export class Charts {
       this.drawRealtimePlot2(fileData);
       this.realtimePlotActive = true;
     }
+    // if (streamActive) {
+    //   console.log('hello');
+    //   this.drawRealtimePlot2(fileData);
+    //   // this.realtimePlotActive = true;
+    // }
   }
 
   private loadVitals(file: FileType) {
@@ -1777,6 +1786,7 @@ export class Charts {
     data: LiveplotDataType,
     evt: CustomEventInit
   ) {
+    console.log('drawStaticElements');
     if (ctx) {
       ctx.fillStyle = 'gray';
       ctx.fillRect(
@@ -1802,6 +1812,50 @@ export class Charts {
         );
         ctx.stroke();
       }
+
+      for (let i = 0; i < data.XGridCenter.length; i++) {
+        ctx.fillStyle = 'red';
+        ctx.beginPath();
+        ctx.arc(
+          data.XGridCenter[i],
+          data.YGridCenter[i],
+          4,
+          0,
+          Math.PI * 2,
+          true
+        );
+        ctx.fill();
+      }
+
+      if (data.RewardStage == 0) {
+        for (let j = 0; j < data.FixationXYT['0'].length; j++) {
+          ctx.fillStyle = 'black';
+          ctx.beginPath();
+          ctx.arc(
+            data.FixationXYT['0'][j],
+            data.FixationXYT['1'][j] - data.offsettop,
+            2,
+            0,
+            Math.PI * 2,
+            true
+          );
+          ctx.fill();
+        }
+      } else {
+        for (let k = 0; k < data.ResponseXYT['0'].length; k++) {
+          ctx.fillStyle = 'black';
+          ctx.beginPath();
+          ctx.arc(
+            data.ResponseXYT['0'][k],
+            data.ResponseXYT['1'][k] - data.offsettop,
+            2,
+            0,
+            Math.PI * 2,
+            true
+          );
+          ctx.fill();
+        }
+      }
     }
   }
 
@@ -1814,9 +1868,9 @@ export class Charts {
 
     // const realtimeOnData =
     window.addEventListener('data_arrived', (evt: CustomEventInit) => {
-      console.log('LONGER AXIS:', longerAxis);
+      // console.log('LONGER AXIS:', longerAxis);
       if (evt.detail.meta == 2) {
-        this.drawStaticElements(cvs, ctx, data, evt);
+        this.drawStaticElements(cvs, ctx, this.fd, evt);
       }
 
       if (evt.detail.meta == 1 || evt.detail.meta == 0) {

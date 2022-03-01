@@ -15,27 +15,27 @@ export class Utils {
     let files: any = [];
 
     for (let item of fileList.prefixes) {
-      let subFileList = (
-        await this.getFileList(path + item.name + '/', ext)
-      );
+      let subFileList = await this.getFileList(path + item.name + '/', ext);
       files = [...files, ...subFileList];
     }
 
     for (let i = 0; i < fileList.items.length; i++) {
-      if (typeof(ext) == 'string') {
-        if (fileList.items[i].name.endsWith(ext)) { // if file extension is correct
+      if (typeof ext == 'string') {
+        if (fileList.items[i].name.endsWith(ext)) {
+          // if file extension is correct
           files.push({
             fullpath: fileList.items[i].fullPath,
-            name: fileList.items[i].name
+            name: fileList.items[i].name,
           });
         }
       } else if (parseInt(fileList.items[i].name.slice(0, 4)) >= year - 1) {
         files.push({
           fullpath: fileList.items[i].fullPath,
-          name: fileList.items[i].name
+          name: fileList.items[i].name,
         });
       }
     }
+    console.log('files:', files);
 
     return files;
   }
@@ -43,13 +43,17 @@ export class Utils {
   public async getStorageFile(path: string) {
     let fileRef = storageRef.child(path);
     // console.log('fileRef:', fileRef);
-    let file = await storageRef.child(path).getDownloadURL().then(async (url: string) => {
-      let response = await fetch(url);
-      return response.json();
-    }).catch(e => {
-      console.error('Error Getting URL:', e);
-    });
-    // console.log('file:', file);
+    let file = await storageRef
+      .child(path)
+      .getDownloadURL()
+      .then(async (url: string) => {
+        let response = await fetch(url);
+        return response.json();
+      })
+      .catch((e) => {
+        console.error('Error Getting URL:', e);
+      });
+    console.log('file:', file);
     return file;
   }
 
@@ -67,7 +71,7 @@ export class Utils {
         smoothedData[i] = tmp.reduce((a: any, b: any) => {
           return a + b;
         });
-        smoothedData[i] /= (i + 1);
+        smoothedData[i] /= i + 1;
       } else {
         let tmp = data.slice(i - n + 1, i + 1);
         smoothedData[i] = tmp.reduce((a: number, b: number) => {

@@ -134,6 +134,7 @@ export interface LiveplotDataType {
   offsettop: number;
   workspace: number[];
   SampleOriginScreenPixels: { x: number; y: number };
+  THREEJStoPixels: number;
   SampleTHREEJStoPixels: number;
   SampleTHREEJStoInches: number;
   SampleXGridCenterTHREEJS: number[];
