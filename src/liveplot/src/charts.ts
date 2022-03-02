@@ -1827,35 +1827,97 @@ export class Charts {
         ctx.fill();
       }
 
-      if (data.RewardStage == 0) {
-        for (let j = 0; j < data.FixationXYT['0'].length; j++) {
-          ctx.fillStyle = 'black';
-          ctx.beginPath();
-          ctx.arc(
-            data.FixationXYT['0'][j],
-            data.FixationXYT['1'][j] - data.offsettop,
-            2,
-            0,
-            Math.PI * 2,
-            true
-          );
-          ctx.fill();
+      if (data.Eye.TrackEye > 0) {
+        if (data.RewardStage > 0) {
+          data.SampleFixationXYT['0'].forEach((el: number, idx: number) => {
+            ctx.fillStyle = 'black';
+            ctx.beginPath();
+            ctx.arc(
+              el,
+              data.SampleFixationXYT['1'][idx] - data.offsettop,
+              2,
+              0,
+              Math.PI * 2,
+              true
+            );
+            ctx.fill();
+          });
+        } else {
+          data.FixationXYT['0'].forEach((el: number, idx: number) => {
+            ctx.fillStyle = 'black';
+            ctx.beginPath();
+            ctx.arc(
+              el,
+              data.FixationXYT['1'][idx] - data.offsettop,
+              2,
+              0,
+              Math.PI * 2,
+              true
+            );
+            ctx.fill();
+          });
         }
       } else {
-        for (let k = 0; k < data.ResponseXYT['0'].length; k++) {
-          ctx.fillStyle = 'black';
-          ctx.beginPath();
-          ctx.arc(
-            data.ResponseXYT['0'][k],
-            data.ResponseXYT['1'][k] - data.offsettop,
-            2,
-            0,
-            Math.PI * 2,
-            true
-          );
-          ctx.fill();
+        if (data.RewardStage > 0) {
+          data.ResponseXYT['0'].forEach((el: number, idx: number) => {
+            ctx.fillStyle = 'black';
+            ctx.beginPath();
+            ctx.arc(
+              el,
+              data.ResponseXYT['1'][idx] - data.offsettop,
+              2,
+              0,
+              Math.PI * 2,
+              true
+            );
+            ctx.fill();
+          });
+        } else {
+          data.FixationXYT['0'].forEach((el: number, idx: number) => {
+            ctx.fillStyle = 'black';
+            ctx.beginPath();
+            ctx.arc(
+              el,
+              data.FixationXYT['1'][idx] - data.offsettop,
+              2,
+              0,
+              Math.PI * 2,
+              true
+            );
+            ctx.fill();
+          });
         }
       }
+
+      // if (data.RewardStage == 0) {
+      //   for (let j = 0; j < data.FixationXYT['0'].length; j++) {
+      //     ctx.fillStyle = 'black';
+      //     ctx.beginPath();
+      //     ctx.arc(
+      //       data.FixationXYT['0'][j],
+      //       data.FixationXYT['1'][j] - data.offsettop,
+      //       2,
+      //       0,
+      //       Math.PI * 2,
+      //       true
+      //     );
+      //     ctx.fill();
+      //   }
+      // } else {
+      //   for (let k = 0; k < data.ResponseXYT['0'].length; k++) {
+      //     ctx.fillStyle = 'black';
+      //     ctx.beginPath();
+      //     ctx.arc(
+      //       data.ResponseXYT['0'][k],
+      //       data.ResponseXYT['1'][k] - data.offsettop,
+      //       2,
+      //       0,
+      //       Math.PI * 2,
+      //       true
+      //     );
+      //     ctx.fill();
+      //   }
+      // }
     }
   }
 
