@@ -21,7 +21,7 @@ window.addEventListener('beforeunload', async (evt) => {
 document.querySelector('button[id=googlesignin]').style.display = 'block';
 document.querySelector('button[id=googlesignin]').style.visibility = 'visible';
 document
-  .querySelector('button[id=googlesignin')
+  .querySelector('button[id=googlesignin]')
   .addEventListener('pointerup', firebaseRedirectSignIn, false);
 document.querySelector('button[id=reloadpage]').addEventListener(
   'pointerup',
