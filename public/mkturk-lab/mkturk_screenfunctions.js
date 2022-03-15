@@ -650,6 +650,8 @@ function render3D(taskscreen, s, f, gr, fr, sc, ob, id) {
       ];
     }
   } //FOR j display items
+  console.log('boundingBoxesChoice3JS:', boundingBoxesChoice3JS);
+  console.log('boundingBoxesChoice3D:', boundingBoxesChoice3D);
 } //FUNCTION render3D
 
 async function render2D(taskscreen, s, f, gr, fr, sc, ob, id, canvasobj) {
