@@ -1,5 +1,19 @@
 //================== IMAGE RENDERING ==================//
 function displayTrial(ti, gr, fr, sc, ob, id, mkm) {
+  console.log(
+    '[displayTrial] ti:',
+    ti,
+    'gr:',
+    gr,
+    'fr:',
+    fr,
+    'sc:',
+    sc,
+    'ob:',
+    ob,
+    'id:',
+    id
+  );
   let lenArgs = arguments.length;
   // if (arguments.length == 7) {
   // 	console.log('mkm:', mkm);
