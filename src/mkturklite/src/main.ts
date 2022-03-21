@@ -83,6 +83,7 @@ imageCanvas.addEventListener('imagesLoaded', (evt: Event) => {
 });
 
 imageCanvas.addEventListener('pointerdown', (evt: PointerEvent) => {
+  evt.preventDefault();
   console.log('pointerdown');
   if (imagesLoaded && isInBoundingBox(evt) && !trialInProgress) {
     trialInProgress = true;
