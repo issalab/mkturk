@@ -108,6 +108,8 @@ export class Liveplot {
 
   public async populateFileList(elem: HTMLSelectElement) {
     try {
+      console.log('populateFileList');
+      console.log('this.file.path:', this.file.path);
       let fileList = await utils.getFileList(this.file.path);
 
       fileList.sort((a: any, b: any) => {

@@ -1,5 +1,19 @@
 //================== IMAGE RENDERING ==================//
 function displayTrial(ti, gr, fr, sc, ob, id, mkm) {
+  console.log(
+    '[displayTrial] ti:',
+    ti,
+    'gr:',
+    gr,
+    'fr:',
+    fr,
+    'sc:',
+    sc,
+    'ob:',
+    ob,
+    'id:',
+    id
+  );
   let lenArgs = arguments.length;
   // if (arguments.length == 7) {
   // 	console.log('mkm:', mkm);
@@ -654,6 +668,8 @@ function render3D(taskscreen, s, f, gr, fr, sc, ob, id) {
       ];
     }
   } //FOR j display items
+  console.log('boundingBoxesChoice3JS:', boundingBoxesChoice3JS);
+  console.log('boundingBoxesChoice3D:', boundingBoxesChoice3D);
 } //FUNCTION render3D
 
 async function render2D(taskscreen, s, f, gr, fr, sc, ob, id, canvasobj) {

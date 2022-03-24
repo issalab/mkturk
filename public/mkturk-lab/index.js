@@ -21,7 +21,7 @@ window.addEventListener('beforeunload', async (evt) => {
 document.querySelector('button[id=googlesignin]').style.display = 'block';
 document.querySelector('button[id=googlesignin]').style.visibility = 'visible';
 document
-  .querySelector('button[id=googlesignin')
+  .querySelector('button[id=googlesignin]')
   .addEventListener('pointerup', firebaseRedirectSignIn, false);
 document.querySelector('button[id=reloadpage]').addEventListener(
   'pointerup',
@@ -2108,7 +2108,28 @@ if (ENV.BatteryAPIAvailable) {
           ];
           FLAGS.waitingforTouches--;
         } else {
-          // IF !RSVP, require choiuce
+          // IF !RSVP, require choice
+          // TODO: logEVENTS('boundingBoxesChoice3D', boundingBoxesChoice3D, 'trialseries')
+          console.log(
+            '[index.js] boundingBoxesChoice3D:',
+            boundingBoxesChoice3D
+          );
+
+          let boundingboxeschoice3darr = [];
+          for (let i = 0; i < boundingBoxesChoice3D.x[0].length; i++) {
+            for (let j = 0; j < boundingBoxesChoice3D.y[0].length; j++) {
+              boundingboxeschoice3darr.push({
+                x: boundingBoxesChoice3D['x'][0][i],
+                y: boundingBoxesChoice3D['y'][0][j],
+              });
+            }
+          }
+          console.log('boundingboxeschoice3darr:', boundingboxeschoice3darr);
+          logEVENTS(
+            'BoundingBoxesChoice',
+            boundingboxeschoice3darr,
+            'trialseries'
+          );
           let p1 = hold_promise(
             0,
             boundingBoxesChoice3D,
