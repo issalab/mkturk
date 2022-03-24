@@ -22,9 +22,9 @@ async function automateTask(automatorData, trialhistory) {
       Object.assign({}, TASK, automatorData[currentStageIdx])
     ).flatMap(([key, value]) => {
       if (
-        key == 'CurrentAutomatorStageName' ||
-        key == 'MinPercentCriterion' ||
-        key == 'MinTrialsCriterion'
+        key == "CurrentAutomatorStageName" ||
+        key == "MinPercentCriterion" ||
+        key == "MinTrialsCriterion"
       ) {
         return [];
       }
@@ -79,7 +79,7 @@ async function automateTask(automatorData, trialhistory) {
       TASK.Automator = 0;
       FLAGS.need2saveParameters = 1;
 
-      automatorEvents.push('COMPLETED FINAL STAGE, TURNING AUTOMATOR OFF');
+      automatorEvents.push("COMPLETED FINAL STAGE, TURNING AUTOMATOR OFF");
       FLAGS.automatortext = updateHeadsUpDisplayAutomator(
         ENV.CurrentAutomatorStageName,
         ENV.StagePctCorrect,
@@ -90,17 +90,17 @@ async function automateTask(automatorData, trialhistory) {
       );
       updateHeadsUpDisplay();
       console.log(
-        'With ' +
+        "With " +
           ENV.StagePctCorrect +
-          '% performance on n=' +
+          "% performance on n=" +
           ENV.StageNTrials +
-          ', subject completed the final stage ' +
+          ", subject completed the final stage " +
           currentStageIdx +
-          ' of ' +
+          " of " +
           (automatorData.length - 1) +
-          ' (zero indexing) of automator.'
+          " (zero indexing) of automator."
       );
-      console.log('Turning automator OFF.');
+      console.log("Turning automator OFF.");
       if (ENV.MTurkWorkerId) {
         let mturkUser = {
           wid: ENV.MTurkWorkerId,
@@ -108,7 +108,7 @@ async function automateTask(automatorData, trialhistory) {
           hid: ENV.HITId,
         };
         let submitAssignmentResult = await submitAssignment(mturkUser);
-        if (submitAssignmentResult.data.status === 'success') {
+        if (submitAssignmentResult.data.status === "success") {
           window.location.replace(
             `https://mkturk.com/mturksurvey/?WID=${ENV.MTurkWorkerId}&AID=${ENV.AssignmentId}&HID=${ENV.HITId}`
           );
@@ -137,11 +137,11 @@ async function automateTask(automatorData, trialhistory) {
       Object.entries(
         Object.assign({}, TASK, automatorData[currentStageIdx + 1])
       ).flatMap(([key, value]) => {
-        console.log('automator transition');
+        console.log("automator transition");
         if (
-          key == 'CurrentAutomatorStageName' ||
-          key == 'MinPercentCriterion' ||
-          key == 'MinTrialsCriterion'
+          key == "CurrentAutomatorStageName" ||
+          key == "MinPercentCriterion" ||
+          key == "MinTrialsCriterion"
         ) {
           return [];
         }
@@ -176,11 +176,11 @@ async function automateTask(automatorData, trialhistory) {
 
 function stageHash(task) {
   // Returns a value that uniquely describes the automator and stage of the automator
-  let currentStageHashStr = '';
+  let currentStageHashStr = "";
   if (task.Automator != 0) {
     currentStageHashStr = `${task.AutomatorFilePath}_stage${task.CurrentAutomatorStage}`;
   } else {
-    currentStageHashStr = 'automator_off';
+    currentStageHashStr = "automator_off";
   }
   // console.log('[Automator] CurrentStageHashStr:', currentStageHashStr);
   return currentStageHashStr;
@@ -193,7 +193,7 @@ async function readTrialHistoryFromFirebase(filepaths) {
   trialhistory.correct = [];
   trialhistory.response = [];
 
-  if (typeof filepaths == 'string') {
+  if (typeof filepaths == "string") {
     filepaths = [filepaths];
   }
 
@@ -205,28 +205,60 @@ async function readTrialHistoryFromFirebase(filepaths) {
   for (var i = 0; i < filepaths.length; i++) {
     const data = await loadTextfromFirebase(filepaths[i]);
 
-    let numTrials = data.TRIALEVENTS.Response.length;
-    // Iterate over TRIALs
-    for (let i_trial = 0; i_trial < numTrials; i_trial++) {
-      //Correct/incorrect trial
-      const correct =
-        data.TRIALEVENTS.Response[i_trial] ==
-        data.TRIALEVENTS.CorrectItem[i_trial]
-          ? 1
-          : 0;
-      trialhistory.correct.push(correct);
+    // if mturk, only load trialhistory if same hitid
+    if (ENV.MTurkWorkerId) {
+      if (ENV.HITId) {
+        if (data.ENV.HITId == ENV.HITId) {
+          let numTrials = data.TRIALEVENTS.Response.length;
+          // Iterate over TRIALs
+          for (let i_trial = 0; i_trial < numTrials; i_trial++) {
+            //Correct/incorrect trial
+            const correct =
+              data.TRIALEVENTS.Response[i_trial] ==
+              data.TRIALEVENTS.CorrectItem[i_trial]
+                ? 1
+                : 0;
+            trialhistory.correct.push(correct);
 
-      //Response
-      const response = data.TRIALEVENTS.Response[i_trial];
-      trialhistory.response.push(response);
+            //Response
+            const response = data.TRIALEVENTS.Response[i_trial];
+            trialhistory.response.push(response);
 
-      //Current automator stage
-      const currentStage = stageHash(data.TASK);
-      trialhistory.trainingstage.push(currentStage);
+            //Current automator stage
+            const currentStage = stageHash(data.TASK);
+            trialhistory.trainingstage.push(currentStage);
 
-      //Start time (fixation dot appears) of trial
-      const starttime = data.TRIALEVENTS.StartTime[i_trial];
-      trialhistory.starttime.push(starttime);
+            //Start time (fixation dot appears) of trial
+            const starttime = data.TRIALEVENTS.StartTime[i_trial];
+            trialhistory.starttime.push(starttime);
+          }
+        }
+      }
+    } else {
+      let numTrials = data.TRIALEVENTS.Response.length;
+      // Iterate over TRIALs
+      for (let i_trial = 0; i_trial < numTrials; i_trial++) {
+        //Correct/incorrect trial
+        const correct =
+          data.TRIALEVENTS.Response[i_trial] ==
+          data.TRIALEVENTS.CorrectItem[i_trial]
+            ? 1
+            : 0;
+        trialhistory.correct.push(correct);
+
+        //Response
+        const response = data.TRIALEVENTS.Response[i_trial];
+        trialhistory.response.push(response);
+
+        //Current automator stage
+        const currentStage = stageHash(data.TASK);
+        trialhistory.trainingstage.push(currentStage);
+
+        //Start time (fixation dot appears) of trial
+        const starttime = data.TRIALEVENTS.StartTime[i_trial];
+        trialhistory;
+      }
+      starttime.push(starttime);
     }
   }
   console.log(
@@ -259,7 +291,7 @@ function computeRunningHistory(
   if (trainingStageHistory.length != correctsHistory.length) {
     // console.log('trainingstage vec. length' + trainingStageHistory.length);
     // console.log('corrects vec. length ' + correctsHistory.length);
-    throw 'The history arrays are of different length. Check what went wrong; cannot compute performance history.';
+    throw "The history arrays are of different length. Check what went wrong; cannot compute performance history.";
   }
 
   // Returns: The at most current-minTrials trial which starts a contiguous sequence to current trial with the same trainingstage/automatorfilepath as the current state,
@@ -275,14 +307,14 @@ function computeRunningHistory(
       } else if (trainingStageHistory.length - i > minTrials) {
         break;
       } else {
-        throw 'Something went wrong';
+        throw "Something went wrong";
       }
     } else if (trainingStageHistory[i] != currentStage) {
       break;
     } else {
       // console.log(trainingStageHistory[i]);
       // console.log(currentStage);
-      throw 'Something went wrong 2';
+      throw "Something went wrong 2";
     }
   } //FOR i trials
 
@@ -293,7 +325,7 @@ function computeRunningHistory(
       ndiscrepancy = ndiscrepancy + 1;
       // console.log(trainingStageHistory[i]);
       // console.log(currentStage);
-      throw 'Something went wrong 3';
+      throw "Something went wrong 3";
     }
     ncountedtrials = ncountedtrials + 1;
   }
