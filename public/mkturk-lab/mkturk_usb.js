@@ -356,28 +356,12 @@ serial.Port.prototype.onReceive = (data) => {
         waitforEvent.next(event_xytt); //send to hold_promise generator
       } //if generated created
 
-      // 	var eyedatalen = Object.keys(EVENTS['timeseries']['EyeData']).length
-      // if (eyedatalen > 1){
-      // 	var dt = EVENTS['timeseries']['EyeData'][eyedatalen-1][1] - EVENTS['timeseries']['EyeData'][eyedatalen-2][1]
-      // 	eyebuffer.dt = eyebuffer.dt + dt
-      // }
-
       eyebuffer.success = eyebuffer.success + 1;
-      // if ( eyedatalen%20 == 0 ){
-      // 	port.statustext_received = 'Parsed EYE: xy_raw(calib)= ' + Math.round(x*100)/100 + ', ' + Math.round(y*100)/100 +
-      // 							', ' + Math.round(w*100)/100 + ', ' + Math.round(a*100)/100 +
-      // 							' (' + Math.round(10*xy[0])/10 + ',' + Math.round(10*xy[1])/10 + ') ' +
-      // 							' @ ' + new Date().toLocaleTimeString("en-US") +
-      // 							' dt=' + dt + 'ms' + 'buff=' + eyebuffer.buffer + port.statustext_received
-      // 	console.log(port.statustext_received)
-      // 	updateHeadsUpDisplayDevices()
-      // } //SUBSAMPLE
 
       if (n_character_close == 1) {
         eyebuffer.buffer = '';
         eyebuffer.accumulateEye = 0;
       } else if (n_character_close == 2) {
-        //received "}/"
         eyebuffer.buffer = '';
         eyebuffer.accumulateEye = 1;
       }
@@ -386,11 +370,6 @@ serial.Port.prototype.onReceive = (data) => {
     //=============== FAILED TO PARSE EYE DATA ===============//
     else if (eyebuffer.buffer.length >= eyebuffer.maxbufferlength_HARDCODED) {
       eyebuffer.fail = eyebuffer.fail + 1;
-      // port.statustext_received = 'EYE PARSE FAILED : buffer size exceeded without end character:' +
-      // 						eyebuffer.buffer + ' bits: ' + port.statustext_received +
-      // 						' @ ' + new Date().toLocaleTimeString("en-US")
-      // updateHeadsUpDisplayDevices()
-
       eyebuffer.buffer = '';
       eyebuffer.accumulateEye = 0;
     } //ELSE didn't receive end character
@@ -512,6 +491,8 @@ function pingUSB() {
   }
 } //FUNCTION pingUSB
 
+//____________________LEGACY________________________
+//____________________LEGACY________________________
 //____________________LEGACY________________________
 
 //PORT - send pump duration to arduino

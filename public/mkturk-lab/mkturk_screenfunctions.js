@@ -133,18 +133,6 @@ function displayTrial(ti, gr, fr, sc, ob, id, mkm) {
                 mkm.dataObj.yTrainLabels.push(oneHotIdx);
                 mkm.dataObj.yTrain.push(mkm.oneHotArr[oneHotIdx]);
                 mkm.dataObj.xTrain.push(featureVec);
-
-                // if (CURRTRIAL.sample_scenebag_label[0][0] == 0) {
-                // 	mkm.dataObj.yTrainLabels.push(0);
-                // 	// mkm.dataObj.yTrain.push([0]);
-                // 	mkm.dataObj.yTrain.push([1, 0]);
-                // 	// for SVM
-                // 	// mkm.dataObj.yTrain.push([-1])
-                // } else if (CURRTRIAL.sample_scenebag_label[0][0] == 1) {
-                // 	mkm.dataObj.yTrainLabels.push(1);
-                // 	// mkm.dataObj.yTrain.push([1]);
-                // 	mkm.dataObj.yTrain.push([0, 1]);
-                // }
               } else {
                 let oneHotIdx = mkm.getOneHotIdx(
                   CURRTRIAL.sample_scenebag_label[0][0]
@@ -177,16 +165,6 @@ function displayTrial(ti, gr, fr, sc, ob, id, mkm) {
                 boundingBoxes2D: boundingBoxesChoice2D,
               };
 
-              // let mkmBoundingBox = mkm.getMkModelBoundingBox(params);
-
-              // mkmBoundingBox SANITY CHECK CODE
-              // console.log(`TEST sx=${mkmBoundingBox.sx}; sy=${mkmBoundingBox.sy}; sWidth=${mkmBoundingBox.sWidth}; sHeight=${mkmBoundingBox.sHeight}`);
-              // let visiblecvs = document.getElementById("canvaseyetracker");
-              // let ctx2 = visiblecvs.getContext('2d');
-              // ctx2.clearRect(0, 0, EYETRACKERCANVAS.width, EYETRACKERCANVAS.height);
-              // ctx2.rect(mkmBoundingBox.sx, mkmBoundingBox.sy, mkmBoundingBox.sWidth, mkmBoundingBox.sHeight);
-              // ctx2.stroke();
-
               ctx.drawImage(
                 VISIBLECANVAS,
                 mkmBoundingBox.sx,
@@ -211,17 +189,6 @@ function displayTrial(ti, gr, fr, sc, ob, id, mkm) {
                 mkm.dataObj.yTrainLabels.push(oneHotIdx);
                 mkm.dataObj.yTrain.push(mkm.oneHotArr[oneHotIdx]);
                 mkm.dataObj.xTrain.push(featureVec);
-                // if (CURRTRIAL.test_scenebag_labels[0][0] == 0) {
-                // 	mkm.dataObj.yTrainLabels.push(0);
-                // 	// mkm.dataObj.yTrain.push([0]);
-                // 	mkm.dataObj.yTrain.push([1, 0]);
-                // 	// for SVM
-                // 	// mkm.dataObj.yTrain.push([-1])
-                // } else if (CURRTRIAL.test_scenebag_labels[0][0] == 1) {
-                // 	mkm.dataObj.yTrainLabels.push(1);
-                // 	// mkm.dataObj.yTrain.push([1]);
-                // 	mkm.dataObj.yTrain.push([0, 1]);
-                // }
               } else {
                 let oneHotIdx = mkm.getOneHotIdx(
                   CURRTRIAL.test_scenebag_labels[0][0]
@@ -314,12 +281,6 @@ function displayTrial(ti, gr, fr, sc, ob, id, mkm) {
                   .child(path)
                   .putString(mkm.cvs.toDataURL(), 'data_url');
               }
-              // let path = `${TASK.Agent}/${ENV.CurrentDate.toJSON()}/${CURRTRIAL.num}_sample.png`;
-              // let pathWebgl = `${TASK.Agent}/${ENV.CurrentDate.toJSON()}/${CURRTRIAL.num}_sample_webgl.png`;
-              // let canvasDataWebgl = VISIBLECANVASWEBGL.toDataURL();
-              // let canvasData = VISIBLECANVAS.toDataURL();
-              // storageRef.child('mkturkfiles/mkmodels/').child(path).putString(canvasData, 'data_url');
-              // storageRef.child('mkturkfiles/mkmodels/').child(pathWebgl).putString(canvasDataWebgl, 'data_url');
 
               // console.log(mkm.featureExtractor);
               let hello = mkm.featureExtractor.execute(
@@ -431,7 +392,6 @@ function displayTrial(ti, gr, fr, sc, ob, id, mkm) {
 
 function render3D(taskscreen, s, f, gr, fr, sc, ob, id) {
   f = frame.frames[frame.current][s];
-  //var taskscreen = sc[f].charAt(0).toUpperCase() + sc[f].slice(1)
   if (taskscreen == 'Sample') {
     var ims = [CURRTRIAL.sampleimage[CURRTRIAL.sequenceclip[f]][fr[f]]]; //fr[f] frame within clip
   } else if (taskscreen == 'Test') {
@@ -451,14 +411,6 @@ function render3D(taskscreen, s, f, gr, fr, sc, ob, id) {
       gr[f][j],
       ims[j]
     );
-
-    // if (taskscreen == 'Sample') {
-    // 	console.log('boundingBox:', boundingBox);
-    // 	console.log('boundingBox:', boundingBox[0]);
-    // 	console.log('boundingBoxCube:', boundingBoxCube);
-    // 	console.log('boundingBoxCube:', boundingBoxCube[0]);
-    // 	console.log('crop:', crop);
-    // }
 
     if (
       s == 0 &&
@@ -526,34 +478,6 @@ function render3D(taskscreen, s, f, gr, fr, sc, ob, id) {
 
     // render in THREEJS
     renderer.render(scene[taskscreen], camera); //takes >1ms, do before the fast 2D swap (<1ms)
-    // if (
-    //   (taskscreen == 'Test' || taskscreen == 'Sample') &&
-    //   TASK.Agent == 'SaveImages' &&
-    //   FLAGS.savedata == 1
-    // ) {
-    //   if (
-    //     (FLAGS.movieper[taskscreen][ob[frame.current][0]][
-    //       id[frame.current][0]
-    //     ] < 1 &&
-    //       (frame.current == 0 ||
-    //         sc[frame.current] != sc[frame.current - 1] ||
-    //         ob[frame.current][0] != ob[frame.current - 1][0] ||
-    //         id[frame.current][0] != id[frame.current - 1][0])) || //if !movie, save when screen changes
-    //     FLAGS.movieper[taskscreen][ob[frame.current][0]][
-    //       id[frame.current][0]
-    //     ] >= 1
-    //   ) {
-    //     //OR movie
-    //     saveScreenshot(
-    //       VISIBLECANVASWEBGL,
-    //       CURRTRIAL.num,
-    //       taskscreen,
-    //       fr[f],
-    //       ob[f][j],
-    //       id[f][j]
-    //     );
-    //   } //IF movie
-    // } //IF taskscreen
 
     //Post-render 2D filtering in pixel space
     var [objFilterSingleFrame, imgFilterSingleFrame] = updateFilterSingleFrame(
@@ -591,24 +515,10 @@ function render3D(taskscreen, s, f, gr, fr, sc, ob, id) {
     var left = Math.round(scenecenterX / ENV.CanvasRatio - swidth_2d / 2);
     var top = Math.round(scenecenterY / ENV.CanvasRatio - sheight_2d / 2);
 
-    // if (taskscreen == 'Sample') {
-    // 	console.log('sx:', sx, 'sy:', sy, 'swidth:', swidth, 'sheight:', sheight);
-    // 	console.log('left:', left, 'top:', top, 'swidth_2d:', swidth_2d, 'sheight_2d:', sheight_2d);
-    // }
-
     // mkm.boundingBoxVisibleCanvas = [left, top, swidth_2d, sheight_2d];
 
     // Transfer 3D Canvas to 2D Canvas
     if (TASK.Agent == 'SaveImages') {
-      // console.log(
-      //   sx,
-      //   sy,
-      //   swidth,
-      //   sheight,
-      //   VISIBLECANVAS.width,
-      //   VISIBLECANVAS.height
-      // );
-
       VISIBLECANVAS.getContext('2d').drawImage(
         renderer.domElement,
         sx,
@@ -682,9 +592,9 @@ async function render2D(taskscreen, s, f, gr, fr, sc, ob, id, canvasobj) {
         boundingBoxesChoice2D = boundingBox;
       }
       updated2d = 1;
-    } //ELSE 2D shape
-  } //IF new taskscreen
-} //FUNCTION render2D
+    }//ELSE 2D shape
+  }//IF new taskscreen
+}//FUNCTION render2D
 
 function renderShape2D(sc, gr, canvasobj) {
   switch (sc) {
@@ -908,9 +818,6 @@ function renderTriangleOnCanvas(
   // var len_side = Math.sin(30 * Math.PI / 180);     // returns 1 (the sine of 90 degrees)
 
   context.beginPath();
-  // context.moveTo(xcent, ycent + wd/2); //bottom vertex
-  // context.lineTo(xcent-wd/2, ycent-wd/2); //top left
-  // context.lineTo(xcent+wd/2, ycent-wd/2); //top right
   context.moveTo(xcent, ycent - wd / 2); //bottom vertex
   context.lineTo(xcent - wd / 2, ycent + wd / 2); //top left
   context.lineTo(xcent + wd / 2, ycent + wd / 2); //top right
@@ -1359,21 +1266,6 @@ async function saveScreenshot(
   fullpath_mesh = fullpath + '.glb';
   fullpath = fullpath + '.png';
 
-  // canvasobj.toBlob(function (blob) {
-  //   try {
-  //     var response = storage.ref().child(fullpath).put(blob);
-  //     console.log("saved image: " + fullpath);
-  //     console.log(
-  //       "FIREBASE: Successful image file upload. Size:" +
-  //         Math.round(response.blob_.size_ / 1000) +
-  //         "kb"
-  //     );
-  //   } catch (error) {
-  //     //TRY
-  //     console.log(error);
-  //   }
-  // }); //.toBlob function
-  // console.log('fullpath:', fullpath);
   let imgFileNameSplit = fullpath.split('/');
   let imgFileName = imgFileNameSplit[imgFileNameSplit.length - 1];
   let dirNameSplit = scenefolder.split('/');

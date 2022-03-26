@@ -173,8 +173,6 @@ function hold_promise(touchduration, boundingBoxes, punishOutsideTouch) {
       } //IF acquired, get cxyt data
       //================== (END) 1-GET XYT & CHOSEN BOX ==================//
 
-      // console.log("acq=" + FLAGS.acquiredTouch + " " + touchevent.type + " " + touchcxyt + " waiting=" + FLAGS.waitingforTouches)
-      // console.log(boundingBoxes)
       //================== 2-INIATE HOLD ==================//
       if (
         !FLAGS.acquiredTouch &&
@@ -284,17 +282,6 @@ function hold_promise(touchduration, boundingBoxes, punishOutsideTouch) {
       } //IF ended touch early
       //================== (END) 4-END HOLD prematurely ==================//
     } //WHILE events
-    // if (FLAGS.rtdbAgentNumConnections > 0) {
-    // 	console.log(boundingBoxes);
-    // 	let metaStr = 2;
-    // 	FLAGS.rtdbDataRef.set({
-    // 		x: -1,
-    // 		y: -1,
-    // 		boundingBoxes: boundingBoxesRtdb,
-    // 		meta: metaStr,
-    // 		timestamp: new Date().toJSON()
-    // 	});
-    // }
     if (ENV.Eye.TrackEye) {
       //Median x,y = final eye position estimate
       var xs = [];

@@ -54,14 +54,6 @@ textobj.addEventListener('click', headsuptext_listener, false);
 //============= Initialize Audio & Battery Objects ==================//
 
 // Prevent window scrolling and bounce back effect
-// document.body.addEventListener(
-//   'touchmove',
-//   function (event) {
-//     event.preventDefault();
-//   },
-//   { capture: false, passive: false }
-// );
-
 document.body.addEventListener(
   'touchmove',
   (event) => {
@@ -210,150 +202,6 @@ if (ENV.BatteryAPIAvailable) {
   const fps = await estimatefps();
   ENV.FrameRateDisplay = fps;
 
-  // if (TASK.DeviceConfig !== undefined) {
-  //   screenSpecs = await queryDevice(TASK.DeviceConfig);
-  //   ENV.ScreenSizeInches = screenSpecs.screenSizeInches;
-  //   ENV.ScreenPhysicalPixels = screen.screenPhysicalPixels;
-  //   ENV.ScreenRatio = screenSpecs.screenRatio;
-  //   ENV.PhysicalPPI = screenSpecs.ppi;
-  //   ENV.FrameRateMovie =
-  //     screenSpecs.frameRateMovie === -1 ? 30 : screenSpecs.frameRateMovie;
-  //   ENV.ViewportPixels[0] = ENV.ScreenPhysicalPixels[0] / ENV.DevicePixelRatio;
-  //   ENV.ViewportPixels[1] = ENV.ScreenPhysicalPixels[1] / ENV.DevicePixelRatio;
-  //   if (ENV.DevicePixelRatio !== ENV.ScreenRatio) {
-  //     console.log(
-  //       'User is not running screen at native pixelratio which affects image scaling, will attempt to compensate'
-  //     );
-  //   }
-  //   //always compute PPI based on the larger dimension for consistency across portrait/landscape modes
-  //   if (ENV.ViewportPixels[0] >= ENV.ViewportPixels[1]) {
-  //     ENV.ViewportPPI = ENV.ViewportPixels[0] / ENV.ScreenSizeInches[0];
-  //   } else {
-  //     ENV.ViewportPPI = ENV.ViewportPixels[1] / ENV.ScreenSizeInches[1];
-  //   }
-  // } else {
-  //   console.log(
-  //     'Device not detected in firestore/devices. Will attempt findDPI code for the optimal ViewportPPI'
-  //   );
-  //   ENV.ViewportPPI = findDPI();
-  // }
-
-  // if (ENV.FrameRateMovie > ENV.FrameRateDisplay) {
-  //   console.error(
-  //     'Movie is animating at a higher frame rate than display refresh rate'
-  //   );
-  // }
-
-  // var screenSpecs = await queryDeviceonFirestore(ENV.DeviceName);
-
-  //if device not identified by deviceAPI or no matching firestore devices record found for an identified device
-  // if (TASK.DeviceConfig !== undefined) {
-  //   var screenSpecs = await queryDeviceonFirestore(TASK.DeviceConfig);
-  //   console.log('DeviceConfig was configured in agent param file');
-  //   if (TASK.DeviceConfig.FrameRateMovie === undefined) {
-  //     ENV.FrameRateMovie = 30;
-  //   } else {
-  //     ENV.FrameRateMovie = await estimatefps();
-  //   }
-  // } else
-  // if (screenSpecs.screenSizeInches < 0 && ENV.DeviceType == 'desktop') {
-  //   screenSpecs = await queryDeviceonFirestore('32ul750'); //default to desktop monitor
-  //   console.log(
-  //     'Desktop detected, defaulting to LG 32ul750 monitor for screen ppi'
-  //   );
-  // } else if (screenSpecs.screenSizeInches < 0 && ENV.DeviceType == 'tablet') {
-  //   screenSpecs = await queryDeviceonFirestore('pixel c'); //default to pixel c
-  //   console.log('Tablet detected, defaulting to pixel c tablet for screen ppi');
-  // } else if (screenSpecs.screenSizeInches < 0 && ENV.DeviceType == 'mobile') {
-  //   screenSpecs = await queryDeviceonFirestore('pixel 4 xl'); //default to pixel 4 xl
-  //   console.log(
-  //     'Mobile detected, defaulting to pixel 4 xl phone for screen ppi'
-  //   );
-  // } else if (
-  //   screenSpecs.screenSizeInches < 0 &&
-  //   ENV.DeviceType == 'smartphone'
-  // ) {
-  //   screenSpecs = await queryDeviceonFirestore('pixel 6');
-  //   console.log(
-  //     'Smartphone detected, defaulting to pixel6 phone for screen ppi'
-  //   );
-  // } else if (
-  //   screenSpecs.screenSizeInches < 0 &&
-  //   (ENV.DeviceType == 'Not available' || ENV.DeviceType == '')
-  // ) {
-  //   screenSpecs = await queryDeviceonFirestore('pixel c'); //default to pixel c
-  //   console.log(
-  //     'Device type unidentified, defaulting to pixel c tablet for screen ppi'
-  //   );
-  // }
-
-  // ENV.ScreenSizeInches = screenSpecs.screenSizeInches;
-  // ENV.ScreenPhysicalPixels = screenSpecs.screenPhysicalPixels; //display pixels (<= physical screen pixels)
-  // ENV.ScreenRatio = screenSpecs.screenRatio; //scaling from physical pixels to display pixels (retina display)
-  // ENV.PhysicalPPI = screenSpecs.ppi; //physical device pixels per inch
-  // // ENV.FrameRateMovie = (screenSpecs)
-  // ENV.FrameRateMovie =
-  //   screenSpecs2.FrameRateMovie === -1 ? 30 : screenSpecs2.FrameRateMovie;
-
-  // if (window.innerWidth < window.innerHeight) {
-  //   ENV.ScreenSizeInches = [
-  //     ENV.ScreenSizeInches[1],
-  //     ENV.ScreenSizeInches[0],
-  //     ENV.ScreenSizeInches[2],
-  //   ];
-  //   ENV.ScreenPhysicalPixels = [
-  //     ENV.ScreenPhysicalPixels[1],
-  //     ENV.ScreenPhysicalPixels[0],
-  //   ];
-  // } //IF PORTRAIT flip horizontal and vertical
-
-  // if (ENV.DevicePixelRatio != ENV.ScreenRatio) {
-  //   console.log(
-  //     'User is not running screen at native pixelratio which affects image scaling, will attempt to compensate'
-  //   );
-  // } //IF user not running screen at native scaling
-
-  // ENV.ViewportPixels[0] = ENV.ScreenPhysicalPixels[0] / ENV.DevicePixelRatio;
-  // ENV.ViewportPixels[1] = ENV.ScreenPhysicalPixels[1] / ENV.DevicePixelRatio;
-
-  // IF MTurkWorker we cannot pull device data from firestore/devices
-  // so calculate ENV.ViewportPPI on the fly
-  // if (ENV.MTurkWorkerId || TASK.Agent == 'MTurkTest') {
-  //   function binSearch(fn, min, max) {
-  //     if (max < min) return -1;
-
-  //     let mid = (min + max) >>> 1;
-  //     if (0 < fn(mid)) {
-  //       if (mid == min || 0 >= fn(mid - 1)) {
-  //         return mid;
-  //       }
-  //       return binSearch(fn, min, mid - 1);
-  //     }
-  //     return binSearch(fn, mid + 1, max);
-  //   }
-
-  //   function findFirstPositive(fn) {
-  //     let start = 1;
-  //     while (0 >= fn(start)) start <<= 1;
-  //     return binSearch(fn, start >>> 1, start) | 0;
-  //   }
-
-  //   function findDPI(counter = 0) {
-  //     return findFirstPositive(
-  //       (x) => (++counter, matchMedia(`(max-resolution: ${x}dpi)`).matches)
-  //     );
-  //   }
-
-  //   ENV.ViewportPPI = findDPI();
-  // } else {
-  //   //always compute PPI based on the larger dimension for consistency across portrait/landscape modes
-  //   if (ENV.ViewportPixels[0] >= ENV.ViewportPixels[1]) {
-  //     ENV.ViewportPPI = ENV.ViewportPixels[0] / ENV.ScreenSizeInches[0]; //viewport pixels per inch
-  //   } else {
-  //     ENV.ViewportPPI = ENV.ViewportPixels[1] / ENV.ScreenSizeInches[1]; //viewport pixels per inch
-  //   } //IF
-  // }
-
   updateHeadsUpDisplay();
   //====================== (END) Retrieve device's screen properties ===========================//
 
@@ -414,9 +262,6 @@ if (ENV.BatteryAPIAvailable) {
       '_' +
       ENV.HITId +
       '_params.json';
-
-    // document.querySelector('button[id=doneTestingTask]').innerText = 'Start';
-    // ENV.WebUSBAvailable = 0;
   } else {
     ENV.ParamFileName = PARAM_DIRPATH + ENV.Subject + '_params.json';
   }
@@ -622,70 +467,7 @@ if (ENV.BatteryAPIAvailable) {
       await loadParametersfromFirebase(ENV.ParamFileName); //then read them
     } //IF
   } //IF !QuickLoad.load
-  // if (ENV.MTurkWorkerId) {
-  //   document
-  //     .querySelector('button[id=doneEditingParams]')
-  //     .dispatchEvent(new Event('click'));
-  // } else {
-  //   if (QuickLoad.load == 0) {
-  //     console.log('QuickLoad == 0');
-  //     updateStatusText(JSON.stringify(TASK, null, ' '));
-  //     document
-  //       .querySelector('p[id=headsuptext]')
-  //       .setAttribute('contentEditable', true);
-  //     document.querySelector('button[id=doneEditingParams]').style.display =
-  //       'block';
-  //     document.querySelector('button[id=doneEditingParams]').style.visibility =
-  //       'visible';
-
-  //     await editParamsPromise();
-  //     document.querySelector('button[id=doneEditingParams]').style.display =
-  //       'none';
-  //     var textobj = document.getElementById('headsuptext');
-  //     textobj.removeEventListener('touchend', headsuptext_listener);
-  //     textobj.removeEventListener('mouseup', headsuptext_listener);
-  //     document
-  //       .querySelector('p[id=headsuptext]')
-  //       .setAttribute('contentEditable', false);
-
-  //     if (FLAGS.need2saveParameters == 1) {
-  //       var user_param_text = document.getElementById('headsuptext').innerHTML; //get new params
-  //       await saveParameterTexttoFirebase(user_param_text); //write new params
-  //       await loadParametersfromFirebase(ENV.ParamFileName); //then read them
-  //     } //IF
-  //   } //IF !QuickLoad.load
-  // }
   //================== (END) AWAIT USER CAN EDIT SUBJECT PARAMS ==================//
-
-  // if (ENV.MTurkWorkerId || TASK.Agent == 'MTurkTest') {
-  //   console.log('getting ppi');
-  //   function binSearch(fn, min, max) {
-  //     if (max < min) return -1;
-
-  //     let mid = (min + max) >>> 1;
-  //     if (0 < fn(mid)) {
-  //       if (mid == min || 0 >= fn(mid - 1)) {
-  //         return mid;
-  //       }
-  //       return binSearch(fn, min, mid - 1);
-  //     }
-  //     return binSearch(fn, mid + 1, max);
-  //   }
-
-  //   function findFirstPositive(fn) {
-  //     let start = 1;
-  //     while (0 >= fn(start)) start <<= 1;
-  //     return binSearch(fn, start >>> 1, start) | 0;
-  //   }
-
-  //   function findDPI(counter = 0) {
-  //     return findFirstPositive(
-  //       (x) => (++counter, matchMedia(`(max-resolution: ${x}dpi)`).matches)
-  //     );
-  //   }
-
-  //   ENV.ViewportPPI = findDPI();
-  // }
 
   // =================== LOAD MKMODELS IF SPECIES = MODEL =================//
   let mkm;
@@ -733,10 +515,6 @@ if (ENV.BatteryAPIAvailable) {
   await Promise.all(soundpromises); //simultaneously evaluate array of sound load promises
   updateStatusText('');
 
-  //============= AWAIT ESTIMATE SCREEN REFRESH RATE =========//
-  // var fps = await estimatefps();
-  // ENV.FrameRateDisplay = fps;
-
   //========= Start in TEST mode =======//
   document.querySelector('button[id=googlesignin]').style.display = 'none'; //if do style.visibility=hidden, element will still occupy space
   document.querySelector('button[id=reloadpage]').style.display = 'block';
@@ -760,8 +538,6 @@ if (ENV.BatteryAPIAvailable) {
       .querySelector('button[id=doneTestingTask]')
       .dispatchEvent(new Event('pointerup'));
   }
-
-  // await mkmodels.loadFeatureExtractor('https://tfhub.dev/google/tfjs-model/imagenet/resnet_v2_50/feature_vector/3/default/1');
 
   // =========================================================================================================== //
   // ============ MAIN LOOP ==================================================================================== //
@@ -1437,34 +1213,7 @@ if (ENV.BatteryAPIAvailable) {
       if (ENV.StressTest == 1) {
         //IF automated stress test
         if (TASK.Species == 'model') {
-          // let ctx = mkm.cvs.getContext('2d');
-          // ctx.clearRect(0, 0, mkm.cvs.width, mkm.cvs.height);
-
           touchhold_return = { type: 'theld' };
-
-          // ctx.drawImage(VISIBLECANVAS, sx, sy, sWidth, sHeight, 0, 0, 224, 224);
-          // let tensor = mkm.normalizePixelValues(mkm.cvs);
-          // let feature = mkm.featureExtractor.execute(tensor);
-          // feature = feature.reshape([2048]);
-          // let moments = tf.moments(feature);
-          // let subtracted = feature.sub(moments.mean);
-          // let scaledFeature = subtracted.divNoNan(moments.variance);
-          // scaledFeature.print();
-          // if (CURRTRIAL.num <= TASK.ModelConfig.trainIdx) {
-          //   console.log('CURRTRIAL.num:', CURRTRIAL.num);
-          //   mkm.dataObj.xTrain.push(feature);
-          //   if (CURRTRIAL.correctitem == 0) {
-          //     mkm.dataObj.yTrain.push([-1]);
-          //     // mkm.dataObj.yTrain.push([1, 0]);
-          //   } else if (CURRTRIAL.correctitem == 1) {
-          //     mkm.dataObj.yTrain.push([1]);
-          //     // mkm.dataObj.yTrain.push([0, 1]);
-          //   }
-          // } else {
-          //   mkm.dataObj.xTest = feature;
-          //   mkm.dataObj.yTest = CURRTRIAL.correctitem;
-          // }
-
           let x =
             boundingBoxesFixation.x[0][0] +
             Math.round(
@@ -1570,10 +1319,6 @@ if (ENV.BatteryAPIAvailable) {
         logEVENTS('Response', CURRTRIAL.response, 'trialseries');
       }
 
-      // else if ( (CURRTRIAL.fixationtouchevent == "tbroken" && TASK.RewardStage == 1)
-      //           || (CURRTRIAL.fixationtouchevent == "TimeOut")){
-      //     }//IF timed out OR dms task, ok if touched outside, just wait for touch inside fixation area
-
       //========= AWAIT CLEAR FIXATION =========//
       for (let q in CANVAS.sequenceblank) {
         frame.shown[q] = 0;
@@ -1650,7 +1395,6 @@ if (ENV.BatteryAPIAvailable) {
           i < frame.frames.length;
           i++
         ) {
-          // console.log('keepsampleon FRAME:', frame);
           // Append last Sample scene rendered
           frame.frames[i].push(idxArr[idxArr.length - 1]);
         }
@@ -1721,7 +1465,6 @@ if (ENV.BatteryAPIAvailable) {
         FLAGS.waitingforTouches = 0;
 
         //Determine number of clips fixated
-        // var nclipshown = CURRTRIAL.sequenceclip[frame.shown.lastIndexOf(1)]
         var nclipshown =
           frame.shown.lastIndexOf(1) !== undefined
             ? CURRTRIAL.sequenceclip[frame.shown.lastIndexOf(1)]
@@ -1842,14 +1585,6 @@ if (ENV.BatteryAPIAvailable) {
       logEVENTS('FrameNum', CURRTRIAL.sequenceframe, 'timeseries');
       logEVENTS('TSequenceDesired', CURRTRIAL.tsequence, 'timeseries');
       logEVENTS('TSequenceActual', CURRTRIAL.tsequenceactual, 'timeseries');
-
-      // //Store timestamp from beginnning of display
-      // EVENTS["timeseries"]["FrameNum"][Object.keys(EVENTS["timeseries"]["FrameNum"]).length-1][1] = CURRTRIAL.samplestarttime_string
-      // EVENTS["timeseries"]["TSequenceDesired"][Object.keys(EVENTS["timeseries"]["TSequenceDesired"]).length-1][1] = CURRTRIAL.samplestarttime_string
-      // EVENTS["timeseries"]["TSequenceActual"][Object.keys(EVENTS["timeseries"]["TSequenceActual"]).length-1][1] = CURRTRIAL.samplestarttime_string
-      // if (FLAGS.savedata == 0){
-      //     updateImageLoadingAndDisplayText(' ') //displays frame tactual - tdesired
-      // }
 
       // Store timestamp from beginning of display
       let lastFrameIdx =
@@ -1977,11 +1712,6 @@ if (ENV.BatteryAPIAvailable) {
               });
               currchoice = yPred[0];
             }
-            // let yPred = mkm.model.predict(mkm.dataObj.xTest.reshape([1, 2048]));
-            // yPred.print();
-            // yPred = yPred.reshape([2]).argMax(0);
-            // yPred = yPred.dataSync();
-            // currchoice = yPred[0];
             console.log('yPred:', currchoice, 'yTrue:', CURRTRIAL.correctitem);
             mkm.dataObj.xTest = [];
             mkm.dataObj.yTest = [];
@@ -2013,15 +1743,6 @@ if (ENV.BatteryAPIAvailable) {
                     }_incorrect_yTrue-${
                       CURRTRIAL.correctitem
                     }_yPred-${currchoice}.png`;
-              // if (currchoice != CURRTRIAL.correctitem) {
-              //   let path = (
-              //     `${TASK.Agent}/${ENV.CurrentDate.toJSON()}/${CURRTRIAL.num}_incorrect.png`
-              //   );
-              // } else if (currchoice == CURRTRIAL.correctitem) {
-              //   let path = (
-              //     `${TASK.Agent}/${ENV.CurrentDate.toJSON()}/${CURRTRIAL.num}_correct.png`
-              //   );
-              // }
               mkmodelsRef.child(path).putString(cvsData, 'data_url');
             }
           }
@@ -2136,7 +1857,6 @@ if (ENV.BatteryAPIAvailable) {
       logEVENTS('Response', CURRTRIAL.response, 'trialseries');
 
       // Keep track of repeated responses to one side
-      // Keep track of repeated responses to one side
       if (
         TASK.NRSVP <= 0 &&
         CURRTRIAL.num > 0 &&
@@ -2177,13 +1897,10 @@ if (ENV.BatteryAPIAvailable) {
         CURRTRIAL.nreward = 0;
       } else {
         // exponential reward = 1*exp(a*(nseen - nmin)), where a = ln(rmax)/(nmax-nmin)
-        // CURRTRIAL.nreward = Math.exp(
-        // 	( Math.log1p(TASK.NRewardMax)/(ENV.NRSVPMax - ENV.NRSVPMin) ) * (nclipshown - ENV.NRSVPMin) )
         CURRTRIAL.nreward = Math.exp(
           (Math.log1p(TASK.NRewardMax - 1) / (ENV.NRSVPMax - ENV.NRSVPMin)) *
             (nclipshown - ENV.NRSVPMin)
         );
-
         CURRTRIAL.nreward = Math.round(CURRTRIAL.nreward);
       }
     } //IF NRSVP && reward based on nclips fixated before break
@@ -2241,7 +1958,6 @@ if (ENV.BatteryAPIAvailable) {
       renderShape2D(CANVAS.sequencepost[0], -1, VISIBLECANVAS);
 
       let lenTsequencePost = CANVAS.tsequencepost.length;
-      // displayTrial(time, grid, frame, screen, obj, idx)
       await displayTrial(
         CANVAS.tsequencepost,
         Array(lenTsequencePost).fill(-1),
@@ -2271,7 +1987,6 @@ if (ENV.BatteryAPIAvailable) {
         playSound(2);
         renderShape2D(CANVAS.sequencepost[0], -1, VISIBLECANVAS);
         let lenTsequencePost = CANVAS.tsequencepost.length;
-        // displayTrial(time, grid, frame, screen, obj, idx);
         let p1 = displayTrial(
           CANVAS.tsequencepost,
           Array(lenTsequencePost).fill(-1),
@@ -2315,7 +2030,6 @@ if (ENV.BatteryAPIAvailable) {
 
       renderShape2D(CANVAS.sequencepost[0], -1, VISIBLECANVAS);
       let lenSequencepost = CANVAS.sequencepost.length;
-      // displayTrial(time, grid, frame, screen, obj, idx);
       let p1 = displayTrial(
         CANVAS.tsequencepost,
         Array(lenSequencepost).fill(-1),
@@ -2356,73 +2070,6 @@ if (ENV.BatteryAPIAvailable) {
     //HOUSEKEEPING    HOUSEKEEPING    HOUSEKEEPING    HOUSEKEEPING    HOUSEKEEPING    //
     //================= HOUSEKEEPING =================//
     let ITIstart = performance.now();
-
-    // if (FLAGS.savedata == 0) {
-    //   let photodiode = { t: [], v: [] };
-
-    //   for (let q in EVENTS['timeseries']['Arduino']) { // FOR q Arduino events
-    //     let evt = EVENTS['timeseries']['Arduino'][q];
-    //     if (evt[0] != CURRTRIAL.num) {
-    //       continue;
-    //     }
-
-    //     let tArduino = new Date(evt[1]).valueOf() - ENV.CurrentDate.valueOf();
-
-    //     if (evt[2].indexOf('sa') == 0) { // IF sample command return
-    //       if (evt[2][2] == 1) {
-    //         let dSampleCommandOn = tArduino - EVENTS['trialseries']['SampleStartTime'];
-    //         console.log(`d_roundtrip_commandON=${dSampleCommandOn}`);
-    //       } else if (evt[2][2] == 0) {
-    //         let dSampleCommandOff = tArduino - EVENTS['trialseries']['EndTime'];
-    //         console.log(`d_roundtrip_commandOFF=${dSampleCommandOff}`);
-    //       }
-
-    //     } else if (evt[2].indexOf('pu') == 0) {
-    //       console.log(`d_roundtrip_pumpON=${tArduino - EVENTS['trialseries']['ReinforcementTime']}`);
-    //     }
-
-    //     if (evt[2].indexOf('ph') == 0) {
-    //       photodiode.t.push(tArduino - EVENTS['trialseries']['SampleStartTime']); // measure re: sample start
-    //       photodiode.v.push(evt[2].slice(2, evt[2].length));
-    //     }
-    //   }
-
-    //   // IF photodiode vals
-    //   if (photodiode.t.length > 1) {
-    //     let tDisplay = {
-    //       d: [],
-    //       a: [],
-    //       p: [],
-    //       v: []
-    //     };
-    //     let dt = { software: [], hardware: [] };
-    //     let n = EVENTS['timeseries']['TSequenceDesired'][CURRTRIAL.num].length;
-    //     tDisplay.d = EVENTS['timeseries']['TSequenceDesired'][CURRTRIAL.num].slice(2, n);
-    //     tDisplay.a = EVENTS['timeseries']['TSequenceDesired'][CURRTRIAL.num].slice(2, n);
-
-    //     for (let i = tDisplay.d.length - 1; i >= 0; i--) { // backwards traversal
-    //       dt.software[i] = Math.round(tDisplay.a[i] - tDisplay.d[i]);
-    //       for (let j = 0; j < photodiode.t.length; j++) {
-    //         if (photodiode.t[j] > tDisplay.a[i]) {
-    //           tDisplay.p[i] = photodiode.t[j];
-    //           tDisplay.v[i] = photodiode.v[j];
-    //           dt.hardware[i] = Math.round(tDisplay.p[i] - tDisplay.a[i]);
-    //           photodiode.t[j] = -99999;
-    //           break;
-    //         }
-    //       }
-    //     }
-
-    //     console.log(tDisplay.a);
-    //     console.log(tDisplay.p);
-    //     console.log(dt.software);
-    //     console.log(dt.hardware);
-    //     console.log(tdisplay.v);
-    //     console.log(CURRTRIAL.sequencetaskscreen);
-    //   }
-
-    //   updateImageLoadingAndDisplayText(' '); // displays relevant timing information
-    // }
 
     // Calibrate eye
     if (ENV.Eye.TrackEye > 0) {
@@ -2615,10 +2262,6 @@ if (ENV.BatteryAPIAvailable) {
     //================= (end) HOUSEKEEPING =================//
 
     updateHeadsUpDisplay();
-    // console.log('END OF TRIAL ', CURRTRIAL.num);
-    // CURRTRIAL.num++;
-    // EVENTS.trialnum = CURRTRIAL.num;
-
     if (typeof TASK.InterTrialInterval != 'undefined') {
       let remainingInterTrialInterval =
         TASK.InterTrialInterval - (performance.now() - ITIstart);
