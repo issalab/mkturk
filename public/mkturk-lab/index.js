@@ -1104,7 +1104,7 @@ if (ENV.BatteryAPIAvailable) {
 
     while (FLAGS.waitingforTouches > 0) {
       // Choose fixation grid index at random
-      if (TASK.FixationGridIndex > 0) {
+      if (TASK.FixationGridIndex >= 0) {
         CURRTRIAL.fixationgridindex = TASK.FixationGridIndex;
       } else if (TASK.FixationGridIndex < 0) {
         CURRTRIAL.fixationgridindex = Math.floor(
@@ -1235,7 +1235,8 @@ if (ENV.BatteryAPIAvailable) {
             Date.now() - ENV.CurrentDate.valueOf(),
           ];
           FLAGS.waitingforTouches--;
-        } else {
+        }//IF MODEL STRESSTEST
+        else {
           touchhold_return = { type: 'theld' };
           let x =
             boundingBoxesFixation.x[0][0] +
@@ -1259,8 +1260,9 @@ if (ENV.BatteryAPIAvailable) {
           ];
 
           FLAGS.waitingforTouches--;
-        }
-      } else {
+        }//IF !MODEL STRESSTEST
+      }//IF STRESSTEST
+      else {
         // ELSE await fixation hold
         FLAGS.acquiredTouch = 0;
         let p1 = hold_promise(
@@ -1270,10 +1272,9 @@ if (ENV.BatteryAPIAvailable) {
         );
         let p2 = choiceTimeOut(TASK.FixationTimeOut);
         touchhold_return = await Promise.race([p1, p2]);
-      }
+      }//ELSE !STRESSTEST
 
       if (FLAGS.movieplaying == 1) {
-        // IF movie is playing
         // So that sample movie does not continue playing after fixation acquired
         frame.current = frame.shown.length - 1;
         frame.shown[frame.current] = 1;
@@ -1346,21 +1347,23 @@ if (ENV.BatteryAPIAvailable) {
     //============== AWAIT SHOW SAMPLE THEN TEST ==============//
     if (TASK.RewardStage === 1) {
       // Set where to display
-      if (TASK.SampleGridIndex > 0) {
+      if (TASK.SampleGridIndex >= 0) {
         // IF fixed sample location
         CURRTRIAL.samplegridindex = TASK.SampleGridIndex;
-      } else if (TASK.SampleGridIndex < 0) {
+      }//IF
+      else if (TASK.SampleGridIndex < 0) {
         // ELSE IF random sample location
         if (TASK.FixationGridIndex < 0) {
           // IF moving fixation, use its grid location for sample
           CURRTRIAL.samplegridindex = CURRTRIAL.fixationgridindex;
-        } else {
+        }
+        else {
           // ELSE use random grid location for sample
           CURRTRIAL.samplegridindex = Math.floor(
             ENV.XGridCenter.length * Math.random()
           );
-        }
-      }
+        }//ELSE random grid location
+      }//ELSEIF grid<0
 
       // Update grid location of each Sample frame
       for (let i = 0; i < CURRTRIAL.sequencegridindex.length; i++) {
@@ -1368,8 +1371,8 @@ if (ENV.BatteryAPIAvailable) {
           if (CURRTRIAL.sequencetaskscreen[i] == 'Sample') {
             CURRTRIAL.sequencegridindex[i][j] = CURRTRIAL.samplegridindex;
           }
-        }
-      }
+        }//FOR j gridindex
+      }//FOR i gridindex
 
       logEVENTS('SampleGridIndex', CURRTRIAL.samplegridindex, 'trialseries');
       frame.shown = [];
@@ -1460,7 +1463,13 @@ if (ENV.BatteryAPIAvailable) {
         CURRTRIAL.samplestarttime_string = new Date(
           CURRTRIAL.samplestarttime + ENV.CurrentDate.valueOf()
         ).toJSON();
-        let race_return = await Promise.race([p1, p2]);
+        let race_return = [];
+        if (ENV.StressTest == 0){
+          race_return = await Promise.race([p1, p2]);
+        }
+        else{
+          race_return = await p2;
+        }//ELSE STRESSTEST
         FLAGS.acquiredTouch = 0;
         FLAGS.waitingforTouches = 0;
 
@@ -1618,7 +1627,7 @@ if (ENV.BatteryAPIAvailable) {
 
       let race_return = { type: 'theld' };
       let currchoice;
-      if (ENV.StressTest == 1) {
+      if (ENV.StressTest == 1){
         let nchoices = boundingBoxesChoice3D.x.length;
         let distractor_array;
         let x;
@@ -1748,7 +1757,7 @@ if (ENV.BatteryAPIAvailable) {
           }
         } else {
           // ELSE TASK.Species != 'model'
-          let hitrate = 0;
+          let hitrate = 0.5;
 
           if (TASK.Agent == 'Youno') {
             hitrate = 0.9;
@@ -1758,36 +1767,47 @@ if (ENV.BatteryAPIAvailable) {
             hitrate = 1.0;
           }
 
-          if (Math.random() < hitrate) {
-            currchoice = CURRTRIAL.correctitem;
-          } else {
-            distractor_array = [];
-            for (let i = 0; i < nchoices; i++) {
-              if (i != CURRTRIAL.correctitem) {
-                distractor_array.push(i);
+          if (TASK.NRSVP>0){
+            // IF RSVP, skip choice
+            CURRTRIAL.correctitem = 1;
+            race_return = { type: 'theld' };
+            currchoice = 1;
+            x=-1; y=-1;
+          }//IF RSVP
+          else{
+            if (Math.random() < hitrate) {
+              currchoice = CURRTRIAL.correctitem;
+            } else {
+              distractor_array = [];
+              for (let i = 0; i < nchoices; i++) {
+                if (i != CURRTRIAL.correctitem) {
+                  distractor_array.push(i);
+                }
               }
+
+              distractor_array = shuffle(distractor_array);
+              currchoice = distractor_array[0];
             }
 
-            distractor_array = shuffle(distractor_array);
-            currchoice = distractor_array[0];
-          }
+            x =
+              boundingBoxesChoice3D.x[currchoice][0] +
+              Math.round(
+                Math.random() *
+                  (boundingBoxesChoice3D.x[currchoice][1] -
+                    boundingBoxesChoice3D.x[currchoice][0])
+              );
 
-          x =
-            boundingBoxesChoice3D.x[currchoice][0] +
-            Math.round(
-              Math.random() *
-                (boundingBoxesChoice3D.x[currchoice][1] -
-                  boundingBoxesChoice3D.x[currchoice][0])
-            );
+            y =
+              boundingBoxesChoice3D.y[currchoice][0] +
+              Math.round(
+                Math.random() *
+                  (boundingBoxesChoice3D.y[currchoice][1] -
+                    boundingBoxesChoice3D.y[currchoice][0])
+              );
 
-          y =
-            boundingBoxesChoice3D.y[currchoice][0] +
-            Math.round(
-              Math.random() *
-                (boundingBoxesChoice3D.y[currchoice][1] -
-                  boundingBoxesChoice3D.y[currchoice][0])
-            );
-        }
+
+            }//ELSE !RSVP
+        }//ELSE TASK.Species != 'model'
 
         race_return.cxyt = [
           currchoice,
@@ -1796,7 +1816,8 @@ if (ENV.BatteryAPIAvailable) {
           Date.now() - ENV.CurrentDate.valueOf(),
         ];
         FLAGS.waitingforTouches--;
-      } else {
+      }//IF STRESSTEST
+      else {
         // ELSE !ENV.StressTest
         if (TASK.NRSVP > 0) {
           // IF RSVP, skip choice
@@ -1819,7 +1840,7 @@ if (ENV.BatteryAPIAvailable) {
               // broke samplefixation
               currchoice = 0;
             }
-          }
+          }//ELSE RSVP fixation required
 
           race_return.cxyt = [
             currchoice,
@@ -1829,7 +1850,7 @@ if (ENV.BatteryAPIAvailable) {
           ];
           FLAGS.waitingforTouches--;
         } else {
-          // IF !RSVP, require choiuce
+          // IF !RSVP, require choice
           let p1 = hold_promise(
             0,
             boundingBoxesChoice3D,
@@ -1837,8 +1858,8 @@ if (ENV.BatteryAPIAvailable) {
           );
           let p2 = choiceTimeOut(TASK.ChoiceTimeOut);
           race_return = await Promise.race([p1, p2]);
-        }
-      }
+        }//ELSE !RSVP
+      }//ELSE !STRESSTEST
 
       CURRTRIAL.responsetouchevent = race_return.type;
       CURRTRIAL.response = race_return.cxyt[0];
@@ -1872,7 +1893,7 @@ if (ENV.BatteryAPIAvailable) {
           FLAGS.stickyresponse = 0;
         }
       }
-    } //if TASK.RewardStage
+    }//IF TASK.RewardStage === 1
     logEVENTS('CorrectItem', CURRTRIAL.correctitem, 'trialseries');
 
     //REWARD PUNISH    REWARD PUNISH    REWARD PUNISH    REWARD PUNISH    REWARD PUNISH    //
@@ -2063,8 +2084,8 @@ if (ENV.BatteryAPIAvailable) {
     CURRTRIAL.endtime = Date.now() - ENV.CurrentDate.valueOf();
     console.log('[END TIME LOGGED]:', Date.now());
     logEVENTS('EndTime', CURRTRIAL.endtime, 'trialseries');
-
     //============ (end) DELIVER REWARD/PUNISH ============//
+
     //HOUSEKEEPING    HOUSEKEEPING    HOUSEKEEPING    HOUSEKEEPING    HOUSEKEEPING    //
     //HOUSEKEEPING    HOUSEKEEPING    HOUSEKEEPING    HOUSEKEEPING    HOUSEKEEPING    //
     //HOUSEKEEPING    HOUSEKEEPING    HOUSEKEEPING    HOUSEKEEPING    HOUSEKEEPING    //
