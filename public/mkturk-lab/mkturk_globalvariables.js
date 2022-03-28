@@ -291,7 +291,6 @@ var sounds = {
 };
 var boundingBoxesFixation = { x: [], y: [] }; //where the fixation touch targets are on the canvas
 var boundingBoxesSampleFixation = { x: [], y: [] };
-var boundingBoxesChoice = { x: [], y: [] }; //where the choice touch targets are on the canvas
 var waitforClick; //variable to hold generator
 var waitforEvent; //variable to hold generator
 var touchTimer; //variable to hold timer
