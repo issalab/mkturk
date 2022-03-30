@@ -423,7 +423,6 @@ serial.Port.prototype.writepumpdurationtoUSB = async function (data) {
   await this.device_.transferOut(4, textEncoder.encode(msgstr));
 
   port.statustext_sent = 'TRANSFERRED CHAR --> USB:' + msgstr;
-  // console.log(port.statustext_sent)
   updateHeadsUpDisplayDevices();
 }; //port.writepumpdurationUSB
 
@@ -435,7 +434,6 @@ serial.Port.prototype.writeSampleCommandTriggertoUSB = async function (data) {
   await this.device_.transferOut(4, textEncoder.encode(msgstr)); //SANITY CHECK what the 4 is
 
   port.statustext_sent = 'TRANSFERRED SampleCommandSignal --> USB:' + msgstr;
-  console.log(port.statustext_sent);
   updateHeadsUpDisplayDevices();
 }; //port.writepumpdurationUSB
 
@@ -481,7 +479,6 @@ function pingUSB() {
     port.device_.transferOut(4, textEncoder.encode(msgstr));
 
     port.statustext_sent = 'PINGING! TRANSFERRED CHAR --> USB:' + msgstr;
-    console.log(port.statustext_sent);
     updateHeadsUpDisplayDevices();
 
     pingTimer = setTimeout(function () {
@@ -504,7 +501,6 @@ serial.Port.prototype.writepumpdurationtoUSBBYTE = async function (data) {
   await this.device_.transferOut(4, view);
 
   port.statustext_sent = 'TRANSFERRED BYTE --> USB:' + view;
-  console.log(port.statustext_sent);
   updateHeadsUpDisplayDevices();
 };
 

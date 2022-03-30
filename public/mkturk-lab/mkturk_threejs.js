@@ -117,7 +117,7 @@ async function addToScene(taskscreen) {
           )
         ) {
           IMAGES[taskscreen][classlabel].CAMERAS[cam].position.x[i] =
-            interpParam(
+            interpParam_frames(
               IMAGES[taskscreen][classlabel].CAMERAS[cam].position.x[i],
               "continuous",
               durationMS,
@@ -140,7 +140,7 @@ async function addToScene(taskscreen) {
           )
         ) {
           IMAGES[taskscreen][classlabel].CAMERAS[cam].position.y[i] =
-            interpParam(
+            interpParam_frames(
               IMAGES[taskscreen][classlabel].CAMERAS[cam].position.y[i],
               "continuous",
               durationMS,
@@ -162,7 +162,7 @@ async function addToScene(taskscreen) {
           )
         ) {
           IMAGES[taskscreen][classlabel].CAMERAS[cam].position.z[i] =
-            interpParam(
+            interpParam_frames(
               IMAGES[taskscreen][classlabel].CAMERAS[cam].position.z[i],
               "continuous",
               durationMS,
@@ -207,7 +207,7 @@ async function addToScene(taskscreen) {
           )
         ) {
           IMAGES[taskscreen][classlabel].CAMERAS[cam].targetTHREEJS.x[i] =
-            interpParam(
+            interpParam_frames(
               IMAGES[taskscreen][classlabel].CAMERAS[cam].targetTHREEJS.x[i],
               "continuous",
               durationMS,
@@ -233,7 +233,7 @@ async function addToScene(taskscreen) {
           )
         ) {
           IMAGES[taskscreen][classlabel].CAMERAS[cam].targetTHREEJS.y[i] =
-            interpParam(
+            interpParam_frames(
               IMAGES[taskscreen][classlabel].CAMERAS[cam].targetTHREEJS.y[i],
               "continuous",
               durationMS,
@@ -259,7 +259,7 @@ async function addToScene(taskscreen) {
           )
         ) {
           IMAGES[taskscreen][classlabel].CAMERAS[cam].targetTHREEJS.z[i] =
-            interpParam(
+            interpParam_frames(
               IMAGES[taskscreen][classlabel].CAMERAS[cam].targetTHREEJS.z[i],
               "continuous",
               durationMS,
@@ -347,7 +347,7 @@ async function addToScene(taskscreen) {
             )
           ) {
             IMAGES[taskscreen][classlabel].LIGHTS[lt].position.x[i] =
-              interpParam(
+              interpParam_frames(
                 IMAGES[taskscreen][classlabel].LIGHTS[lt].position.x[i],
                 "continuous",
                 durationMS,
@@ -364,7 +364,7 @@ async function addToScene(taskscreen) {
             )
           ) {
             IMAGES[taskscreen][classlabel].LIGHTS[lt].position.y[i] =
-              interpParam(
+              interpParam_frames(
                 IMAGES[taskscreen][classlabel].LIGHTS[lt].position.y[i],
                 "continuous",
                 durationMS,
@@ -381,7 +381,7 @@ async function addToScene(taskscreen) {
             )
           ) {
             IMAGES[taskscreen][classlabel].LIGHTS[lt].position.z[i] =
-              interpParam(
+              interpParam_frames(
                 IMAGES[taskscreen][classlabel].LIGHTS[lt].position.z[i],
                 "continuous",
                 durationMS,
@@ -398,7 +398,7 @@ async function addToScene(taskscreen) {
             )
           ) {
             IMAGES[taskscreen][classlabel].LIGHTS[lt].intensity[i] =
-              interpParam(
+              interpParam_frames(
                 IMAGES[taskscreen][classlabel].LIGHTS[lt].intensity[i],
                 "continuous",
                 durationMS,
@@ -413,7 +413,7 @@ async function addToScene(taskscreen) {
           if (
             Array.isArray(IMAGES[taskscreen][classlabel].LIGHTS[lt].visible[i])
           ) {
-            IMAGES[taskscreen][classlabel].LIGHTS[lt].visible[i] = interpParam(
+            IMAGES[taskscreen][classlabel].LIGHTS[lt].visible[i] = interpParam_frames(
               IMAGES[taskscreen][classlabel].LIGHTS[lt].visible[i],
               "binary",
               durationMS,
@@ -535,7 +535,7 @@ async function addToScene(taskscreen) {
             ) {
               IMAGES[taskscreen][classlabel].OBJECTS[obj].positionTHREEJS[key][
                 i
-              ] = interpParam(
+              ] = interpParam_frames(
                 IMAGES[taskscreen][classlabel].OBJECTS[obj].positionTHREEJS[
                   key
                 ][i],
@@ -564,7 +564,7 @@ async function addToScene(taskscreen) {
             ) {
               IMAGES[taskscreen][classlabel].OBJECTS[obj].rotationDegrees[key][
                 i
-              ] = interpParam(
+              ] = interpParam_frames(
                 IMAGES[taskscreen][classlabel].OBJECTS[obj].rotationDegrees[
                   key
                 ][i],
@@ -587,7 +587,7 @@ async function addToScene(taskscreen) {
             )
           ) {
             IMAGES[taskscreen][classlabel].OBJECTS[obj].sizeTHREEJS[i] =
-              interpParam(
+              interpParam_frames(
                 IMAGES[taskscreen][classlabel].OBJECTS[obj].sizeTHREEJS[i],
                 "continuous",
                 durationMS,
@@ -604,7 +604,7 @@ async function addToScene(taskscreen) {
             )
           ) {
             IMAGES[taskscreen][classlabel].OBJECTS[obj].visible[i] =
-              interpParam(
+              interpParam_frames(
                 IMAGES[taskscreen][classlabel].OBJECTS[obj].visible[i],
                 "binary",
                 durationMS,
@@ -622,7 +622,7 @@ async function addToScene(taskscreen) {
             )
           ) {
             IMAGES[taskscreen][classlabel].OBJECTS[obj].material.opacity[i] =
-              interpParam(
+              interpParam_frames(
                 IMAGES[taskscreen][classlabel].OBJECTS[obj].material.opacity[i],
                 "continuous",
                 durationMS,
@@ -722,7 +722,7 @@ async function addToScene(taskscreen) {
               }
 
               let morphTargetIdx = math.setDistinct(morphTime);
-              morphTime = interpParam(
+              morphTime = interpParam_frames(
                 morphTime,
                 "continuous",
                 durationMS,
@@ -965,7 +965,7 @@ async function addToScene(taskscreen) {
               )
             ) {
               IMAGES[taskscreen][classlabel].OBJECTFILTERS[key][i] =
-                interpParam(
+                interpParam_frames(
                   IMAGES[taskscreen][classlabel].OBJECTFILTERS[key][i],
                   "continuous",
                   durationMS,
@@ -1059,7 +1059,7 @@ async function addToScene(taskscreen) {
           0
         );
 
-        IMAGES[taskscreen][classlabel].IMAGES.imageidx[i] = interpParam(
+        IMAGES[taskscreen][classlabel].IMAGES.imageidx[i] = interpParam_frames(
           imgIdx,
           "binary",
           durationMS,
@@ -1090,7 +1090,7 @@ async function addToScene(taskscreen) {
         if (IMAGES[taskscreen][classlabel].IMAGES.visible !== undefined) {
           // IF IMAGES.visible isArray
           if (Array.isArray(IMAGES[taskscreen][classlabel].IMAGES.visible[i])) {
-            IMAGES[taskscreen][classlabel].IMAGES.visible[i] = interpParam(
+            IMAGES[taskscreen][classlabel].IMAGES.visible[i] = interpParam_frames(
               IMAGES[taskscreen][classlabel].IMAGES.visible[i],
               "binary",
               durationMS,
@@ -1117,7 +1117,7 @@ async function addToScene(taskscreen) {
               IMAGES[taskscreen][classlabel].IMAGEFILTERS[key] !== undefined &&
               Array.isArray(IMAGES[taskscreen][classlabel].IMAGEFILTERS[key][i])
             ) {
-              IMAGES[taskscreen][classlabel].IMAGEFILTERS[key][i] = interpParam(
+              IMAGES[taskscreen][classlabel].IMAGEFILTERS[key][i] = interpParam_frames(
                 IMAGES[taskscreen][classlabel].IMAGEFILTERS[key][i],
                 "continuous",
                 durationMS,
@@ -2051,47 +2051,131 @@ function toTHREEJSOffset(x, y, taskscreen) {
   ];
 } //FUNCTION toTHREEJSOffset
 
-function createMovieSeq(
-  taskscreen,
-  offdurationMSpre,
-  ondurationMS,
-  offdurationMSpost,
-  framerate
-) {
-  var movie_tseq = range(0, ondurationMS, Math.round(1000 / framerate)); //Off times for sample frame
+function createMovieSeq_frames(taskscreen,offdurationMSpre,ondurationMS,offdurationMSpost,framerate){
+  var nframes_movie = Math.round(ondurationMS*framerate/1000);
+  var movie_sequence = Array(nframes_movie).fill(taskscreen);
 
+  //--- Prepend SamplePRE
+  var nframes_pre = Math.round(offdurationMSpre*framerate/1000);
+  for (var f=0; f<=nframes_pre-1; f++){
+    movie_sequence = ["Blank", movie_sequence].flat();
+  }//FOR f
+
+  //---- Postpend SampleOFF
   if (offdurationMSpost > 0) {
-    //Postpend blank frame which starts at last Sample Frame OFF time
-    movie_tseq[movie_tseq.length] =
-      movie_tseq[movie_tseq.length - 1] + 1000 / framerate;
-    movie_sequence = [
-      Array(movie_tseq.length - 1).fill(taskscreen),
-      "Blank",
-    ].flat();
-
-    //Add preceding SampleOFF (which is sampleframe0 ON) & Shift Sample frame OFF times by preceding SampleOFF [ON, OFF .... OFF ]
-    movie_tsequence = movie_tseq.map(function (a) {
-      return a + offdurationMSpre;
-    });
-
-    //Assign frame numbers, -1 for blank
-    movie_framenum = range(0, movie_sequence.length - 2, 1);
-    movie_framenum[movie_framenum.length] = -1;
+    var nframes_post = Math.round(offdurationMSpost*framerate/1000);
+    for (var f=0; f<=nframes_post-1; f++){
+      movie_sequence = [movie_sequence,"Blank"].flat();
+    }//FOR f
   } //IF need to postpend a blank
-  else if (offdurationMSpost <= 0) {
-    movie_sequence = [Array(movie_tseq.length).fill(taskscreen)].flat();
 
-    //Add preceding SampleOFF (which is sampleframe0 ON) & Shift Sample frame OFF times by preceding SampleOFF [ON, OFF .... OFF ]
-    movie_tsequence = movie_tseq.map(function (a) {
-      return a + offdurationMSpre;
-    });
+  //---- Add frame time, framenum
+  var movie_tsequence = []
+  var movie_framenum = []
+  var cnt = 0;
+  for (var f=0; f<=movie_sequence.length-1; f++){
+    movie_tsequence[f] = f * 1000/framerate;
+    if ( movie_sequence[f] == "Blank"){
+      movie_framenum[f] = -1;
+    }
+    else{
+      movie_framenum[f] = cnt;
+      cnt++
+    }//ELSE
+  }//FOR f
 
-    movie_framenum = range(0, movie_sequence.length - 1, 1);
-  } //ELSEIF no blank needed
   return [movie_sequence, movie_tsequence, movie_framenum];
-} //FUNCTION createMovieSeq
+} //FUNCTION createMovieSeq_frames
 
-function interpParam(vec, type, durationMS, framerate) {
+function interpParam_frames(vec, type, durationMS, framerate) {
+  var fseq = range(0,Math.round(durationMS*framerate/1000) - 1, 1);
+  var tseq = []
+  for (var f=0; f<=fseq.length-1; f++){
+    tseq[f] = f * (1000 / framerate);
+  }
+  var vec_flattened = Array(fseq.length).fill("");
+
+  if (vec.every((val) => val !== "")) {
+    if (type == "binary") {
+      vec[vec.length] = 0;
+    } //pad to get correct # of segments for step variables
+    var nseg = vec.length - 1;
+
+    if (nseg <= 0) {
+      vec_flattened = vec;
+    } 
+    else if (vec.length == fseq.length){
+      vec_flattened = vec; //no interpolation
+    } //ELSEIF user specified each frame in scene file
+    else {
+      for (var i = 0; i <= nseg; i++) {
+        var p1 = [(i * durationMS) / nseg, vec[i]];
+        var p2 = [((i + 1) * durationMS) / nseg, vec[i + 1]]; //line
+        if (type == "binary") {
+          p2 = [((i + 1) * durationMS) / nseg, vec[i]]; //constant
+        } //ELSEIF binary
+
+        //piecewise linear interpolation between two points in a segment
+        var [slope, intercept] = findLinEqwithTwopts(p1, p2);
+        tseq.forEach((t, j) => {
+          if (t >= p1[0] && t <= p2[0]) {
+            vec_flattened[j] = slope * t + intercept;
+          } //IF time falls within segment
+        }); //tseq.forEACH
+      } //FOR i segments
+    } //ELSE
+
+    if (isNaN(vec_flattened[vec_flattened.length - 1])) {
+      vec_flattened[vec_flattened.length - 1] = vec[vec.length - 1];
+    }
+
+    if (type == "binary") {
+      vec_flattened[vec_flattened.length - 1] = vec[vec.length - 2];
+    }
+  }
+
+  return vec_flattened;
+} //FUNCTION interpParam_frames
+
+function range(start, end, step = 1) {
+  // Test that the first 3 arguments are finite numbers.
+  const allNumbers = [start, end, step].every(Number.isFinite);
+
+  // Throw an error if any of the first 3 arguments is not a finite number.
+  if (!allNumbers) {
+    throw new TypeError("range() expects only finite numbers as arguments.");
+  }
+  // The length is incremented by 1 after Math.floor().
+  // This ensures that the end number is listed if it falls within the range.
+
+  if (start == end) {
+    return [start];
+  } else {
+    //start != end
+    if (step != 0) {
+      const length = Math.floor(Math.abs((end - start) / step)) + 1;
+      return Array.from(Array(length), (x, index) => start + index * step);
+    } else {
+      return [start, end];
+    }
+  }
+} //FUNCTION range
+
+function findLinEqwithTwopts(P, Q) {
+  // find a linear equation that goes through two points P, Q
+  // returns slope and intercept
+
+  var slope = (Q[1] - P[1]) / (Q[0] - P[0]);
+  var intercept = (Q[0] * P[1] - Q[1] * P[0]) / (Q[0] - P[0]);
+
+  return [slope, intercept];
+} //FUNCTION findLinEqwithTwopts
+
+
+//____________________LEGACY________________________
+//____________________LEGACY________________________
+//____________________LEGACY________________________
+function interpParam_time(vec, type, durationMS, framerate) {
   var dur = durationMS / 1000; //convert to seconds
   var tseq = range(0, dur, Math.round(1000 / framerate) / 1000);
   var vec_flattened = Array(tseq.length).fill("");
@@ -2132,38 +2216,35 @@ function interpParam(vec, type, durationMS, framerate) {
   }
 
   return vec_flattened;
-} //FUNCTION interpParam
+} //FUNCTION interpParam_time
 
-function range(start, end, step = 1) {
-  // Test that the first 3 arguments are finite numbers.
-  const allNumbers = [start, end, step].every(Number.isFinite);
+function createMovieSeq_time(taskscreen,offdurationMSpre,ondurationMS,offdurationMSpost,framerate){
+  var movie_tseq = range(0, ondurationMS, Math.round(1000 / framerate)); //Off times for sample frame
 
-  // Throw an error if any of the first 3 arguments is not a finite number.
-  if (!allNumbers) {
-    throw new TypeError("range() expects only finite numbers as arguments.");
-  }
-  // The length is incremented by 1 after Math.floor().
-  // This ensures that the end number is listed if it falls within the range.
+  if (offdurationMSpost > 0) {
+    //Postpend blank frame which starts at last Sample Frame OFF time
+    movie_tseq[movie_tseq.length] =
+      movie_tseq[movie_tseq.length - 1] + 1000 / framerate;
+    movie_sequence = [
+      Array(movie_tseq.length - 1).fill(taskscreen),
+      "Blank",
+    ].flat();
 
-  if (start == end) {
-    return [start];
-  } else {
-    //start != end
-    if (step != 0) {
-      const length = Math.floor(Math.abs((end - start) / step)) + 1;
-      return Array.from(Array(length), (x, index) => start + index * step);
-    } else {
-      return [start, end];
-    }
-  }
-} //FUNCTION range
+    //Add preceding SampleOFF (which is sampleframe0 ON) & Shift Sample frame OFF times by preceding SampleOFF [ON, OFF .... OFF ]
+    movie_tsequence = movie_tseq.map(function (a) {
+      return a + offdurationMSpre;
+    });
 
-function findLinEqwithTwopts(P, Q) {
-  // find a linear equation that goes through two points P, Q
-  // returns slope and intercept
+    //Assign frame numbers, -1 for blank
+    movie_framenum = range(0, movie_sequence.length - 2, 1);
+    movie_framenum[movie_framenum.length] = -1;
+  } //IF need to postpend a blank
+  else if (offdurationMSpost <= 0) {
+    movie_sequence = [Array(movie_tseq.length).fill(taskscreen)].flat();
 
-  var slope = (Q[1] - P[1]) / (Q[0] - P[0]);
-  var intercept = (Q[0] * P[1] - Q[1] * P[0]) / (Q[0] - P[0]);
-
-  return [slope, intercept];
-} //FUNCTION findLinEqwithTwopts
+    //Add preceding SampleOFF (which is sampleframe0 ON) & Shift Sample frame OFF times by preceding SampleOFF [ON, OFF .... OFF ]
+    movie_tsequence = movie_tseq.map(function (a) { return a + offdurationMSpre; });
+    movie_framenum = range(0, movie_sequence.length - 1, 1);
+  } //ELSEIF no blank needed
+  return [movie_sequence, movie_tsequence, movie_framenum];
+} //FUNCTION createMovieSeq_time

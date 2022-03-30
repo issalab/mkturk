@@ -154,8 +154,8 @@ FLAGS.rtdbAgentNumConnections = null;
 
 var CANVAS = {};
 var CANVAS = {
-  sequenceblank: ['Blank', 'Blank'],
-  tsequenceblank: [0, 50],
+  sequenceblank: ['Blank'],
+  tsequenceblank: [0],
   sequencepre: ['Touchfix'],
   tsequencepre: [0],
   sequencepost: ['Blank', 'Reward', 'Blank'], // blank, reward

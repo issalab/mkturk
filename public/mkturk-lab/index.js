@@ -198,7 +198,7 @@ if (ENV.BatteryAPIAvailable) {
   ENV.DeviceTouchscreen = deviceProperties.data.touchscreen;
 
   let screenSpecs;
-  ENV.FrameRateMovie = 30;
+  ENV.FrameRateMovie = 60;
   const fps = await estimatefps();
   ENV.FrameRateDisplay = fps;
 
@@ -313,7 +313,7 @@ if (ENV.BatteryAPIAvailable) {
     ENV.ScreenRatio = screenSpecs.screenRatio;
     ENV.PhysicalPPI = screenSpecs.ppi;
     ENV.FrameRateMovie =
-      screenSpecs.frameRateMovie === -1 ? 30 : screenSpecs.frameRateMovie;
+      screenSpecs.frameRateMovie === -1 ? 60 : screenSpecs.frameRateMovie;
     // IF PORTRAIT flip horizontal and vertical
     if (window.innerWidth < window.innerHeight) {
       ENV.ScreenSizeInches = [
@@ -348,7 +348,7 @@ if (ENV.BatteryAPIAvailable) {
       ENV.ScreenRatio = screenSpecs.screenRatio;
       ENV.PhysicalPPI = screenSpecs.ppi;
       ENV.FrameRateMovie =
-        screenSpecs.frameRateMovie === -1 ? 30 : screenSpecs.frameRateMovie;
+        screenSpecs.frameRateMovie === -1 ? 60 : screenSpecs.frameRateMovie;
       if (window.innerWidth < window.innerHeight) {
         ENV.ScreenSizeInches = [
           ENV.ScreenSizeInches[1],
@@ -917,15 +917,16 @@ if (ENV.BatteryAPIAvailable) {
 
     //============ SET UP SAMPLE & TEST SEQUENCE ============//
     // when & where to display
-    CURRTRIAL.tsequence = [0];
-    CURRTRIAL.sequencegridindex = [[-1]];
+    CURRTRIAL.tsequencedesired = [];
+    CURRTRIAL.sequencegridindex = [];
+    let t0=0;
 
     // what to display
-    CURRTRIAL.sequenceclip = [-1]; //movieclip# in RSVP
-    CURRTRIAL.sequenceframe = [-1]; //frame# in movie
-    CURRTRIAL.sequencetaskscreen = ['blank'];
-    CURRTRIAL.sequencelabel = [[0]]; //image class
-    CURRTRIAL.sequenceindex = [[0]]; //image index
+    CURRTRIAL.sequenceclip = []; //movieclip# in RSVP
+    CURRTRIAL.sequenceframe = []; //frame# in movie
+    CURRTRIAL.sequencetaskscreen = [];
+    CURRTRIAL.sequencelabel = []; //image class
+    CURRTRIAL.sequenceindex = []; //image index
 
     //EXPAND SAMPLE (for rsvp & movies)
     //Start with blank for max(100,SampleOFF), then append SampleON+blank (eg, blank,Sample,blank,Sample,blank)
@@ -933,16 +934,16 @@ if (ENV.BatteryAPIAvailable) {
     //Start with blank for max(100,SampleOFF), then append SampleON+blank (eg, blank,Sample,blank,Sample,blank)
     for (let i = 0; i < CURRTRIAL.sample_scenebag_index.length; i++) {
       // FOR i RSVP Sample
-      let t0 = CURRTRIAL.tsequence[CURRTRIAL.tsequence.length - 1];
+      if (i >= 1){
+        t0 = CURRTRIAL.tsequencedesired[CURRTRIAL.tsequencedesired.length - 1];      
+      }
       let sampleon = chooseArrayElement(
         IMAGES['Sample'][CURRTRIAL.sample_scenebag_label[i][0]].durationMS,
         CURRTRIAL.sample_scenebag_index[i][0],
         0
       );
 
-      // Timing: blankdurationpre, sampleon, framerate
       let blankdurationpre;
-
       if (i == 0) {
         if (
           typeof TASK.SamplePRE === 'undefined' ||
@@ -958,43 +959,23 @@ if (ENV.BatteryAPIAvailable) {
       }
 
       // Create Movie Sequence
-      [movie_sequence, movie_tsequence, movie_framenum] = createMovieSeq(
-        'Sample',
-        blankdurationpre,
-        sampleon,
-        TASK.SampleOFF,
-        ENV.FrameRateMovie
-      );
-      movie_tsequence = movie_tsequence.map((a) => {
-        return a + t0;
-      });
+      [movie_sequence, movie_tsequence, movie_framenum] =
+        createMovieSeq_frames('Sample', blankdurationpre, sampleon, TASK.SampleOFF, ENV.FrameRateMovie);
+      movie_tsequence = movie_tsequence.map((a) => { return a + t0; });
 
-      CURRTRIAL.tsequence.push(...movie_tsequence);
-      CURRTRIAL.sequencegridindex.push(
-        ...Array(movie_tsequence.length).fill([TASK.SampleGridIndex])
-      );
-
+      CURRTRIAL.tsequencedesired.push(...movie_tsequence);
+      CURRTRIAL.sequencegridindex.push(...Array(movie_tsequence.length).fill([TASK.SampleGridIndex]));
       CURRTRIAL.sequenceclip.push(...Array(movie_tsequence.length).fill(i));
-
       CURRTRIAL.sequenceframe.push(...movie_framenum);
       CURRTRIAL.sequencetaskscreen.push(...movie_sequence);
-      CURRTRIAL.sequencelabel.push(
-        ...Array(movie_tsequence.length).fill(
-          CURRTRIAL.sample_scenebag_label[i]
-        )
-      );
-
-      CURRTRIAL.sequenceindex.push(
-        ...Array(movie_tsequence.length).fill(
-          CURRTRIAL.sample_scenebag_index[i]
-        )
-      );
-    }
+      CURRTRIAL.sequencelabel.push(...Array(movie_tsequence.length).fill(CURRTRIAL.sample_scenebag_label[i]));
+      CURRTRIAL.sequenceindex.push(...Array(movie_tsequence.length).fill(CURRTRIAL.sample_scenebag_index[i]));
+    } // FOR i RSVP Sample
 
     // APPEND TEST OR CHOICE
     if (TASK.NRSVP <= 0) {
       // IF !RSVP, then show test/choice screen
-      let t0 = CURRTRIAL.tsequence[CURRTRIAL.tsequence.length - 1];
+      t0 = CURRTRIAL.tsequencedesired[CURRTRIAL.tsequencedesired.length - 1];
       let teston = chooseArrayElement(
         IMAGES['Test'][CURRTRIAL.test_scenebag_labels[0][0]].durationMS,
         CURRTRIAL.test_scenebag_indices[0][0],
@@ -1007,40 +988,22 @@ if (ENV.BatteryAPIAvailable) {
         );
       }
 
-      [movie_sequence, movie_tsequence, movie_framenum] = createMovieSeq(
-        'Test',
-        TASK.SampleOFF,
-        teston,
-        TASK.TestOFF,
-        ENV.FrameRateMovie
-      );
-      movie_tsequence = movie_tsequence.map((a) => {
-        return a + t0;
-      });
+      [movie_sequence, movie_tsequence, movie_framenum] = 
+        createMovieSeq_frames('Test', TASK.SampleOFF, teston, TASK.TestOFF, ENV.FrameRateMovie);
+      movie_tsequence = movie_tsequence.map((a) => { return a + t0; });
 
-      CURRTRIAL.tsequence.push(...movie_tsequence);
-      CURRTRIAL.sequencegridindex.push(
-        ...Array(movie_tsequence.length).fill(TASK.TestGridIndex)
-      );
-
+      CURRTRIAL.tsequencedesired.push(...movie_tsequence);
+      CURRTRIAL.sequencegridindex.push(...Array(movie_tsequence.length).fill(TASK.TestGridIndex));
       CURRTRIAL.sequenceclip.push(...Array(movie_tsequence.length).fill(0));
-
       CURRTRIAL.sequenceframe.push(...movie_framenum);
       CURRTRIAL.sequencetaskscreen.push(...movie_sequence);
-      CURRTRIAL.sequencelabel.push(
-        ...Array(movie_tsequence.length).fill(CURRTRIAL.test_scenebag_labels[0])
-      );
-
-      CURRTRIAL.sequenceindex.push(
-        ...Array(movie_tsequence.length).fill(
-          CURRTRIAL.test_scenebag_indices[0]
-        )
-      );
+      CURRTRIAL.sequencelabel.push(...Array(movie_tsequence.length).fill(CURRTRIAL.test_scenebag_labels[0]));
+      CURRTRIAL.sequenceindex.push(...Array(movie_tsequence.length).fill(CURRTRIAL.test_scenebag_indices[0]));
 
       // Append choice if needed
       if (TASK.SameDifferent > 0) {
         // IF Same-Different, show test & choice
-        let t0 = CURRTRIAL.tsequence[CURRTRIAL.tsequence.length - 1];
+        t0 = CURRTRIAL.tsequencedesired[CURRTRIAL.tsequencedesired.length - 1];
         let seq;
         let tseq;
 
@@ -1052,18 +1015,15 @@ if (ENV.BatteryAPIAvailable) {
           tseq = [t0];
         }
 
-        CURRTRIAL.tsequence.push(...tseq);
-        CURRTRIAL.sequencegridindex.push(
-          ...Array(tseq.length).fill(TASK.ChoiceGridIndex)
-        );
-
+        CURRTRIAL.tsequencedesired.push(...tseq);
+        CURRTRIAL.sequencegridindex.push(...Array(tseq.length).fill(TASK.ChoiceGridIndex));
         CURRTRIAL.sequenceclip.push(...Array(tseq.length).fill(0));
         CURRTRIAL.sequenceframe.push(...Array(tseq.length).fill(0));
         CURRTRIAL.sequencetaskscreen.push(...seq);
         CURRTRIAL.sequencelabel.push(...Array(tseq.length).fill([0]));
         CURRTRIAL.sequenceindex.push(...Array(tseq.length).fill([0]));
       }
-    }
+    } //IF !NRSVP, append test or choice screen
     //============(END) SET UP SAMPLE & TEST SEQUENCE ============//
 
     //================= RFID check =================//
@@ -1168,20 +1128,11 @@ if (ENV.BatteryAPIAvailable) {
 
       if (TASK.FixationUsesSample <= 0) {
         // IF !FixationUsesSample, show fixation dot
-        // displayTrial(time, grid, frame, screen, obj, idx)
-        await displayTrial(
-          CANVAS.tsequencepre,
-          [CURRTRIAL.fixationgridindex],
-          [0],
-          CANVAS.sequencepre,
-          [0],
-          [0],
-          mkm
-        );
+        await displayTrial(CANVAS.tsequencepre,[CURRTRIAL.fixationgridindex],[0],CANVAS.sequencepre,[0],[0],mkm);
       } else if (TASK.FixationUsesSample > 0) {
         // IF FixationUsesSample, show image/movie
         displayTrial(
-          CURRTRIAL.tsequence,
+          CURRTRIAL.tsequencedesired,
           CURRTRIAL.sequencegridindex,
           CURRTRIAL.sequenceframe,
           CURRTRIAL.sequencetaskscreen,
@@ -1190,7 +1141,7 @@ if (ENV.BatteryAPIAvailable) {
           mkm
         );
         await moviestart_promise();
-      }
+      } //ELSEIF FixationUsesSample
 
       audiocontext.suspend();
 
@@ -1328,15 +1279,7 @@ if (ENV.BatteryAPIAvailable) {
       frame.current = 0;
       if (FLAGS.waitingforTouches > 0) {
         // blank out screen
-        await displayTrial(
-          CANVAS.tsequenceblank,
-          [-1, -1],
-          [0, 1],
-          CANVAS.sequenceblank,
-          [0, 0],
-          [0, 0],
-          mkm
-        );
+        await displayTrial(CANVAS.tsequenceblank,[-1],[0],CANVAS.sequenceblank,[0],[0],mkm);
       }
     } //WHILE waiting for NFixations
     //============ (end) WHILE RUN FIXATION SCREEN ============//
@@ -1445,24 +1388,15 @@ if (ENV.BatteryAPIAvailable) {
           FLAGS.punishOutsideTouch
         );
         let p2 = displayTrial(
-          CURRTRIAL.tsequence,
+          CURRTRIAL.tsequencedesired,
           CURRTRIAL.sequencegridindex,
           CURRTRIAL.sequenceframe,
           CURRTRIAL.sequencetaskscreen,
           CURRTRIAL.sequencelabel,
           CURRTRIAL.sequenceindex,
-          mkm
+          mkm,FLAGS.savedata
         );
 
-        if (port.connected && FLAGS.savedata) {
-          port.writeSampleCommandTriggertoUSB('1');
-        }
-
-        CURRTRIAL.samplestarttime = Date.now() - ENV.CurrentDate.valueOf();
-        console.log('[SAMPLE START TIME LOGGED]:', Date.now());
-        CURRTRIAL.samplestarttime_string = new Date(
-          CURRTRIAL.samplestarttime + ENV.CurrentDate.valueOf()
-        ).toJSON();
         let race_return = [];
         if (ENV.StressTest == 0){
           race_return = await Promise.race([p1, p2]);
@@ -1522,37 +1456,19 @@ if (ENV.BatteryAPIAvailable) {
         CURRTRIAL.samplefixationtouchevent = '';
         CURRTRIAL.samplefixationxyt = [];
 
-        if (port.connected && FLAGS.savedata) {
-          port.writeSampleCommandTriggertoUSB('1');
-        }
-
-        CURRTRIAL.samplestarttime = Date.now() - ENV.CurrentDate.valueOf();
-        console.log('[SAMPLE START TIME LOGGED [!RSVP]]:', Date.now());
-        CURRTRIAL.samplestarttime_string = new Date(
-          CURRTRIAL.samplestarttime + ENV.CurrentDate.valueOf()
-        ).toJSON();
-
         await displayTrial(
-          CURRTRIAL.tsequence,
+          CURRTRIAL.tsequencedesired,
           CURRTRIAL.sequencegridindex,
           CURRTRIAL.sequenceframe,
           CURRTRIAL.sequencetaskscreen,
           CURRTRIAL.sequencelabel,
           CURRTRIAL.sequenceindex,
-          mkm
+          mkm, FLAGS.savedata
         );
-      }
+      } //ELSE !RSVP
 
-      logEVENTS(
-        'SampleFixationTouchEvent',
-        CURRTRIAL.samplefixationtouchevent,
-        'trialseries'
-      );
-      logEVENTS(
-        'SampleFixationXYT',
-        CURRTRIAL.samplefixationxyt,
-        'trialseries'
-      );
+      logEVENTS('SampleFixationTouchEvent',CURRTRIAL.samplefixationtouchevent,'trialseries');
+      logEVENTS('SampleFixationXYT',CURRTRIAL.samplefixationxyt,'trialseries');
 
       //Store timing of clip presentations
       CURRTRIAL.tsequencedesiredclip = [];
@@ -1567,7 +1483,7 @@ if (ENV.BatteryAPIAvailable) {
             CURRTRIAL.sequencetaskscreen[f - 1] ||
           CURRTRIAL.sequenceclip[f] != CURRTRIAL.sequenceclip[f - 1]
         ) {
-          CURRTRIAL.tsequencedesiredclip.push(CURRTRIAL.tsequence[f]);
+          CURRTRIAL.tsequencedesiredclip.push(CURRTRIAL.tsequencedesired[f]);
           if (
             f > CURRTRIAL.tsequenceactual.length - 1 ||
             CURRTRIAL.tsequenceactual[f] === undefined
@@ -1580,34 +1496,32 @@ if (ENV.BatteryAPIAvailable) {
         }
       }
 
-      logEVENTS(
-        'TSequenceDesiredClip',
-        CURRTRIAL.tsequencedesiredclip,
-        'trialseries'
-      );
-      logEVENTS(
-        'TSequenceActualClip',
-        CURRTRIAL.tsequenceactualclip,
-        'trialseries'
-      );
+      logEVENTS('TSequenceDesiredClip',CURRTRIAL.tsequencedesiredclip,'trialseries');
+      logEVENTS('TSequenceActualClip',CURRTRIAL.tsequenceactualclip,'trialseries');
       logEVENTS('SampleStartTime', CURRTRIAL.samplestarttime, 'trialseries');
       logEVENTS('FrameNum', CURRTRIAL.sequenceframe, 'timeseries');
-      logEVENTS('TSequenceDesired', CURRTRIAL.tsequence, 'timeseries');
+      logEVENTS('TSequenceDesired', CURRTRIAL.tsequencedesired, 'timeseries');
       logEVENTS('TSequenceActual', CURRTRIAL.tsequenceactual, 'timeseries');
 
       // Store timestamp from beginning of display
-      let lastFrameIdx =
-        Object.keys(EVENTS['timeseries']['FrameNum']).length - 1;
-      let lastTSequenceDesiredIdx =
-        Object.keys(EVENTS['timeseries']['TSequenceDesired']).length - 1;
-      let lastTSequenceActualIdx =
-        Object.keys(EVENTS['timeseries']['TSequenceActual']).length - 1;
-      EVENTS['timeseries']['FrameNum'][lastFrameIdx][1] =
-        CURRTRIAL.samplestarttime_string;
-      EVENTS['timeseries']['TSequenceDesired'][lastTSequenceDesiredIdx][1] =
-        CURRTRIAL.samplestarttime_string;
-      EVENTS['timeseries']['TSequenceActual'][lastTSequenceActualIdx][1] =
-        CURRTRIAL.samplestarttime_string;
+      let lastFrameIdx = Object.keys(EVENTS['timeseries']['FrameNum']).length - 1;
+      let lastTSequenceDesiredIdx = Object.keys(EVENTS['timeseries']['TSequenceDesired']).length - 1;
+      let lastTSequenceActualIdx = Object.keys(EVENTS['timeseries']['TSequenceActual']).length - 1;
+
+      EVENTS['timeseries']['FrameNum'][lastFrameIdx][1] = CURRTRIAL.samplestarttime_string;
+      EVENTS['timeseries']['TSequenceDesired'][lastTSequenceDesiredIdx][1] = CURRTRIAL.samplestarttime_string;
+      EVENTS['timeseries']['TSequenceActual'][lastTSequenceActualIdx][1] = CURRTRIAL.samplestarttime_string;
+      
+      //Frame Irregularities
+      var dframe = [];
+      for (var f=0; f<=CURRTRIAL.tsequenceactual.length-1; f++){
+        if (CURRTRIAL.tsequenceactual[f] > 0){
+          dframe[f] = CURRTRIAL.tsequenceactual[f] - CURRTRIAL.tsequencedesired[f];
+        }//If frame shown
+      }//FOR f frames
+      funcreturn = getMeanStandardDeviation(dframe);
+      console.log("Display timing (actual-desired): " + funcreturn[0] + " +- " + funcreturn[1] + ' ms');
+
       if (FLAGS.savedata == 0) {
         updateImageLoadingAndDisplayText(' '); // displays frame tactual - tdesired
       }
@@ -1965,8 +1879,8 @@ if (ENV.BatteryAPIAvailable) {
     //NO FEEDBACK
     if (CURRTRIAL.nreward == -1) {
       // IF no feedback
-      CANVAS.sequencepost[1] = 'blank';
-      CANVAS.tsequencepost[2] = 2 * CANVAS.tsequencepost[1];
+      CANVAS.sequencepost[1] = 'Blank';
+      CANVAS.tsequencepost[1] = 0;
       frame.shown = [];
       frame.frames = [];
       frame.current = 0;
@@ -1989,10 +1903,20 @@ if (ENV.BatteryAPIAvailable) {
         mkm
       );
     } else if (CURRTRIAL.correct) {
-      // ELSE IF correct, then REWARD
-      CANVAS.sequencepost[1] = 'reward';
-      CANVAS.tsequencepost[2] =
-        CANVAS.tsequencepost[1] + ENV.RewardDuration * 1000;
+      // ELSE IF correct, then REWARD (blank, reward, blank)
+      CANVAS.tsequencepost = [];
+      CANVAS.sequencepost = [];
+      funcreturn = makeSequencePost(50,"Blank",ENV.FrameRateMovie);
+      CANVAS.tsequencepost = funcreturn[0];
+      CANVAS.sequencepost = funcreturn[1];
+
+      funcreturn = makeSequencePost(ENV.RewardDuration*1000,"Reward",ENV.FrameRateMovie);
+      CANVAS.tsequencepost.push(...funcreturn[0]);
+      CANVAS.sequencepost.push(...funcreturn[1]);
+
+      funcreturn = makeSequencePost(0,"Blank",ENV.FrameRateMovie);
+      CANVAS.tsequencepost.push(...funcreturn[0]);
+      CANVAS.sequencepost.push(...funcreturn[1]);
 
       for (let i = 0; i < CURRTRIAL.nreward; i++) {
         // FOR nrewards
@@ -2008,22 +1932,15 @@ if (ENV.BatteryAPIAvailable) {
         playSound(2);
         renderShape2D(CANVAS.sequencepost[0], -1, VISIBLECANVAS);
         let lenTsequencePost = CANVAS.tsequencepost.length;
-        let p1 = displayTrial(
-          CANVAS.tsequencepost,
-          Array(lenTsequencePost).fill(-1),
-          range(0, lenTsequencePost - 1, 1),
+        let p1 = displayTrial(CANVAS.tsequencepost,
+          Array(lenTsequencePost).fill(-1),range(0, lenTsequencePost - 1, 1),
           CANVAS.sequencepost,
-          Array(lenTsequencePost).fill(0),
-          Array(lenTsequencePost).fill(0),
+          Array(lenTsequencePost).fill(0), Array(lenTsequencePost).fill(0),
           mkm
         );
 
         CURRTRIAL.reinforcementtime = Date.now() - ENV.CurrentDate.valueOf();
-        logEVENTS(
-          'ReinforcementTime',
-          CURRTRIAL.reinforcementtime,
-          'trialseries'
-        );
+        logEVENTS('ReinforcementTime',CURRTRIAL.reinforcementtime,'trialseries');
 
         if (ble.connected == false && port.connected == false) {
           await Promise.all([p1]);
@@ -2035,12 +1952,24 @@ if (ENV.BatteryAPIAvailable) {
         } else if (port.connected == true) {
           port.writepumpdurationtoUSB(Math.round(ENV.RewardDuration * 1000));
           await Promise.all([p1]);
-        }
-      }
+        } //ELSEIF USB
+      } //FOR i rewards
     } else if (!CURRTRIAL.correct) {
-      // ELSE IF wrong, then timeout (PUNISH)
-      CANVAS.sequencepost[1] = 'punish';
-      CANVAS.tsequencepost[2] = CANVAS.tsequencepost[1] + TASK.PunishTimeOut;
+      // ELSE IF wrong, then timeout (Blank, Punish, Blank)
+      CANVAS.tsequencepost = [];
+      CANVAS.sequencepost = [];
+      funcreturn = makeSequencePost(50,"Blank",ENV.FrameRateMovie);
+      CANVAS.tsequencepost = funcreturn[0];
+      CANVAS.sequencepost = funcreturn[1];
+
+      funcreturn = makeSequencePost(TASK.PunishTimeOut,"Punish",ENV.FrameRateMovie);
+      CANVAS.tsequencepost.push(...funcreturn[0]);
+      CANVAS.sequencepost.push(...funcreturn[1]);
+
+      funcreturn = makeSequencePost(0,"Blank",ENV.FrameRateMovie);
+      CANVAS.tsequencepost.push(...funcreturn[0]);
+      CANVAS.sequencepost.push(...funcreturn[1]);
+
       frame.shown = [];
       frame.frames = [];
       frame.current = 0;
@@ -2051,30 +1980,20 @@ if (ENV.BatteryAPIAvailable) {
 
       renderShape2D(CANVAS.sequencepost[0], -1, VISIBLECANVAS);
       let lenSequencepost = CANVAS.sequencepost.length;
-      let p1 = displayTrial(
-        CANVAS.tsequencepost,
-        Array(lenSequencepost).fill(-1),
-        range(0, lenSequencepost - 1, 1),
+      let p1 = displayTrial(CANVAS.tsequencepost,
+        Array(lenSequencepost).fill(-1),range(0, lenSequencepost - 1, 1),
         CANVAS.sequencepost,
-        Array(lenSequencepost).fill(0),
-        Array(lenSequencepost).fill(0),
-        mkm
+        Array(lenSequencepost).fill(0), Array(lenSequencepost).fill(0),mkm
       );
 
       let numTrialsToBufferPunishPeriod = 50;
       let p2 = TQS.generate_trials(numTrialsToBufferPunishPeriod * TASK.RSVP);
       playSound(3);
-
       CURRTRIAL.reinforcementtime = Date.now() - ENV.CurrentDate.valueOf();
-      logEVENTS(
-        'ReinforcementTime',
-        CURRTRIAL.reinforcementtime,
-        'trialseries'
-      );
-      console.log('[REINFORCEMENT TIME LOGGED]:', Date.now());
+      logEVENTS('ReinforcementTime',CURRTRIAL.reinforcementtime,'trialseries');
 
       await Promise.all([p1, p2]);
-    }
+    } //IF PUNISH
 
     if (port.connected && FLAGS.savedata) {
       port.writeSampleCommandTriggertoUSB('0');
@@ -2082,7 +2001,6 @@ if (ENV.BatteryAPIAvailable) {
 
     // Log trial end time
     CURRTRIAL.endtime = Date.now() - ENV.CurrentDate.valueOf();
-    console.log('[END TIME LOGGED]:', Date.now());
     logEVENTS('EndTime', CURRTRIAL.endtime, 'trialseries');
     //============ (end) DELIVER REWARD/PUNISH ============//
 

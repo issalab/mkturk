@@ -1,6 +1,6 @@
 //================== IMAGE RENDERING ==================//
-function displayTrial(ti, gr, fr, sc, ob, id, mkm) {
-  // ti=time, gr=grid, fr=frame, sc=screen, ob=object_label, id=renderparam_index
+function displayTrial(ti, gr, fr, sc, ob, id, mkm, trig) {
+  // ti=time, gr=grid, fr=frame, sc=screen, ob=scenebag, id=renderparam_index
   let lenArgs = arguments.length;
   updated2d = 0; updated3d = 0;
   boundingBoxesChoice2D = { x: [], y: [] };
@@ -18,104 +18,104 @@ function displayTrial(ti, gr, fr, sc, ob, id, mkm) {
   async function updateCanvas(timestamp) {
     if (!start) start = timestamp; //IF start has not been set to a float timestamp, set it now.
 
-    if (frame.shown[frame.current - 1] != 1 && frame.current > 0) {
-      CURRTRIAL.tsequenceactual[frame.current - 1] = Math.round(100 * (timestamp - start)) / 100; //in milliseconds, rounded to nearest hundredth of a millisecond
+    if (frame.current > 0 && frame.shown[frame.current - 1] != 1) {
+      //Store time of screen flip to the newly rendered frame
+      CURRTRIAL.tsequenceactual[frame.current - 1] = Math.round(100 * (timestamp - start)) / 100; //rounded to nearest hundredth of a millisecond
       frame.shown[frame.current - 1] = 1;
-    }//IF first time shown, store this time as the first transition to the new frame
 
-    if (timestamp - start > ti[frame.current]) {
-      //----- RENDER ALL ELEMENTS
+      if ( frame.current==1 && (typeof(trig) != "undefined" && trig == 1) ){
+        CURRTRIAL.samplestarttime = Date.now() - ENV.CurrentDate.valueOf();
+        CURRTRIAL.samplestarttime_string = new Date(CURRTRIAL.samplestarttime + ENV.CurrentDate.valueOf()).toJSON();
+        if (port.connected){
+          port.writeSampleCommandTriggertoUSB('1');
+        }
+      } //IF showing sample trigger frame
+    }//IF showing frame
+
+    //---------------- RENDER THE NEXT FRAME ------------------//
+    if (frame.current <= frame.shown.length - 1) {
+    //RENDER BLANK
       renderShape2D('Blank', [-1], VISIBLECANVAS);
+      
+      for (var s = 0; s <= frame.frames[frame.current].length - 1; s++) {
+        f = frame.frames[frame.current][s];
+        var taskscreen = sc[f].charAt(0).toUpperCase() + sc[f].slice(1);
 
-      if (frame.current <= frame.shown.length - 1) {
-        //Skip rendering if already did last frame and just waiting for it to show
-        for (var s = 0; s <= frame.frames[frame.current].length - 1; s++) {
-          f = frame.frames[frame.current][s];
-          var taskscreen = sc[f].charAt(0).toUpperCase() + sc[f].slice(1);
+        if (s == 0) { var taskscreen0 = taskscreen; } //IF primary screen
 
-          if (s == 0) { var taskscreen0 = taskscreen; } //IF primary screen
+    //RENDER in 3D (transfers to 2D & filters)
+        if (taskscreen == 'Sample' || taskscreen == 'Test') {
+          render3D(taskscreen, s, f, gr, fr, sc, ob, id);
+        }//IF sample || test
+        else {
+          updated3d = 0;
+        } //ELSE hide 3D when plotting 2D elements like buttons and not keeping (overlaying) sample/test
+        const defaultFilter = 'blur(0px) brightness(100%) contrast(100%) grayscale(0%) hue-rotate(0deg) invert(0%) opacity(100%) saturate(100%) sepia(0%)';
+        VISIBLECANVAS.getContext('2d').filter = defaultFilter; //restore 2D filter
 
-          //------------------- DISPLAY THE FRAME 3D ---------------------//
-          if (taskscreen == 'Sample' || taskscreen == 'Test') {
-            render3D(taskscreen, s, f, gr, fr, sc, ob, id);
-          }//IF sample || test
-          else {
-            updated3d = 0;
-          } //ELSE hide 3D when plotting 2D elements like buttons and not keeping (overlaying) sample/test
+    //RENDER 2D (choice buttons, grid underlay)
+        render2D(taskscreen, s, f, gr, fr, sc, ob, id, VISIBLECANVAS);
 
-          //RENDER 2D directly onscreen
-          const defaultFilter =
-            'blur(0px) brightness(100%) contrast(100%) grayscale(0%) hue-rotate(0deg) invert(0%) opacity(100%) saturate(100%) sepia(0%)';
-          VISIBLECANVAS.getContext('2d').filter = defaultFilter;
-          render2D(taskscreen, s, f, gr, fr, sc, ob, id, VISIBLECANVAS);
+    //RENDER 2D (fixation dot)
+        if ( taskscreen == 'Touchfix' || taskscreen == 'Sample' || taskscreen == 'Blank' )
+        {
+          //Overlay fixation dot
+          if (typeof gr[f] == 'number') { renderShape2D('FixationDot', gr[f], VISIBLECANVAS); }
+          else { renderShape2D('FixationDot', gr[f][0], VISIBLECANVAS); }
+        } //IF touchfix || sample
+      } //FOR s screens within frame
 
-          if ( taskscreen == 'Touchfix' || taskscreen == 'Sample' || taskscreen == 'Blank' )
-          {
-            //Overlay fixation dot
-            if (typeof gr[f] == 'number') {
-              renderShape2D('FixationDot', gr[f], VISIBLECANVAS);
-            } else {
-              renderShape2D('FixationDot', gr[f][0], VISIBLECANVAS);
-            }
+    //RENDER 2D (photodiode square)
+      if (typeof(trig) != "undefined" && TASK.Photodiode > 0 ) {
+        renderShape2D('PhotodiodeSquare', [ENV.PhotodiodeSquareX, ENV.PhotodiodeSquareY],VISIBLECANVAS);
+      } //IF port.connected
 
-            if (port.connected && TASK.Photodiode > 0) {
-              renderShape2D('PhotodiodeSquare', [ENV.PhotodiodeSquareX, ENV.PhotodiodeSquareY],VISIBLECANVAS);
-            } //IF port.connected
-          } //IF touchfix || sample
-        } //FOR s screens within frame
+      //----- Merge Bounding Boxes
+      if (updated2d) {
+        boundingBoxesChoice3D.x = boundingBoxesChoice2D.x;
+        boundingBoxesChoice3D.y = boundingBoxesChoice2D.y;
+      }//IF updated2d
+      if (updated3d) {
+        boundingBoxesChoice3D.x = boundingBoxesChoice3JS.x;
+        boundingBoxesChoice3D.y = boundingBoxesChoice3JS.y;
+      } //IF updated3d
 
-        //----- (1) Merge Bounding Boxes
-        if (updated2d) {
-          boundingBoxesChoice3D.x = boundingBoxesChoice2D.x;
-          boundingBoxesChoice3D.y = boundingBoxesChoice2D.y;
-        }//IF updated2d
-        if (updated3d) {
-          boundingBoxesChoice3D.x = boundingBoxesChoice3JS.x;
-          boundingBoxesChoice3D.y = boundingBoxesChoice3JS.y;
-        } //IF updated3d
+      // MkModel
+      if (lenArgs >= 7 && mkm) { transferToModelCanvas(taskscreen,mkm) } //IF MkModel
 
-        // MkModel Logic
-        if (lenArgs == 7 && mkm) {
-          transferToModelCanvas(taskscreen,mkm)
-        } //IF MkModel
+      //----- Update Status
+      updated2d = 0;
+      updated3d = 0;
+      if (FLAGS.movieplaying == 0) {
+        FLAGS.movieplaying = 1;
+        if (typeof waitforMovieStart != 'undefined') {
+          waitforMovieStart.next();
+        }
+      } //IF movieplaying
 
-        //----- (2) Update Status
-        updated2d = 0;
-        updated3d = 0;
-        if (FLAGS.movieplaying == 0) {
-          FLAGS.movieplaying = 1;
-          if (typeof waitforMovieStart != 'undefined') {
-            waitforMovieStart.next();
-          }
-        } //IF movieplaying
+      //----- Save Out Images
+      if ( (taskscreen0 == 'Sample' || taskscreen0 == 'Test') & TASK.Agent == 'SaveImages'
+            && FLAGS.savedata == 1)
+      {
+        if ( (FLAGS.movieper[taskscreen0][ob[frame.current][0]][id[frame.current][0]] < 1 &&
+              ( frame.current == 0 ||
+                sc[frame.current] != sc[frame.current - 1] ||
+                ob[frame.current][0] != ob[frame.current - 1][0] ||
+                id[frame.current][0] != id[frame.current - 1][0]  )
+          )//if !movie, save when screen changes
+          || FLAGS.movieper[taskscreen0][ob[frame.current][0]][id[frame.current][0]] >= 1 ) //OR if movie
+        {
+          saveScreenshot(VISIBLECANVAS,CURRTRIAL.num,taskscreen0,frame.current,
+                      ob[frame.current],id[frame.current]);
+        } //IF need to save out this frame
+      } //IF sample or test screen & save out images
 
-        //----- (3) Save Out Images
-        if (
-          (taskscreen0 == 'Sample' || taskscreen0 == 'Test') &&
-          TASK.Agent == 'SaveImages' &&
-          FLAGS.savedata == 1
-        ) {
-          if ( (FLAGS.movieper[taskscreen0][ob[frame.current][0]][id[frame.current][0]] < 1 &&
-                ( frame.current == 0 ||
-                  sc[frame.current] != sc[frame.current - 1] ||
-                  ob[frame.current][0] != ob[frame.current - 1][0] ||
-                  id[frame.current][0] != id[frame.current - 1][0]  )
-            )//if !movie, save when screen changes
-            || FLAGS.movieper[taskscreen0][ob[frame.current][0]][id[frame.current][0]] >= 1 ) //OR if movie
-          {
-            saveScreenshot(VISIBLECANVAS,CURRTRIAL.num,taskscreen0,frame.current,
-                        ob[frame.current],id[frame.current]);
-          } //IF need to save out this frame
-        } //IF sample or test screen & save out images
-
-        frame.current++;
-      } //IF haven't rendered last frame
-    } //IF time to show new frame
-    //---------------- (end) DISPLAY THE FRAME ------------------//
+      frame.current++;
+    } //IF frames remain to be shown
+    //------(END)-------- RENDER THE NEXT FRAME ------------------//
 
     //IF prematurely ending movies externally
     if (frame.current >= frame.shown.length) { frame.current = frame.shown.length;} 
-
     if (frame.shown[frame.shown.length - 1] != 1) {
       window.requestAnimationFrame(updateCanvas);
     } //IF frames left to show
@@ -415,6 +415,7 @@ function renderShape2D(sc, gr, canvasobj) {
 //------- FUNCTION transferToModelCanvas ---------//
 function transferToModelCanvas(taskscreen, mkm){
   if (TASK.SameDifferent > 0) {
+//!!not fully implemented yet
     if (taskscreen == 'Sample' && !mkm.hasSampleFeatures) {
       let ctx = mkm.cvs.getContext('2d');
       ctx.clearRect(0, 0, mkm.cvs.width, mkm.cvs.height);
@@ -536,7 +537,7 @@ function transferToModelCanvas(taskscreen, mkm){
       mkm.hasSampleFeatures = false;
       mkm.hasTestFeatures = false;
     }
-  } else {
+  } else {//SR2
     if (taskscreen == 'Sample' && !mkm.hasSampleFeatures) {
       let ctx = mkm.cvs.getContext('2d');
       ctx.clearRect(0, 0, mkm.cvs.width, mkm.cvs.height);
@@ -566,17 +567,6 @@ function transferToModelCanvas(taskscreen, mkm){
       let srcHeight =
         (img.IMAGES.sizeTHREEJS / heightThreeJS) *
         VISIBLECANVASWEBGL.height;
-
-      // mkmBoundingBox SANITY CHECK CODE
-      // console.log(`SAMPLE sx=${mkmBoundingBox.sx}; sy=${mkmBoundingBox.sy}; sWidth=${mkmBoundingBox.sWidth}; sHeight=${mkmBoundingBox.sHeight}`);
-      // let visiblecvs = document.getElementById('canvasvisiblewebgl');
-      // let ctx2 = visiblecvs.getContext('webgl2');
-      // ctx2.rect(mkmBoundingBox.sx, mkmBoundingBox.sy, mkmBoundingBox.sWidth, mkmBoundingBox.sHeight);
-      // ctx2.stroke();
-
-      // ctx.drawImage(VISIBLECANVAS, mkmBoundingBox.sx, mkmBoundingBox.sy, mkmBoundingBox.sWidth, mkmBoundingBox.sHeight, 0, 0, 224, 224);
-      // ctx.drawImage(VISIBLECANVASWEBGL, mkmBoundingBox.sx, mkmBoundingBox.sy, mkmBoundingBox.sWidth, mkmBoundingBox.sHeight, 0, 0, 224, 224);
-      // let sx = Math.round(boundingBoxesChoice3D.x[0][0] + IMAGEMETA.THREEJStoPixels) * 2 + 10;
 
       let sx =
         ENV.XGridCenter[CURRTRIAL.samplegridindex] * 2 - srcHeight / 2;
@@ -629,14 +619,6 @@ function transferToModelCanvas(taskscreen, mkm){
         // mkm.dataObj.yTest.push(CURRTRIAL.sample_scenebag_label[0][0]);
         mkm.dataObj.yTest.push(oneHotIdx);
       }
-      // mkm.cvs SANITY CHECK CODE
-      // let mkmodelsRef = storageRef.child('mkturkfiles/mkmodels/');
-      // let cvsData = mkm.cvs.toDataURL();
-      // let path = (
-      //  `${TASK.Agent}/${ENV.CurrentDate.toJSON()}/${CURRTRIAL.num}_sample.png`
-      // );
-      // mkmodelsRef.child(path).putString(cvsData, 'data_url');
-      // ctx2.clearRect(0, 0, EYETRACKERCANVAS.width, EYETRACKERCANVAS.height);
       mkm.hasSampleFeatures = true;
     } else if (taskscreen != 'Sample' && mkm.hasSampleFeatures) {
       mkm.hasSampleFeatures = false;
@@ -1030,6 +1012,18 @@ async function bufferFixationUsingTriangle(
   boundingBoxesFixation.y[0] = funcreturn[1];
 } //FUNCTION bufferFixationUsingTriangle
 
+
+function makeSequencePost(durationMS,taskscreen,framerate){
+  var fseq = range(0,Math.round(durationMS*framerate/1000) - 1, 1);
+  var tseq = []
+  var sseq = []
+  for (var f=0; f<=fseq.length-1; f++){
+    tseq[f] = f * (1000 / framerate);
+    sseq[f] = taskscreen;
+  }//FOR f frames
+  return [tseq,sseq]
+} //FUNCTION makeSequencePost
+
 function checkDisplayBounds(displayobject_coord) {
   var outofbounds = 0;
   if (
@@ -1404,25 +1398,6 @@ function estimatefps() {
   window.requestAnimationFrame(dummyLoop);
   return p;
 } //estimatefps
-
-function appendTest(teston) {
-  var t0 = CURRTRIAL.tsequence[CURRTRIAL.tsequence.length - 1];
-  if (TASK.SameDifferent <= 0) {
-    var seq = ['test'];
-    var tseq = [t0];
-  } //IF SR or MTS, show test
-  else if (TASK.SameDifferent > 0) {
-    if (TASK.TestOFF > 0) {
-      var seq = ['test', 'blank', 'choice'];
-      var tseq = [t0, t0 + teston, t0 + teston + TASK.TestOFF];
-    } //ELSEIF TestOFF
-    else if (TASK.TestOFF <= 0) {
-      var seq = ['test', 'choice'];
-      var tseq = [t0, t0 + teston];
-    } //ELSEIF no TestOFF
-  } //IF SD, show test & choice
-  return [seq, tseq];
-} //FUNCTION appendTest
 
 //================== CANVAS SETUP ==================//
 function refreshCanvasSettings(TASK) {
