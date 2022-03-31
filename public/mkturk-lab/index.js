@@ -299,7 +299,7 @@ if (ENV.BatteryAPIAvailable) {
     });
     FLAGS.SaveImagesCvs = document.querySelector('#save-images-canvas');
     FLAGS.SaveImagesCtx = FLAGS.SaveImagesCvs.getContext('2d');
-  }
+  } //IF SaveImages, ask to stream to local disk
 
   if (TASK.DeviceConfig !== undefined) {
     screenSpecs = await queryDevice(TASK.DeviceConfig, 'docname');
@@ -361,10 +361,8 @@ if (ENV.BatteryAPIAvailable) {
           ENV.ScreenPhysicalPixels[0],
         ];
       }
-      ENV.ViewportPixels[0] =
-        ENV.ScreenPhysicalPixels[0] / ENV.DevicePixelRatio;
-      ENV.ViewportPixels[1] =
-        ENV.ScreenPhysicalPixels[1] / ENV.DevicePixelRatio;
+      ENV.ViewportPixels[0] = ENV.ScreenPhysicalPixels[0] / ENV.DevicePixelRatio;
+      ENV.ViewportPixels[1] = ENV.ScreenPhysicalPixels[1] / ENV.DevicePixelRatio;
       //always compute PPI based on the larger dimension for consistency across portrait/landscape modes
       if (ENV.ViewportPixels[0] >= ENV.ViewportPixels[1]) {
         ENV.ViewportPPI = ENV.ViewportPixels[0] / ENV.ScreenSizeInches[0];
@@ -376,8 +374,11 @@ if (ENV.BatteryAPIAvailable) {
         'Device not detected in firestore/devices. Will attempt findDPI code for the optimal ViewportPPI'
       );
       ENV.ViewportPPI = findDPI();
-    }
-  }
+
+      ENV.ViewportPixels[0] = document.body.clientWidth;
+      ENV.ViewportPixels[1] = document.body.clientHeight;
+    }//ELSE queryDevice did not retrieve any info, find DPI
+  } //ELSE try to queryDevice
 
   if (ENV.FrameRateMovie > ENV.FrameRateDisplay) {
     console.error(
@@ -685,12 +686,10 @@ if (ENV.BatteryAPIAvailable) {
       }
 
       //Fixation window, if specified, operates on both fixation & sample screens
-      ENV.FixationWindowRadius =
-        (TASK.FixationWindowSizeInches / 2) * ENV.ViewportPPI;
+      ENV.FixationWindowRadius = (TASK.FixationWindowSizeInches / 2) * ENV.ViewportPPI;
 
       // Photodiode Square to display on the bottom right (hard coded size & position)
-      ENV.PhotodiodeSquareWidth =
-        ENV.PhotodiodeSquareSizeInches * ENV.ViewportPPI;
+      ENV.PhotodiodeSquareWidth = ENV.PhotodiodeSquareSizeInches * ENV.ViewportPPI;
       ENV.PhotodiodeSquareX =
         ENV.ViewportPixels[0] -
         ENV.PhotodiodeSquareWidth / 2 -
