@@ -728,10 +728,8 @@ if (ENV.BatteryAPIAvailable) {
     } //IF purge
 
     //======================== 3D SCENE SET-UP =======================//
-    if (
-      typeof TASK.THREEJSRenderRatio == 'undefined' ||
-      TASK.THREEJSRenderRatio < 0
-    ) {
+    if (typeof TASK.THREEJSRenderRatio == 'undefined' || TASK.THREEJSRenderRatio < 0)
+    {
       TASK.THREEJSRenderRatio = 2;
     }
     if (typeof TASK.THREEJScameraZDist == 'undefined') {
@@ -755,13 +753,24 @@ if (ENV.BatteryAPIAvailable) {
       // 5: animate <--> render loop within trial
 
       //============ 0: LOAD SCENES from JSON ============//
+      FLAGS.usecanvas2D = 1
       for (let i = 0; i < TASK.ImageBagsSample.length; i++) {
         IMAGES.Sample[i] = await loadTextfromFirebase(TASK.ImageBagsSample[i]);
-      }
+        if (typeof(IMAGES.Sample[i]['CAMERAS']) != "undefined" ||
+            typeof(IMAGES.Sample[i]['LIGHTS']) != "undefined" ||
+            typeof(IMAGES.Sample[i]['OBJECTS']) != "undefined"){
+          FLAGS.usecanvas2D = 0;
+        } //IF
+      } //FOR i samplebags
 
       for (let i = 0; i < TASK.ImageBagsTest.length; i++) {
         IMAGES.Test[i] = await loadTextfromFirebase(TASK.ImageBagsTest[i]);
-      }
+        if (typeof(IMAGES.Test[i]['CAMERAS']) != "undefined" ||
+            typeof(IMAGES.Test[i]['LIGHTS']) != "undefined" ||
+            typeof(IMAGES.Test[i]['OBJECTS']) != "undefined"){
+          FLAGS.usecanvas2D = 0;
+        } //IF
+      } //FOR i testbags
 
       // find the longest scene param array in IMAGES (ie # of stim)
       for (let i = 0; i < IMAGES.Sample.length; i++) {
@@ -769,16 +778,16 @@ if (ENV.BatteryAPIAvailable) {
         IMAGES.Test[i].nimages = getLongestArray(IMAGES.Test[i]);
 
         //Determine if images will also be rendered
-        IMAGES.Sample[i].nbackgroundimages =
-          IMAGES.Sample[i].IMAGES.imageidx.length;
-        IMAGES.Test[i].nbackgroundimages =
-          IMAGES.Test[i].IMAGES.imageidx.length;
+        IMAGES.Sample[i].nbackgroundimages = IMAGES.Sample[i].IMAGES.imageidx.length;
+        IMAGES.Test[i].nbackgroundimages = IMAGES.Test[i].IMAGES.imageidx.length;
 
         FLAGS.movieper['Sample'][i] = [];
         FLAGS.movieper['Test'][i] = [];
-      }
+      } //FOR i samplebags
       //============ (END) 0: LOAD SCENES from JSON ============//
 
+    if (!FLAGS.usecanvas2D)
+    {
       //============ 1: LOAD MESHES FOR SCENES ============//
       OBJECTS = { Sample: {}, Test: {} };
       for (let taskscreen in OBJECTS) {
@@ -838,6 +847,13 @@ if (ENV.BatteryAPIAvailable) {
       }
       console.log('3js: compiled scene');
       //============ (END) 4: PRELOAD SHADERS (COMPILE) ============//
+    }//IF !FLAGS.usecanvas2D
+
+    if (FLAGS.usecanvas2D){
+      for (let scenetype in IMAGES) {
+        expandImage2DFrames(scenetype)
+      }
+    } //IF FLAGS.usecanvas2D
 
       FLAGS.need2loadScenes = 0;
 
@@ -1354,7 +1370,7 @@ if (ENV.BatteryAPIAvailable) {
           idx = CURRTRIAL.sequencetaskscreen.indexOf('Test', idx + 1);
         }
 
-        // FOR i remaining frames after TEst
+        // FOR i remaining frames after Test
         for (
           let i = idxArr[idxArr.length - 1] + 1;
           i < frame.frames.length;

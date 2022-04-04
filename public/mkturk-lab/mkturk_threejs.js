@@ -19,10 +19,8 @@ async function initThreeJS(sceneData) {
   renderer.setPixelRatio(TASK.THREEJSRenderRatio);
   document.body.append(renderer.domElement);
 
-  renderer.domElement.style.width =
-    VISIBLECANVASWEBGL.width / TASK.THREEJSRenderRatio + "px";
-  renderer.domElement.style.height =
-    VISIBLECANVASWEBGL.height / TASK.THREEJSRenderRatio + "px";
+  renderer.domElement.style.width = VISIBLECANVASWEBGL.width / TASK.THREEJSRenderRatio + "px";
+  renderer.domElement.style.height = VISIBLECANVASWEBGL.height / TASK.THREEJSRenderRatio + "px";
 
   console.log(VISIBLECANVAS.clientWidth, VISIBLECANVAS.clientHeight);
 

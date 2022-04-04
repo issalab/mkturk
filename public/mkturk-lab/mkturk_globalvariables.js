@@ -131,6 +131,7 @@ FLAGS.need2loadImagesTrialQueue = 1;
 FLAGS.need2loadScenes = 1;
 FLAGS.movieper = { Sample: [], Test: [] };
 FLAGS.movieplaying = 0;
+FLAGS.usecanvas2D = 0;
 FLAGS.need2loadParameters = 1;
 FLAGS.need2saveParameters = 0;
 FLAGS.savedata = 0;

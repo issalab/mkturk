@@ -43,9 +43,16 @@ function displayTrial(ti, gr, fr, sc, ob, id, mkm, trig) {
 
         if (s == 0) { var taskscreen0 = taskscreen; } //IF primary screen
 
-    //RENDER in 3D (transfers to 2D & filters)
         if (taskscreen == 'Sample' || taskscreen == 'Test') {
-          render3D(taskscreen, s, f, gr, fr, sc, ob, id);
+          if (FLAGS.usecanvas2D == 0){
+    //RENDER 3D (transfers to 2D & filters)
+            render3D(taskscreen, s, f, gr, fr, sc, ob, id);
+          } //IF 3D canvas
+          else if (FLAGS.usecanvas2D == 1){
+    //RENDER 2D Sample/Test Image
+            render2D(taskscreen, s, f, gr, fr, sc, ob, id, VISIBLECANVAS);  
+            updated3d = 0;
+          } //ELSEIF 2D canvas
         }//IF sample || test
         else {
           updated3d = 0;
@@ -53,10 +60,27 @@ function displayTrial(ti, gr, fr, sc, ob, id, mkm, trig) {
         const defaultFilter = 'blur(0px) brightness(100%) contrast(100%) grayscale(0%) hue-rotate(0deg) invert(0%) opacity(100%) saturate(100%) sepia(0%)';
         VISIBLECANVAS.getContext('2d').filter = defaultFilter; //restore 2D filter
 
-    //RENDER 2D (choice buttons, grid underlay)
-        render2D(taskscreen, s, f, gr, fr, sc, ob, id, VISIBLECANVAS);
+    //OVERLAY GRID
+        if (FLAGS.savedata == 0 && s == 0 && FLAGS.underlayGridPoints == 1) {
+          renderBlankWithGridMarkers(
+            ENV.XGridCenter, ENV.YGridCenter,
+            CURRTRIAL.FixationGridIndex, CURRTRIAL.samplegridindex,
+            TASK.TestGridIndex, TASK.ChoiceGridIndex,
+            ENV.FixationRadius, ENV.ChoiceRadius,
+            ENV.CanvasRatio, VISIBLECANVAS
+          );
+        } //IF !savedata, underlay grid
 
-    //RENDER 2D (fixation dot)
+    //RENDER 2D SHAPE (Choice/Reward/Punish)
+        if ( taskscreen == 'Choice' || taskscreen == 'Reward' || taskscreen == 'Punish') {
+          var boundingBox = renderShape2D(taskscreen, gr[f], VISIBLECANVAS);
+          if (s == 0 && taskscreen == 'Choice') {
+            boundingBoxesChoice2D = boundingBox;
+          }
+          updated2d = 1;
+        }
+
+    //OVERLAY Fixation Dot
         if ( taskscreen == 'Touchfix' || taskscreen == 'Sample' || taskscreen == 'Blank' )
         {
           //Overlay fixation dot
@@ -65,7 +89,7 @@ function displayTrial(ti, gr, fr, sc, ob, id, mkm, trig) {
         } //IF touchfix || sample
       } //FOR s screens within frame
 
-    //RENDER 2D (photodiode square)
+    //OVERLAY Photodiode Square
       if (typeof(trig) != "undefined" && TASK.Photodiode > 0 ) {
         renderShape2D('PhotodiodeSquare', [ENV.PhotodiodeSquareX, ENV.PhotodiodeSquareY],VISIBLECANVAS);
       } //IF port.connected
@@ -307,38 +331,129 @@ function render3D(taskscreen, s, f, gr, fr, sc, ob, id) {
 
 //------- FUNCTION render2D ---------//
 async function render2D(taskscreen, s, f, gr, fr, sc, ob, id, canvasobj) {
-  if (FLAGS.savedata == 0 && s == 0 && FLAGS.underlayGridPoints == 1) {
-    renderBlankWithGridMarkers(
-      ENV.XGridCenter,
-      ENV.YGridCenter,
-      CURRTRIAL.FixationGridIndex,
-      CURRTRIAL.samplegridindex,
-      TASK.TestGridIndex,
-      TASK.ChoiceGridIndex,
-      ENV.FixationRadius,
-      ENV.ChoiceRadius,
-      ENV.CanvasRatio,
-      canvasobj
-    );
-  } //IF !savedata, underlay grid
-
-  if (
-    f == 0 ||
-    taskscreen != sc[f - 1] ||
-    id[f] != id[f - 1] ||
-    fr[f] != fr[f - 1]
-  ) {
-    if (taskscreen == 'Sample' || taskscreen == 'Test') {
+//===== DRAW IMAGE
+  if (taskscreen == 'Sample' || taskscreen == 'Test'){
+    if (taskscreen == 'Sample'){
+      var ims = [CURRTRIAL.sampleimage[CURRTRIAL.sequenceclip[f]][fr[f]]]; //fr[f] frame within clip
+    } //IF sample
+    else if (taskscreen == 'Test') {
+      var clip = 0;
+      var ims = [CURRTRIAL.testimages[clip][fr[f]]];
     } //IF 2D image
-    else {
-      var boundingBox = renderShape2D(taskscreen, gr[f], canvasobj);
-      if (s == 0 && taskscreen == 'Choice') {
-        boundingBoxesChoice2D = boundingBox;
-      }
-      updated2d = 1;
-    }//ELSE 2D shape
-  }//IF new taskscreen
+
+    if (typeof ims != 'undefined' && typeof ims[0] == 'object') {
+      for (var j = 0; j <= ob[f].length - 1; j++) {
+        var boundingBox = renderImage2D(ims[j],taskscreen,
+                                        ob[f][j],id[f][j],fr[f],
+                                        gr[f][j],canvasobj); //render 2D image prior to next frame draw
+        if (s == 0 &&
+            typeof boundingBox[0] != 'undefined' &&
+            boundingBox[0].length > 0
+        ) {
+          boundingBoxesChoice2D.x[j] = boundingBox[0];
+          boundingBoxesChoice2D.y[j] = boundingBox[1];
+        } //IF
+        updated2d = 1;
+      } //FOR j display items
+    } //IF image available
+  } //IF Sample || Test 2D image
+//===== DRAW SHAPE
+  else {
+    var boundingBox = renderShape2D(taskscreen, gr[f], canvasobj);
+    if (s == 0 && taskscreen == 'Choice') {
+      boundingBoxesChoice2D = boundingBox;
+    }
+    updated2d = 1;
+  }//ELSE 2D shape
 }//FUNCTION render2D
+
+function renderImage2D(
+  im, sc, ob, id, fr, gr, canvasobj
+) {
+  // var sz = chooseArrayElement(IMAGES[sc][ob].IMAGES.sizeTHREEJS * ENV.THREEJStoInches, id, 0);
+  var sz = chooseArrayElement(IMAGES[sc][ob].IMAGES.sizeInches, id, 0);
+  var wdpixels = (sz * ENV.ViewportPPI) / ENV.CanvasRatio;
+  var htpixels = (wdpixels * im.height) / im.width;
+  var context = canvasobj.getContext('2d');
+  var xleft = NaN;
+  var ytop = NaN;
+  var xbound = [];
+  var ybound = [];
+  xleft = Math.round(ENV.XGridCenter[gr] / ENV.CanvasRatio - 0.5 * wdpixels);
+  ytop = Math.round(ENV.YGridCenter[gr] / ENV.CanvasRatio - 0.5 * htpixels);
+
+  context.drawImage(im, xleft, ytop, wdpixels, htpixels);
+  // Bounding boxes of images on canvas
+  xbound = [xleft * ENV.CanvasRatio, (xleft + wdpixels) * ENV.CanvasRatio];
+  ybound = [ytop * ENV.CanvasRatio, (ytop + htpixels) * ENV.CanvasRatio];
+
+  xbound[0] = xbound[0] + CANVAS.offsetleft;
+  xbound[1] = xbound[1] + CANVAS.offsetleft;
+  ybound[0] = ybound[0] + CANVAS.offsettop;
+  ybound[1] = ybound[1] + CANVAS.offsettop;
+
+  return [xbound, ybound];
+} //FUNCTION renderImage2D
+//XX hidetestdistractors needs to go somewhere
+
+
+//------- FUNCTION expandImage2DFrames ---------//
+function expandImage2DFrames(taskscreen)
+{
+  let framerate = ENV.FrameRateMovie;
+
+  for ( let classlabel = 0; classlabel < IMAGES[taskscreen].length; classlabel++)
+  {
+    for (let i = 0; i < IMAGES[taskscreen][classlabel].nimages; i++) {
+      // IF background image idx isArray
+      let imgIdx;
+      if (!Array.isArray(IMAGES[taskscreen][classlabel].IMAGES.imageidx[i])) {
+        imgIdx = [
+          IMAGES[taskscreen][classlabel].IMAGES.imageidx[i],
+          IMAGES[taskscreen][classlabel].IMAGES.imageidx[i],
+        ];
+      } else {
+        // ELSE !isArray
+        imgIdx = IMAGES[taskscreen][classlabel].IMAGES.imageidx[i];
+      }
+
+      let durationMS = chooseArrayElement(
+        IMAGES[taskscreen][classlabel].durationMS,
+        i,
+        0
+      );
+
+      IMAGES[taskscreen][classlabel].IMAGES.imageidx[i] = interpParam_frames(
+        imgIdx,
+        "binary",
+        durationMS,
+        framerate
+      );
+
+      for (
+        let j = 0;
+        j < IMAGES[taskscreen][classlabel].IMAGES.imageidx[i].length;
+        j++
+      ) {
+        if (IMAGES[taskscreen][classlabel].IMAGES.imageidx[i][j] !== "") {
+          IMAGES[taskscreen][classlabel].IMAGES.imageidx[i][j] = Math.round(
+            IMAGES[taskscreen][classlabel].IMAGES.imageidx[i][j]
+          );
+        }
+      } // FOR j img indices, round
+
+      if (
+        !IMAGES[taskscreen][classlabel].IMAGES.imageidx[i].every(
+          (val, i, arr) => val === arr[0]
+        )
+      ) {
+        FLAGS.movieper[taskscreen][classlabel][i] =
+          IMAGES[taskscreen][classlabel].IMAGES.imageidx[i].length;
+      } //IF frames change, isMovie
+    } //FOR i images
+  } //FOR classlabel
+}//FUNCTION expandImage2DFrames
+
 
 //------- FUNCTION renderShape2D ---------//
 function renderShape2D(sc, gr, canvasobj) {
