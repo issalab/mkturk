@@ -48,6 +48,7 @@ export const firebaseSlice = createSlice({
   initialState: initialState,
   reducers: {
     init: (state) => {
+      console.log('hello');
       // state.instance = initializeApp(state.config);
       const auth = getAuth(state.instance);
       getRedirectResult(auth)

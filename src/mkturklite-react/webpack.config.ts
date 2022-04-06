@@ -32,10 +32,23 @@ const config: Configuration = {
             loader: 'css-loader',
           },
         ],
-        include: [path.resolve(__dirname, 'src')],
+        sideEffects: true,
+        // include: [
+        //   path.resolve(__dirname, 'src'),
+        //   path.resolve(__dirname, 'node_modules/jsoneditor/dist'),
+        // ],
       },
       {
-        test: /\.(png|svg|jpg|gif)$/,
+        test: /\.svg$/,
+        use: [
+          {
+            loader: 'url-loader',
+          },
+        ],
+        exclude: [path.resolve(__dirname, 'src/features/editor')],
+      },
+      {
+        test: /\.(png|jpg|gif)$/,
         use: [
           {
             loader: 'file-loader',
@@ -59,7 +72,7 @@ const config: Configuration = {
     ],
   },
   resolve: {
-    extensions: ['.tsx', '.ts', '.js'],
+    extensions: ['.tsx', '.ts', '.js', '.css'],
   },
   output: {
     path: path.resolve(__dirname, '../../public/mkturklite-react'),

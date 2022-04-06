@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
 
 import { useAppSelector, useAppDispatch } from '../../app/hooks';
-import { init } from './firebaseSlice';
+// import { init } from './firebaseSlice';
 
 export function Firebase() {
   const dispatch = useAppDispatch();
-  dispatch(init());
+  // dispatch(init());
   return;
 }

@@ -10,6 +10,7 @@ import {
   selectCount,
 } from './counterSlice';
 import styles from './Counter.module.css';
+import { loadFilesAsync } from '../data/dataSlice';
 
 export function Counter() {
   const count = useAppSelector(selectCount);
@@ -61,6 +62,12 @@ export function Counter() {
           onClick={() => dispatch(incrementIfOdd(incrementValue))}
         >
           Add If Odd
+        </button>
+        <button
+          className={styles.button}
+          onClick={() => dispatch(loadFilesAsync())}
+        >
+          Load Files
         </button>
       </div>
     </div>
