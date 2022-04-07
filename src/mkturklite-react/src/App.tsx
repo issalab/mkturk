@@ -5,6 +5,10 @@ import { Firebase } from './features/firebase/Firebase';
 import { MkFinder } from './features/mkfinder/MkFinder';
 import { Editor } from './features/editor/Editor';
 import './App.css';
+import auth from './firebaseApp';
+import { GoogleAuthProvider } from 'firebase/auth';
+
+const provider = new GoogleAuthProvider();
 
 function App() {
   Firebase();

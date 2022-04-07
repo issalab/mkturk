@@ -10,10 +10,12 @@ import {
   selectCount,
 } from './counterSlice';
 import styles from './Counter.module.css';
-import { loadFilesAsync } from '../data/dataSlice';
+import { selectEntry, listDataFilesAsync } from '../data/dataSlice';
 
 export function Counter() {
   const count = useAppSelector(selectCount);
+  const entry = useAppSelector(selectEntry);
+
   const dispatch = useAppDispatch();
   const [incrementAmount, setIncrementAmount] = useState('2');
 
@@ -65,7 +67,7 @@ export function Counter() {
         </button>
         <button
           className={styles.button}
-          onClick={() => dispatch(loadFilesAsync())}
+          onClick={() => dispatch(listDataFilesAsync(entry))}
         >
           Load Files
         </button>
