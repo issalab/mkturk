@@ -12,29 +12,40 @@ export const Editor = () => {
   // const mode: JSONEditorMode = 'tree';
   const elRef = React.useRef<HTMLDivElement | null>(null);
   const editorRef = React.useRef<JSONEditor | null>(null);
-  const currentDatafile = useAppSelector(selectCurrentDatafile);
+  const curDatafileEntry = useAppSelector(selectCurrentDatafile);
 
   const unmountEditor = () => {
+    console.log('unmountEditor::editorRef:', editorRef);
     editorRef.current?.destroy();
   };
 
   React.useEffect(() => {
+    console.log('editor');
     const container = elRef.current;
-    console.log(currentDatafile);
-    const currentDatafileRef = ref(storage, currentDatafile.fullPath);
-    console.log(editorRef);
-    // getDownloadURL(currentDatafileRef).then((url) => {});
-
-    if (container) {
-      const data = {
-        hi: 'hello',
-      };
-      const jsonEditor = new JSONEditor(container, {}, data);
-      editorRef.current = jsonEditor;
+    if (container && editorRef) {
+      if (editorRef.current === null) {
+        console.log('editorRef.current == null');
+        const jsonEditor = new JSONEditor(container, {}, {});
+        editorRef.current = jsonEditor;
+      } else if (editorRef.current !== null) {
+        const currentDatafileRef = ref(storage, curDatafileEntry.fullPath);
+        getDownloadURL(currentDatafileRef)
+          .then(async (url: string) => {
+            const response = await fetch(url);
+            if (editorRef.current !== null) {
+              const responseJson = await response.json();
+              console.log('response.json:', responseJson);
+              editorRef.current.set(responseJson);
+            }
+          })
+          .catch((e: Error) => {
+            console.error('Error getting download URL:', e);
+          });
+      }
     }
 
-    return unmountEditor;
+    // return unmountEditor;
   });
 
-  return <div id="jsoneditor" ref={elRef}></div>;
+  return <div id='jsoneditor' ref={elRef}></div>;
 };
