@@ -10,16 +10,36 @@ import {
   selectCount,
 } from './counterSlice';
 import styles from './Counter.module.css';
-import { selectEntry, listDataFilesAsync } from '../data/dataSlice';
+import {
+  selectEntry,
+  listDataFilesAsync,
+  loadDatafileAsync,
+  selectCurrentDatafile,
+  selectFileList,
+} from '../data/dataSlice';
 
 export function Counter() {
   const count = useAppSelector(selectCount);
   const entry = useAppSelector(selectEntry);
-
+  // const currentDatafileEntry = useAppSelector(selectCurrentDatafile);
+  const datafileList = useAppSelector(selectFileList);
   const dispatch = useAppDispatch();
   const [incrementAmount, setIncrementAmount] = useState('2');
-
   const incrementValue = Number(incrementAmount) || 0;
+
+  const selectorRef = React.useRef<HTMLSelectElement | null>(null);
+
+  // React.useEffect(() => {
+  //   const selectorContainer = selectorRef.current;
+  //   if (selectorContainer) {
+  //     if (datafileList !== undefined) {
+  //       datafileList.forEach((entry) => {
+  //         const opt = React.useRef<HTMLOptionElement | null>(null);
+  //         selectorRef.current.add()
+  //       })
+  //     }
+  //   }
+  // })
 
   return (
     <div>
@@ -67,10 +87,28 @@ export function Counter() {
         </button>
         <button
           className={styles.button}
-          onClick={() => dispatch(listDataFilesAsync(entry))}
+          onClick={() => {
+            dispatch(listDataFilesAsync(entry))
+              .unwrap()
+              .then((list) => {
+                dispatch(loadDatafileAsync(list[0]));
+              });
+          }}
         >
           Load Files
         </button>
+        <select name="file-list" id="file-list">
+          {datafileList?.map((datafileEntry) => {
+            const elll = document.querySelector(
+              '#file-list'
+            ) as HTMLSelectElement;
+            elll.add(
+              (
+                <option value={datafileEntry.name}>1</option>
+              ) as HTMLOptionElement
+            );
+          })}
+        </select>
       </div>
     </div>
   );

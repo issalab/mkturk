@@ -1,5 +1,5 @@
 import { initializeApp } from 'firebase/app';
-import { getStorage, ref, listAll } from 'firebase/storage';
+import { getStorage, ref, listAll, getDownloadURL } from 'firebase/storage';
 import {
   getAuth,
   getRedirectResult,
@@ -79,4 +79,28 @@ export async function listDatafiles(entry: string) {
   });
 
   return datafilesList;
+}
+
+export async function loadDatafile(entry: DataFileEntry) {
+  const currentDatafileRef = ref(storage, entry.fullPath);
+  const data = await getDownloadURL(currentDatafileRef)
+    .then(async (url: string) => {
+      const response = await fetch(url);
+      const responseJson = await response.json();
+      const flattenedData: any = {};
+      for (const outerKey in responseJson) {
+        if (responseJson.hasOwnProperty(outerKey)) {
+          for (const innerKey in responseJson[outerKey]) {
+            if (responseJson[outerKey].hasOwnProperty(innerKey)) {
+              flattenedData[innerKey] = responseJson[outerKey][innerKey];
+            }
+          }
+        }
+      }
+      return flattenedData;
+    })
+    .catch((e: Error) => {
+      console.error('Error getting download URL:', e);
+    });
+  return data;
 }
