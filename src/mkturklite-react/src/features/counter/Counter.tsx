@@ -87,25 +87,33 @@ export function Counter() {
         </button>
         <button
           className={styles.button}
-          onClick={() => {
-            dispatch(listDataFilesAsync(entry))
-              .unwrap()
-              .then((list) => {
-                dispatch(loadDatafileAsync(list[0]));
-              });
-          }}
+          // onClick={() => {
+          //   dispatch(listDataFilesAsync(entry))
+          //     .unwrap()
+          //     .then((list) => {
+          //       dispatch(loadDatafileAsync(list[0]));
+          //     });
+          // }}
         >
           Load Files
         </button>
-        <select name="file-list" id="file-list">
+        <select
+          name="file-list"
+          id="file-list"
+          onChange={(e) => {
+            dispatch(
+              loadDatafileAsync({
+                name: e.target.value.split('/').slice(-1)[0],
+                fullPath: e.target.value,
+              })
+            );
+          }}
+        >
           {datafileList?.map((datafileEntry) => {
-            const elll = document.querySelector(
-              '#file-list'
-            ) as HTMLSelectElement;
-            elll.add(
-              (
-                <option value={datafileEntry.name}>1</option>
-              ) as HTMLOptionElement
+            return (
+              <option key={datafileEntry.name} value={datafileEntry.fullPath}>
+                {datafileEntry.name}
+              </option>
             );
           })}
         </select>

@@ -1,15 +1,36 @@
-import React, { useState } from 'react';
+import React, { useCallback, useState } from 'react';
 import JSONEditor, { JSONEditorMode, JSONEditorOptions } from 'jsoneditor';
 import './jsoneditor.css';
 
 import { useAppSelector, useAppDispatch } from '../../app/hooks';
-import { selectCurrentData } from '../data/dataSlice';
+import {
+  selectCurrentData,
+  selectEntry,
+  listDataFilesAsync,
+  loadDatafileAsync,
+  selectFileList,
+} from '../data/dataSlice';
+
+import { mkturkliteApp } from '../data/dataAPI';
+
+const dataWorker: Worker = new Worker(
+  new URL('./dataWorker.ts', import.meta.url),
+  { type: 'module' }
+);
 
 export const Editor = () => {
   // const mode: JSONEditorMode = 'tree';
   const elRef = React.useRef<HTMLDivElement | null>(null);
   const editorRef = React.useRef<JSONEditor | null>(null);
+  const dispatch = useAppDispatch();
+  const entry = useAppSelector(selectEntry);
+  const datafileList = useAppSelector(selectFileList);
   const curData = useAppSelector(selectCurrentData);
+  // const worker = new Worker(new URL('./path/to/worker', import.meta.url));
+  // const dataWorker: Worker = new Worker(
+  //   new URL('./dataWorker.ts', import.meta.url),
+  //   { type: 'module' }
+  // );
   // const [curData, setCurData] = useState({});
 
   const unmountEditor = () => {
@@ -18,12 +39,16 @@ export const Editor = () => {
   };
 
   React.useEffect(() => {
-    console.log(curData);
-    console.log('editor');
     const container = elRef.current;
     if (container && editorRef) {
       if (editorRef.current === null) {
         console.log('editorRef.current == null');
+        dispatch(listDataFilesAsync(entry))
+          .unwrap()
+          .then((list) => {
+            dispatch(loadDatafileAsync(list[0]));
+            dataWorker.postMessage(list[0]);
+          });
         const jsonEditor = new JSONEditor(container, { mode: 'tree' }, {});
         editorRef.current = jsonEditor;
       } else if (editorRef.current !== null) {

@@ -58,6 +58,9 @@ export const dataSlice = createSlice({
       })
       .addCase(loadDatafileAsync.fulfilled, (state, action) => {
         state.current.data = action.payload;
+        state.current.fullPath = action.payload.DataFileName;
+        state.current.name =
+          action.payload.DataFileName.split('/').slice(-1)[0];
       })
       .addCase(loadDatafileAsync.rejected, (state, action) => {
         console.log(state, action);

@@ -16,7 +16,7 @@ const firebaseConfig = {
   messagingSenderId: '1003719887944',
 };
 
-const mkturkliteApp = initializeApp(firebaseConfig);
+export const mkturkliteApp = initializeApp(firebaseConfig);
 const authProvider = new GoogleAuthProvider();
 
 interface DataFileEntry {
