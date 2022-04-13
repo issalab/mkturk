@@ -203,14 +203,12 @@ function hold_promise(touchduration, boundingBoxes, punishOutsideTouch) {
           if (ENV.Eye.TrackEye > 0) {
             ENV.Eye.timeOfLastGlanceInBB = touchcxyt[3];
             ENV.Eye.EventType = 'eyemove'; //in box, so future states are "eyemove" (from "undefined" in usb code)
-            console.log('!!!! EYE ENTERED BOX !!!!  ' + touchcxyt);
           }
           //START TIMER touchduration milliseconds
           if (touchduration > 0) {
             if (touchTimer != null) {
               window.clearTimeout(touchTimer);
               touchTimer = null;
-              console.log('HAD TO DELETE TIMER');
             }
 
             touchTimer = setTimeout(function () {

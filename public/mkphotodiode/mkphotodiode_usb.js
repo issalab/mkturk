@@ -278,15 +278,15 @@ serial.Port.prototype.onReceive = (data) => {
     var darkthresh = 250
     var darkthresh = 300
 
-    const isLargeNumber = (element) => element < 250;
-    abuff.tdrop[abuff.indtrace] = Math.round(abuff.t[abuff.ph.findIndex(isLargeNumber)])
+    const isLargeNumber = (element) => element < 260;
+    abuff.tdrop[abuff.tdrop.length] = Math.round(abuff.t[abuff.ph.findIndex(isLargeNumber)])
     console.log('~~TDROP~> ' + abuff.tdrop + ' MS');
-    console.log('~~TDROP~> ' + abuff.tdrop[abuff.indtrace] + ' MS');
+    console.log('~~TDROP~> ' + abuff.tdrop[abuff.tdrop.length-1] + ' MS');
 
-    const isLargeNumber2 = (element) => element > 310;
-    abuff.tdrop2[abuff.indtrace] = Math.round(abuff.t[abuff.ph.findIndex(isLargeNumber2)])
+    const isLargeNumber2 = (element) => element > 300;
+    abuff.tdrop2[abuff.tdrop2.length] = Math.round(abuff.t[abuff.ph.findIndex(isLargeNumber2)])
     console.log('~~TRISE~> ' + abuff.tdrop2 + ' MS');
-    console.log('~~TRISE~> ' + abuff.tdrop2[abuff.indtrace] + ' MS');
+    console.log('~~TRISE~> ' + abuff.tdrop2[abuff.tdrop.length-1] + ' MS');
 
   }
   

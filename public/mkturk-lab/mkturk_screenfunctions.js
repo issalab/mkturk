@@ -1,4 +1,68 @@
 //================== IMAGE RENDERING ==================//
+function displayTrial_prime(ti, gr, fr, sc, ob, id, mkm) {
+  // ti=time, gr=grid, fr=frame, sc=screen, ob=scenebag, id=renderparam_index
+  let lenArgs = arguments.length;
+  updated2d = 0; updated3d = 0;
+
+  var resolveFunc; var errFunc;
+  p = new Promise(function (resolve, reject) {
+    resolveFunc = resolve;
+    errFunc = reject;
+  }).then();
+  
+  var start = null;
+  async function updateCanvas_prime(timestamp) {
+    if (!start) start = timestamp; //IF start has not been set to a float timestamp, set it now.
+
+    if (frame_prime.current > 0 && frame_prime.shown[frame_prime.current - 1] != 1) {
+      frame_prime.shown[frame_prime.current - 1] = 1;
+    }//IF showing frame
+
+    //---------------- RENDER THE NEXT FRAME ------------------//
+    if (frame_prime.current <= frame_prime.shown.length - 1) {     
+      for (var s = 0; s <= frame_prime.frames[frame_prime.current].length - 1; s++) {
+        f = frame_prime.frames[frame_prime.current][s];
+        var taskscreen = sc[f].charAt(0).toUpperCase() + sc[f].slice(1);
+
+        if (s == 0) { var taskscreen0 = taskscreen; } //IF primary screen
+
+        if (taskscreen == 'Sample' || taskscreen == 'Test') {
+          if (FLAGS.usecanvas2D == 0){
+    //RENDER 3D (transfers to 2D & filters)
+            render3D(taskscreen, s, f, gr, fr, sc, ob, id);
+            const defaultFilter = 'blur(0px) brightness(100%) contrast(100%) grayscale(0%) hue-rotate(0deg) invert(0%) opacity(100%) saturate(100%) sepia(0%)';
+            VISIBLECANVAS.getContext('2d').filter = defaultFilter; //restore 2D filter
+          } //IF 3D canvas
+          else if (FLAGS.usecanvas2D == 1){
+    //RENDER 2D Sample/Test Image
+            render2D(taskscreen, s, f, gr, fr, sc, ob, id, VISIBLECANVAS);  
+          } //ELSEIF 2D canvas
+        }//IF sample || test
+        else {
+        } //ELSE hide 3D when plotting 2D elements like buttons and not keeping (overlaying) sample/test
+      } //FOR s screens within frame
+
+      renderShape2D('Blank', [-1], VISIBLECANVAS);
+
+      frame_prime.current++;
+    } //IF frames remain to be shown
+    //------(END)-------- RENDER THE NEXT FRAME ------------------//
+
+    //IF prematurely ending movies externally
+    if (frame_prime.current >= frame_prime.shown.length) { frame_prime.current = frame_prime.shown.length;} 
+    if (frame_prime.shown[frame_prime.shown.length - 1] != 1) {
+      window.requestAnimationFrame(updateCanvas_prime);
+    } //IF frames left to show
+    else {
+      resolveFunc('primed');
+    } //ELSE all frames shown, promise resolve, exit animation loop
+  } //FUNCTION updateCanvas_prime
+
+  window.requestAnimationFrame(updateCanvas_prime);
+  return p;
+} //FUNCTION displayTrial
+
+//================== IMAGE RENDERING ==================//
 function displayTrial(ti, gr, fr, sc, ob, id, mkm, trig) {
   // ti=time, gr=grid, fr=frame, sc=screen, ob=scenebag, id=renderparam_index
   let lenArgs = arguments.length;
@@ -47,6 +111,8 @@ function displayTrial(ti, gr, fr, sc, ob, id, mkm, trig) {
           if (FLAGS.usecanvas2D == 0){
     //RENDER 3D (transfers to 2D & filters)
             render3D(taskscreen, s, f, gr, fr, sc, ob, id);
+            const defaultFilter = 'blur(0px) brightness(100%) contrast(100%) grayscale(0%) hue-rotate(0deg) invert(0%) opacity(100%) saturate(100%) sepia(0%)';
+            VISIBLECANVAS.getContext('2d').filter = defaultFilter; //restore 2D filter
           } //IF 3D canvas
           else if (FLAGS.usecanvas2D == 1){
     //RENDER 2D Sample/Test Image
@@ -57,8 +123,6 @@ function displayTrial(ti, gr, fr, sc, ob, id, mkm, trig) {
         else {
           updated3d = 0;
         } //ELSE hide 3D when plotting 2D elements like buttons and not keeping (overlaying) sample/test
-        const defaultFilter = 'blur(0px) brightness(100%) contrast(100%) grayscale(0%) hue-rotate(0deg) invert(0%) opacity(100%) saturate(100%) sepia(0%)';
-        VISIBLECANVAS.getContext('2d').filter = defaultFilter; //restore 2D filter
 
     //OVERLAY GRID
         if (FLAGS.savedata == 0 && s == 0 && FLAGS.underlayGridPoints == 1) {
@@ -90,7 +154,7 @@ function displayTrial(ti, gr, fr, sc, ob, id, mkm, trig) {
       } //FOR s screens within frame
 
     //OVERLAY Photodiode Square
-      if (typeof(trig) != "undefined" && TASK.Photodiode > 0 ) {
+      if (typeof(trig) != "undefined" && trig==1 && TASK.Photodiode > 0 ) {
         renderShape2D('PhotodiodeSquare', [ENV.PhotodiodeSquareX, ENV.PhotodiodeSquareY],VISIBLECANVAS);
       } //IF port.connected
 
@@ -288,26 +352,26 @@ function render3D(taskscreen, s, f, gr, fr, sc, ob, id) {
     if (TASK.Agent == 'SaveImages') {
       VISIBLECANVAS.getContext('2d').drawImage(
         renderer.domElement,
-        sx,
-        sy,
-        swidth,
-        sheight,
+        Math.round(sx),
+        Math.round(sy),
+        Math.round(swidth),
+        Math.round(sheight),
         0,
         0,
-        VISIBLECANVAS.width,
-        VISIBLECANVAS.height
+        Math.round(VISIBLECANVAS.width),
+        Math.round(VISIBLECANVAS.height)
       );
     } else {
       VISIBLECANVAS.getContext('2d').drawImage(
         renderer.domElement,
-        sx,
-        sy,
-        swidth,
-        sheight,
+        Math.round(sx),
+        Math.round(sy),
+        Math.round(swidth),
+        Math.round(sheight),
         left,
         top,
-        swidth_2d,
-        sheight_2d
+        Math.round(swidth_2d),
+        Math.round(sheight_2d)
       );
     }
 

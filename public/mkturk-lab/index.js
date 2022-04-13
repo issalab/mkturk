@@ -69,7 +69,9 @@ gainNode.connect(audiocontext.destination);
 
 ENV.DevicePixelRatio = window.devicePixelRatio ? window.devicePixelRatio : 1;
 
-var visiblecontext = VISIBLECANVAS.getContext('2d');
+var visiblecontext = VISIBLECANVAS.getContext('2d', { 
+  desynchronized: true,
+});
 
 var backingStoreRatio =
   visiblecontext.webkitBackingStorePixelRatio ||
@@ -690,7 +692,7 @@ if (ENV.BatteryAPIAvailable) {
 
       // Photodiode Square to display on the bottom right (hard coded size & position)
       ENV.PhotodiodeSquareWidth = ENV.PhotodiodeSquareSizeInches * ENV.ViewportPPI;
-      ENV.PhotodiodeSquareX =
+      ENV.PhotodiodeSquareX = 
         ENV.ViewportPixels[0] -
         ENV.PhotodiodeSquareWidth / 2 -
         CANVAS.offsetleft;
@@ -1126,10 +1128,10 @@ if (ENV.BatteryAPIAvailable) {
                 frame.shown.push(0);
                 frame.frames.push([i]);
               }
-            }
-          }
-        }
-      }
+            } //IF Sample
+          } //FOR j clips
+        } //FOR i stim
+      } //ELSEIF FixationUsesSample
 
       // Start timer for this fixation render trial
       CURRTRIAL.starttime = Date.now() - ENV.CurrentDate.valueOf();
@@ -1260,11 +1262,7 @@ if (ENV.BatteryAPIAvailable) {
         CURRTRIAL.fixationxyt = [-1, -1, -1];
       }
 
-      logEVENTS(
-        'FixationTouchEvent',
-        CURRTRIAL.fixationtouchevent,
-        'trialseries'
-      );
+      logEVENTS('FixationTouchEvent',CURRTRIAL.fixationtouchevent,'trialseries');
       logEVENTS('FixationXYT', CURRTRIAL.fixationxyt, 'trialseries');
 
       //IF held fixaton & fixation task, count as correct
@@ -1380,6 +1378,36 @@ if (ENV.BatteryAPIAvailable) {
           frame.frames[i].push(idxArr[idxArr.length - 1]);
         }
       }
+
+if (ENV.NDisplayPrime > 0){
+      frame_prime.shown = [];
+      frame_prime.frames = [];
+      frame_prime.current = 0;
+
+      var nframes_pre = Math.round( TASK.SamplePRE*ENV.FrameRateMovie/1000);
+
+      for (let q in CURRTRIAL.sequencetaskscreen) {
+        if (q < ENV.NDisplayPrime + nframes_pre){
+          frame_prime.shown[q] = 0;
+          if (q < nframes_pre){
+            frame_prime.shown[q] = 1;
+            frame_prime.current = q;
+          }
+          frame_prime.frames[q] = [q];
+        }
+      } // FOR q frames
+
+      displayTrial_prime(
+          CURRTRIAL.tsequencedesired,
+          CURRTRIAL.sequencegridindex,
+          CURRTRIAL.sequenceframe,
+          CURRTRIAL.sequencetaskscreen,
+          CURRTRIAL.sequencelabel,
+          CURRTRIAL.sequenceindex,
+          mkm
+        );
+      await sleep(1000/ENV.FrameRateDisplay+2);
+} //IF Prime Display
 
       //Display Sample & Test/Choice
       if (TASK.NRSVP > 0 && TASK.FixationWindowSizeInches > 0) {
@@ -2145,26 +2173,24 @@ if (ENV.BatteryAPIAvailable) {
       } //IF new firestore, kick off firestore database writes
 
       // BigQuery Data Stream
-      if (CURRTRIAL.num == 0) {
-        if (ENV.Eye.TrackEye > 0) {
-          if (TASK.BQSaveEye === undefined || TASK.BQSaveEye > 0) {
-            // uploads eyedata to BigQuery every 10 seconds
-            pingBigQueryEyeTable();
-          }
-        } // IF trackeye
-        else if (TASK.BQSaveTouch === undefined || TASK.BQSaveTouch > 0) {
-          // uploads touch data to BigQuery every 10 seconds
-          pingBigQueryTouchTable();
-        } //IF BQsavetouch
+      if (ENV.Eye.TrackEye > 0) {
+        if ( (TASK.BQSaveEye === undefined || TASK.BQSaveEye > 0) && FLAGS.pingedBQEyeTable==0 ) {
+          // uploads eyedata to BigQuery every 10 seconds
+          pingBigQueryEyeTable();
+        console.log('BIGQUERY: ' + 'Kick off save EYE (trial ' + CURRTRIAL.num +')')
+        } //IF BQsaveEye
+      } // IF trackeye
+      else if ( (TASK.BQSaveTouch === undefined || TASK.BQSaveTouch > 0) && FLAGS.pingedBQTouchTable==0 ) {
+        // uploads touch data to BigQuery every 10 seconds
+        pingBigQueryTouchTable();
+        console.log('BIGQUERY: ' + 'Kick off save TOUCH (trial ' + CURRTRIAL.num +')')
+      } //IF BQsaveTouch
 
-        if (
-          TASK.BQSaveDisplayTimes === undefined ||
-          TASK.BQSaveDisplayTimes > 0
-        ) {
-          //uploads display times data to bigquery every 10 seconds
-          pingBigQueryDisplayTimesTable();
-        }
-      }
+      if ( (TASK.BQSaveDisplayTimes === undefined || TASK.BQSaveDisplayTimes > 0) && FLAGS.pingedBQDisplayTimesTable==0 ) {
+        //uploads display times data to bigquery every 10 seconds
+        pingBigQueryDisplayTimesTable();
+        console.log('BIGQUERY: ' + 'Kick off save DISPLAY TIMES (trial ' + CURRTRIAL.num +')')
+      } //IF BQsaveDisplayTimes
     } //IF savedata
 
     if (FLAGS.need2saveParameters == 1) {

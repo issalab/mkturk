@@ -91,6 +91,7 @@ ENV.ViewportPPI = -1;
 ENV.PhysicalPPI = -1;
 ENV.FrameRateDisplay = 60;
 ENV.FrameRateMovie = 30;
+ENV.NDisplayPrime = 1;
 
 ENV.Task = '';
 
@@ -152,6 +153,9 @@ FLAGS.underlayGridPoints = 0;
 FLAGS.RFIDGeneratorCreated = 0;
 FLAGS.automatortext = '';
 FLAGS.rtdbAgentNumConnections = null;
+FLAGS.pingedBQEyeTable=0;
+FLAGS.pingedBQTouchTable=0;
+FLAGS.pingedBQDisplayTimesTable=0;
 
 var CANVAS = {};
 var CANVAS = {
@@ -174,6 +178,12 @@ var frame = {
   current: 0,
   shown: [],
 };
+
+var frame_prime = {
+  current: 0,
+  shown: [],
+};
+
 
 // States of the current trial, entered into running trialhistory
 var CURRTRIAL = {};
