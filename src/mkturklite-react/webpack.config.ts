@@ -1,4 +1,4 @@
-import path from 'path';
+import * as path from 'path';
 import { Configuration } from 'webpack';
 // import HtmlWebpackPlugin = require('html-webpack-plugin');
 // import * as HtmlWebpackPlugin from 'html-webpack-plugin';

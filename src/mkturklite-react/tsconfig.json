@@ -27,7 +27,7 @@
 
 {
   "compilerOptions": {
-    "lib": ["dom", "dom.iterable", "esnext", "WebWorker", "ES6"],
+    "lib": ["dom", "dom.iterable", "esnext", "WebWorker", "ES6", "ES2020"],
     "allowJs": true,
     "allowSyntheticDefaultImports": true,
     "skipLibCheck": true,
@@ -38,9 +38,16 @@
     "resolveJsonModule": true,
     "isolatedModules": false,
     "noEmit": true,
-    "jsx": "react"
-    // "module": "esnext"
+    "jsx": "react",
+    "module": "ES2020",
+    "target": "ES6"
+
     // "target": "ESNext"
   },
-  "include": ["src"]
+  "include": ["src"],
+  "ts-node": {
+    "compilerOptions": {
+      "module": "CommonJS"
+    }
+  }
 }

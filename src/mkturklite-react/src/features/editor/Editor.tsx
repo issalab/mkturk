@@ -1,6 +1,7 @@
 import React, { useCallback, useState } from 'react';
 import JSONEditor, { JSONEditorMode, JSONEditorOptions } from 'jsoneditor';
 import './jsoneditor.css';
+// import './dataWorker';
 
 import { useAppSelector, useAppDispatch } from '../../app/hooks';
 import {
@@ -14,9 +15,11 @@ import {
 import { mkturkliteApp } from '../data/dataAPI';
 
 const dataWorker: Worker = new Worker(
-  new URL('./dataWorker.ts', import.meta.url),
+  new URL('dataWorker.ts', import.meta.url),
   { type: 'module' }
 );
+
+// const dataWorker: Worker = new Worker('./dataWorker.ts');
 
 export const Editor = () => {
   // const mode: JSONEditorMode = 'tree';
@@ -52,7 +55,6 @@ export const Editor = () => {
         const jsonEditor = new JSONEditor(container, { mode: 'tree' }, {});
         editorRef.current = jsonEditor;
       } else if (editorRef.current !== null) {
-        console.log('stuff in editor:', editorRef.current.get());
         if (curData !== undefined) {
           editorRef.current.update(curData);
         }
