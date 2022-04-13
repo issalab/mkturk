@@ -41,6 +41,13 @@ export const loadDatafileAsync = createAsyncThunk(
   }
 );
 
+export const checkFileStatusAsync = createAsyncThunk(
+  'storate/checkFileStatus',
+  async (entry: DataFileEntry) => {
+    return;
+  }
+);
+
 export const dataSlice = createSlice({
   name: 'storage',
   initialState,
