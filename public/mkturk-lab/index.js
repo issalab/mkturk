@@ -291,7 +291,6 @@ if (ENV.BatteryAPIAvailable) {
       let wrStream = await sceneFileHandle.createWritable();
       let sceneFileRef = storage.ref().child(sceneFilePath);
       sceneFileRef.getDownloadURL().then(async (url) => {
-        console.log('hi');
         let response = await fetch(url);
         let blob = await response.blob();
 

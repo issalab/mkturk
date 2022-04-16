@@ -1047,7 +1047,7 @@ async function addToScene(taskscreen) {
             IMAGES[taskscreen][classlabel].IMAGES.imageidx[i],
           ];
         } else {
-          // ELSE !isArray
+          // ELSE isArray
           imgIdx = IMAGES[taskscreen][classlabel].IMAGES.imageidx[i];
         }
 

@@ -24,6 +24,7 @@ if (FLAGS.usecanvas2D){
           image.crossOrigin = "Anonymous"; //to allow saving of a 'tainted canvas', see https://developer.mozilla.org/en-US/docs/Web/HTML/CORS_enabled_image
           image.onload = function(){
             updateImageLoadingAndDisplayText('Loaded: ' + imagefile_path)
+            console.log('Loaded IMG: ' + imagefile_path)
             resolve(image)        
           }
           image.src = url
@@ -256,24 +257,20 @@ async function loadImageArrayfromFirebase(imagepathlist) {
       );
       return;
     }
+    if (imagepathlist.length == 0){
+      return []
+    }
 
     if (imagepathlist.length > MAX_SIMULTANEOUS_REQUESTS) {
       console.log(
-        'FIREBASE: Chunking your ' +
-          imagepathlist.length +
-          ' image requests into ' +
-          Math.ceil(imagepathlist.length / MAX_SIMULTANEOUS_REQUESTS) +
-          ' chunks of (up to) ' +
-          MAX_SIMULTANEOUS_REQUESTS +
-          ' each. '
+        'FIREBASE: Chunking your ' + imagepathlist.length +
+          ' image requests into ' + Math.ceil(imagepathlist.length / MAX_SIMULTANEOUS_REQUESTS) +
+          ' chunks of (up to) ' + MAX_SIMULTANEOUS_REQUESTS + ' each. '
       );
       var image_array = [];
 
-      for (
-        var i = 0;
-        i < Math.ceil(imagepathlist.length / MAX_SIMULTANEOUS_REQUESTS);
-        i++
-      ) {
+      for (var i = 0; i < Math.ceil(imagepathlist.length / MAX_SIMULTANEOUS_REQUESTS); i++)
+      {
         var lb = i * MAX_SIMULTANEOUS_REQUESTS;
         var ub = i * MAX_SIMULTANEOUS_REQUESTS + MAX_SIMULTANEOUS_REQUESTS;
         var partial_pathlist = imagepathlist.slice(lb, ub);

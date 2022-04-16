@@ -283,7 +283,7 @@ serial.Port.prototype.onReceive = (data) => {
     console.log('~~TDROP~> ' + abuff.tdrop + ' MS');
     console.log('~~TDROP~> ' + abuff.tdrop[abuff.tdrop.length-1] + ' MS');
 
-    const isLargeNumber2 = (element) => element > 300;
+    const isLargeNumber2 = (element) => element > 280;
     abuff.tdrop2[abuff.tdrop2.length] = Math.round(abuff.t[abuff.ph.findIndex(isLargeNumber2)])
     console.log('~~TRISE~> ' + abuff.tdrop2 + ' MS');
     console.log('~~TRISE~> ' + abuff.tdrop2[abuff.tdrop.length-1] + ' MS');

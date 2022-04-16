@@ -477,7 +477,7 @@ function expandImage2DFrames(taskscreen)
           IMAGES[taskscreen][classlabel].IMAGES.imageidx[i],
         ];
       } else {
-        // ELSE !isArray
+        // ELSE isArray
         imgIdx = IMAGES[taskscreen][classlabel].IMAGES.imageidx[i];
       }
 
@@ -494,26 +494,22 @@ function expandImage2DFrames(taskscreen)
         framerate
       );
 
-      for (
-        let j = 0;
-        j < IMAGES[taskscreen][classlabel].IMAGES.imageidx[i].length;
-        j++
-      ) {
+      for (let j = 0;
+        j < IMAGES[taskscreen][classlabel].IMAGES.imageidx[i].length; j++)
+      {
         if (IMAGES[taskscreen][classlabel].IMAGES.imageidx[i][j] !== "") {
-          IMAGES[taskscreen][classlabel].IMAGES.imageidx[i][j] = Math.round(
-            IMAGES[taskscreen][classlabel].IMAGES.imageidx[i][j]
+            IMAGES[taskscreen][classlabel].IMAGES.imageidx[i][j] = Math.round(IMAGES[taskscreen][classlabel].IMAGES.imageidx[i][j]
           );
-        }
+        } //IF
       } // FOR j img indices, round
 
-      if (
-        !IMAGES[taskscreen][classlabel].IMAGES.imageidx[i].every(
-          (val, i, arr) => val === arr[0]
-        )
-      ) {
-        FLAGS.movieper[taskscreen][classlabel][i] =
-          IMAGES[taskscreen][classlabel].IMAGES.imageidx[i].length;
+      if (!IMAGES[taskscreen][classlabel].IMAGES.imageidx[i].every( (val, i, arr) => val === arr[0] ) )
+      {
+        FLAGS.movieper[taskscreen][classlabel][i] = IMAGES[taskscreen][classlabel].IMAGES.imageidx[i].length;
       } //IF frames change, isMovie
+      else {
+        FLAGS.movieper[taskscreen][classlabel][i] = 0
+      }
     } //FOR i images
   } //FOR classlabel
 }//FUNCTION expandImage2DFrames
@@ -1328,22 +1324,15 @@ function setViewport(gridindex, camera) {
   renderer.setScissorTest(true);
 }
 
-async function saveScreenshot(
-  canvasobj,
-  currtrial,
-  taskscreen,
-  framenum,
-  objectlabel,
-  objectind
-) {
+async function saveScreenshot(canvasobj, currtrial,taskscreen,framenum,objectlabel, objectind)
+{
   //---- upload screenshot to firebase
   //sample image will be uploaded to the appropriate folder in the scene
 
   if (taskscreen == 'Sample') {
     var currtrial_samplepath = TASK.ImageBagsSample[objectlabel];
   } else if (taskscreen == 'Test') {
-    var currtrial_samplepath =
-      TASK.ImageBagsSample[CURRTRIAL.sample_scenebag_label];
+    var currtrial_samplepath = TASK.ImageBagsSample[CURRTRIAL.sample_scenebag_label];
   }
   var currtrial_date = ENV.DataFileName;
   var currtrial_parampath = ENV.ParamFileName;
@@ -1364,54 +1353,31 @@ async function saveScreenshot(
   var date = currtrial_date.substring(ind_start + 1, ind_end);
 
   var storage_path =
-    scenefolder +
-    '_scene_' +
-    date +
-    '_' +
-    paramfolder +
-    '_' +
-    ENV.DeviceName +
-    '_device';
-
-  // console.log('scenefolder:', scenefolder);
+    scenefolder + '_scene_' +
+    date + '_' +
+    paramfolder + '_' +
+    ENV.DeviceName + '_device';
 
   if (canvasobj.width > 4096 || canvasobj.height > 4096) {
-    console.log(
-      'Canvas may be too large for webgl limit of 4096 pixels in either dimension -- Image Saving may not be accurate! Consider using a smaller display size.'
-    );
-  }
+    console.log('Canvas may be too large for webgl limit of 4096 pixels in either dimension -- Image Saving may not be accurate! Consider using a smaller display size.');
+  } //IF
 
   currtrial = String(currtrial).padStart(3, '0');
   framenum = String(framenum).padStart(3, '0');
   var fullpath =
-    storage_path +
-    '/' +
-    canvasobj.id +
-    '_' +
-    'trialnum' +
-    currtrial +
-    '_' +
-    taskscreen +
-    '_' +
-    'framenum' +
-    framenum;
-
-  // console.log('storage_path:', storage_path);
+    storage_path + '/' +
+    canvasobj.id + '_' +
+    'trialnum' + currtrial +
+    '_' + taskscreen +
+    '_' + 'framenum' + framenum;
 
   if (objectlabel.length > 1) {
     for (var i = 0; i <= objectlabel.length - 1; i++) {
       fullpath =
-        fullpath +
-        '_' +
-        'label' +
-        objectlabel[i] +
-        '_' +
-        'index' +
-        objectind[i];
+        fullpath + '_' + 'label' + objectlabel[i] + '_' + 'index' + objectind[i];
     } //FOR i objects
   } else {
-    fullpath =
-      fullpath + '_' + 'label' + objectlabel + '_' + 'index' + objectind;
+    fullpath = fullpath + '_' + 'label' + objectlabel + '_' + 'index' + objectind;
   }
   fullpath_mesh = fullpath + '.glb';
   fullpath = fullpath + '.png';
@@ -1420,7 +1386,6 @@ async function saveScreenshot(
   let imgFileName = imgFileNameSplit[imgFileNameSplit.length - 1];
   let dirNameSplit = scenefolder.split('/');
   let dirName = dirNameSplit[dirNameSplit.length - 1];
-  // console.log('dirname:', dirName);
 
   canvasobj.toBlob(async (blob) => {
     let subDirHandle = await FLAGS.DirHandle.getDirectoryHandle(dirName, {
@@ -1433,43 +1398,44 @@ async function saveScreenshot(
     let writableStream = await imgFileHandle.createWritable();
     await writableStream.write(blob);
     await writableStream.close();
+    console.log('fullpath', fullpath);
+    console.log('dirname:', dirName);
+    console.log('imgFileName', imgFileName)
   });
 
-  // save mesh if morph
-  let objToSave = Object.keys(
-    IMAGES[taskscreen][CURRTRIAL.sample_scenebag_label[0]].OBJECTS
-  )[0];
-  let morphTargetDelta =
-    IMAGES[taskscreen][CURRTRIAL.sample_scenebag_label[0]].OBJECTS[objToSave]
-      .morphTargetDelta;
+  //---- Save mesh if morph
+  if (typeof(IMAGES[taskscreen][CURRTRIAL.sample_scenebag_label[0]].OBJECTS) != "undefined"){
+    let objToSave = Object.keys(IMAGES[taskscreen][CURRTRIAL.sample_scenebag_label[0]].OBJECTS)[0];
+    let morphTargetDelta = IMAGES[taskscreen][CURRTRIAL.sample_scenebag_label[0]].OBJECTS[objToSave].morphTargetDelta;
 
-  if (morphTargetDelta !== undefined) {
-    let lenMorphTargetDelta =
-      IMAGES[taskscreen][CURRTRIAL.sample_scenebag_label[0]].OBJECTS[objToSave]
-        .morphTargetDelta.length;
+    if (morphTargetDelta !== undefined) {
+      let lenMorphTargetDelta =
+        IMAGES[taskscreen][CURRTRIAL.sample_scenebag_label[0]].OBJECTS[objToSave]
+          .morphTargetDelta.length;
 
-    if (lenMorphTargetDelta > 0) {
-      try {
-        let meshToSave =
-          OBJECTS[taskscreen][CURRTRIAL.sample_scenebag_label[0]].meshes[
-            objToSave
-          ].scene;
+      if (lenMorphTargetDelta > 0) {
+        try {
+          let meshToSave =
+            OBJECTS[taskscreen][CURRTRIAL.sample_scenebag_label[0]].meshes[
+              objToSave
+            ].scene;
 
-        const exporter = new THREE.GLTFExporter();
-        const glb = await new Promise((resolve) => {
-          exporter.parse(meshToSave, resolve, {
-            binary: true,
-            truncateDrawRange: false,
+          const exporter = new THREE.GLTFExporter();
+          const glb = await new Promise((resolve) => {
+            exporter.parse(meshToSave, resolve, {
+              binary: true,
+              truncateDrawRange: false,
+            });
           });
-        });
 
-        let meshBlob = new Blob([glb], { type: 'application/octet-stream' });
-        storage.ref().child(fullpath_mesh).put(meshBlob);
-      } catch (error) {
-        console.log('[ERROR SAVING MORPHED MESH]:', error);
-      }
-    }
-  }
+          let meshBlob = new Blob([glb], { type: 'application/octet-stream' });
+          storage.ref().child(fullpath_mesh).put(meshBlob);
+        } catch (error) {
+          console.log('[ERROR SAVING MORPHED MESH]:', error);
+        }
+      } //IF lenMorph
+    } //IF morph
+  } //IF 3D Objects
 } //FUNCTION saveScreenshot
 
 async function saveMeshGLB(
