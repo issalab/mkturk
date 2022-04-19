@@ -11,6 +11,7 @@ import {
   loadDatafileAsync,
   selectFileList,
 } from '../data/dataSlice';
+import { useGetMetadataGenerationQuery } from '../data/dataApiSlice';
 
 import { mkturkliteApp } from '../data/dataAPI';
 
@@ -22,6 +23,7 @@ const dataWorker: Worker = new Worker(
 // const dataWorker: Worker = new Worker('./dataWorker.ts');
 
 export const Editor = () => {
+  console.log('Editor');
   // const mode: JSONEditorMode = 'tree';
   const elRef = React.useRef<HTMLDivElement | null>(null);
   const editorRef = React.useRef<JSONEditor | null>(null);
@@ -29,6 +31,14 @@ export const Editor = () => {
   const entry = useAppSelector(selectEntry);
   const datafileList = useAppSelector(selectFileList);
   const curData = useAppSelector(selectCurrentData);
+  const eentry = {
+    fullPath: '/mkturkfiles/datafiles/Eliaso/2022-04-19T21:13:28_Eliaso.json',
+    name: '2022-04-19T21:13:28_Eliaso.json',
+  };
+  const metadata = useGetMetadataGenerationQuery(eentry, {
+    pollingInterval: 1000,
+  });
+  console.log(metadata);
   // const worker = new Worker(new URL('./path/to/worker', import.meta.url));
   // const dataWorker: Worker = new Worker(
   //   new URL('./dataWorker.ts', import.meta.url),
@@ -42,6 +52,7 @@ export const Editor = () => {
   };
 
   React.useEffect(() => {
+    console.log('React.useEffect()');
     const container = elRef.current;
     if (container && editorRef) {
       if (editorRef.current === null) {
@@ -62,7 +73,7 @@ export const Editor = () => {
     }
 
     // return unmountEditor;
-  });
+  }, [curData, dispatch, entry, metadata.data]);
 
   return <div id="jsoneditor" ref={elRef}></div>;
 };

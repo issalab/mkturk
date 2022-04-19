@@ -1,5 +1,12 @@
 import { initializeApp } from 'firebase/app';
-import { getStorage, ref, listAll, getDownloadURL } from 'firebase/storage';
+import {
+  getStorage,
+  ref,
+  listAll,
+  getDownloadURL,
+  getMetadata,
+  FullMetadata,
+} from 'firebase/storage';
 import {
   getAuth,
   getRedirectResult,
@@ -83,6 +90,9 @@ export async function listDatafiles(entry: string) {
 
 export async function loadDatafile(entry: DataFileEntry) {
   const currentDatafileRef = ref(storage, entry.fullPath);
+  getMetadata(currentDatafileRef).then((metadata: FullMetadata) => {
+    console.log('metadata:', metadata);
+  });
   const data = await getDownloadURL(currentDatafileRef)
     .then(async (url: string) => {
       const response = await fetch(url);
@@ -104,3 +114,7 @@ export async function loadDatafile(entry: DataFileEntry) {
     });
   return data;
 }
+
+// export async function checkFileStatus(entry: DataFileEntry) {
+
+// }

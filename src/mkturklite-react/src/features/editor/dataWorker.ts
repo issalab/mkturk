@@ -15,6 +15,9 @@ const auth = getAuth(mkturkliteApp);
 getRedirectResult(auth).then((result) => {
   console.log('result', result);
 });
+
+const mdGeneration = '';
+
 self.onmessage = (e: MessageEvent) => {
   console.log('Worker received:', e.data);
   const storage = getStorage(mkturkliteApp);

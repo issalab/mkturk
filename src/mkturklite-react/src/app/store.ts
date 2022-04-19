@@ -2,13 +2,16 @@ import { configureStore, ThunkAction, Action } from '@reduxjs/toolkit';
 import counterReducer from '../features/counter/counterSlice';
 // import firebaseReducer from '../features/firebase/firebaseSlice';
 import dataReducer from '../features/data/dataSlice';
+import { dataApiSlice } from '../features/data/dataApiSlice';
 
 export const store = configureStore({
   reducer: {
     counter: counterReducer,
-    // firebase: firebaseReducer,
     storage: dataReducer,
+    [dataApiSlice.reducerPath]: dataApiSlice.reducer,
   },
+  middleware: (getDefaultMiddleware) =>
+    getDefaultMiddleware().concat(dataApiSlice.middleware),
 });
 
 export type AppDispatch = typeof store.dispatch;
