@@ -13,15 +13,13 @@
     dataRunning.addColumn('number', 'milliseconds');
     dataRunning.addColumn('number', 'SampleCommand');
     dataRunning.addColumn('number', 'Photodiode');
-    dataRunning.addRows(4502)
-    // lineRunning.draw(dataRunning, google.charts.Line.convertOptions(runningOptions));
 
     //Cumulative triggered traces plot
     dataCumulative = new google.visualization.DataTable();
     lineCumulative = new google.charts.Line(document.getElementById('cumulative_plot_card'))
     dataCumulative.addColumn('number', 'milliseconds');
+    dataCumulative.addColumn('number', 'SampleCommand');
     dataCumulative.addColumn('number', 'Photodiode');
-    // lineCumulative.draw(dataCumulative, google.charts.Line.convertOptions(cumulativeOptions));
     console.log('Created google line charts: running + triggered')
   }//FUNCTION DRAWCHART()
 

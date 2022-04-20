@@ -1,43 +1,51 @@
 var cumulativeOptions = {
   chart: {
-    title: 'Photodiode',
-    subtitle: 'triggered by sc',
+    title: 'PREVIOUS'
   },
   width: 1200,
-  height: 1000,
+  height: 600,
   allowAsync: true,
   animation: {
-    duration: 250,
+    duration: 0,
     easing:'linear',
-    startup: true,
+    startup: false,
   },
   legend: {
     position: 'none'
   },
-  axes:{
-    x: {
-      0: {label: 'time (ms)'},
-    },
+  // axes:{
+  //   x: {
+  //     0: {label: 'time (ms)'},
+  //   },
 
+  //   y: {
+  //     0: {label: 'Photodiode'},
+  //   } 
+  // }
+  series: {
+    0: {axis: 'PD'},
+    1: {axis: 'SC'}
+  },
+  axes:{
     y: {
-      0: {label: 'Photodiode'},
-    } 
+      PD: {label: 'Photodiode'},
+      SC: {label: 'Sample Command'}
+    }
   }
 }//cumulativeOptions
 
 
 var runningOptions = {
   chart: {
-    title: 'Photodiode & SampleCommand',
-    subtitle: 'realtime',
+    title: 'CURRENT'
   },
   width: 1200,
   height: 600,
   allowAsync: true,
   animation: {
-    duration: 250,
+    duration: 0,
     easing:'linear',
-    startup: true,
+    startup: false,
   },
   legend: {
     position: 'none'
