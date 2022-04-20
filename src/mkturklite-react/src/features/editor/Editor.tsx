@@ -11,9 +11,7 @@ import {
   loadDatafileAsync,
   selectFileList,
 } from '../data/dataSlice';
-import { useGetMetadataGenerationQuery } from '../data/dataApiSlice';
-
-import { mkturkliteApp } from '../data/dataAPI';
+import { useGetDatafileQuery } from '../../services/firebaseApi';
 
 const dataWorker: Worker = new Worker(
   new URL('dataWorker.ts', import.meta.url),
@@ -31,14 +29,16 @@ export const Editor = () => {
   const entry = useAppSelector(selectEntry);
   const datafileList = useAppSelector(selectFileList);
   const curData = useAppSelector(selectCurrentData);
-  const eentry = {
-    fullPath: '/mkturkfiles/datafiles/Eliaso/2022-04-19T21:13:28_Eliaso.json',
-    name: '2022-04-19T21:13:28_Eliaso.json',
-  };
-  const metadata = useGetMetadataGenerationQuery(eentry, {
-    pollingInterval: 1000,
-  });
-  console.log(metadata);
+  const datafile = useGetDatafileQuery({ fullPath: '', name: '' });
+  console.log('editor::datafile', datafile);
+  // const eentry = {
+  //   fullPath: '/mkturkfiles/datafiles/Eliaso/2022-04-19T21:13:28_Eliaso.json',
+  //   name: '2022-04-19T21:13:28_Eliaso.json',
+  // };
+  // const metadata = useGetMetadataGenerationQuery(eentry, {
+  //   pollingInterval: 1000,
+  // });
+  // console.log(metadata);
   // const worker = new Worker(new URL('./path/to/worker', import.meta.url));
   // const dataWorker: Worker = new Worker(
   //   new URL('./dataWorker.ts', import.meta.url),
@@ -53,6 +53,7 @@ export const Editor = () => {
 
   React.useEffect(() => {
     console.log('React.useEffect()');
+    console.log('DATAFILE:', datafile);
     const container = elRef.current;
     if (container && editorRef) {
       if (editorRef.current === null) {
@@ -73,7 +74,9 @@ export const Editor = () => {
     }
 
     // return unmountEditor;
-  }, [curData, dispatch, entry, metadata.data]);
+  });
 
-  return <div id="jsoneditor" ref={elRef}></div>;
+  // [curData, dispatch, entry, metadata.data]
+
+  return <div id='jsoneditor' ref={elRef}></div>;
 };

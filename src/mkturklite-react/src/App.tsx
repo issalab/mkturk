@@ -1,12 +1,10 @@
 import React from 'react';
 import logo from './logo.svg';
 import { Counter } from './features/counter/Counter';
-import { Firebase } from './features/firebase/Firebase';
 import { Editor } from './features/editor/Editor';
 import './App.css';
 
 function App() {
-  Firebase();
   return (
     <div className='App'>
       <header className='App-header'>

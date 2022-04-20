@@ -18,13 +18,30 @@ import {
   selectFileList,
 } from '../data/dataSlice';
 
+import {
+  useGetDatafilesListQuery,
+  useGetDatafileQuery,
+} from '../../services/firebaseApi';
+
 export function Counter() {
   const count = useAppSelector(selectCount);
   const entry = useAppSelector(selectEntry);
   // const currentDatafileEntry = useAppSelector(selectCurrentDatafile);
   const datafileList = useAppSelector(selectFileList);
+  const datafilesList = useGetDatafilesListQuery(entry);
+  console.log(datafilesList);
   const dispatch = useAppDispatch();
   const [incrementAmount, setIncrementAmount] = useState('2');
+  const [selectorEntry, setSelectorEntry] = useState({
+    fullPath: '',
+    name: '',
+  });
+
+  const datafileResult = useGetDatafileQuery(selectorEntry, {
+    refetchOnMountOrArgChange: true,
+  });
+  console.log(datafileResult);
+
   const incrementValue = Number(incrementAmount) || 0;
 
   const selectorRef = React.useRef<HTMLSelectElement | null>(null);
@@ -46,7 +63,7 @@ export function Counter() {
       <div className={styles.row}>
         <button
           className={styles.button}
-          aria-label="Decrement value"
+          aria-label='Decrement value'
           onClick={() => dispatch(decrement())}
         >
           -
@@ -54,7 +71,7 @@ export function Counter() {
         <span className={styles.value}>{count}</span>
         <button
           className={styles.button}
-          aria-label="Increment value"
+          aria-label='Increment value'
           onClick={() => dispatch(increment())}
         >
           +
@@ -63,7 +80,7 @@ export function Counter() {
       <div className={styles.row}>
         <input
           className={styles.textbox}
-          aria-label="Set increment amount"
+          aria-label='Set increment amount'
           value={incrementAmount}
           onChange={(e) => setIncrementAmount(e.target.value)}
         />
@@ -98,15 +115,20 @@ export function Counter() {
           Load Files
         </button>
         <select
-          name="file-list"
-          id="file-list"
+          name='file-list'
+          id='file-list'
           onChange={(e) => {
-            dispatch(
-              loadDatafileAsync({
-                name: e.target.value.split('/').slice(-1)[0],
-                fullPath: e.target.value,
-              })
-            );
+            const selectedEntry = {
+              name: e.target.value.split('/').slice(-1)[0],
+              fullPath: e.target.value,
+            };
+            setSelectorEntry(selectedEntry);
+            // dispatch(
+            //   loadDatafileAsync({
+            //     name: e.target.value.split('/').slice(-1)[0],
+            //     fullPath: e.target.value,
+            //   })
+            // );
           }}
         >
           {datafileList?.map((datafileEntry) => {

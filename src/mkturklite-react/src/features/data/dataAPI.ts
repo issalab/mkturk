@@ -90,9 +90,6 @@ export async function listDatafiles(entry: string) {
 
 export async function loadDatafile(entry: DataFileEntry) {
   const currentDatafileRef = ref(storage, entry.fullPath);
-  getMetadata(currentDatafileRef).then((metadata: FullMetadata) => {
-    console.log('metadata:', metadata);
-  });
   const data = await getDownloadURL(currentDatafileRef)
     .then(async (url: string) => {
       const response = await fetch(url);
