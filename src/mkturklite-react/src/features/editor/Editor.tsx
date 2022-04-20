@@ -7,11 +7,14 @@ import { useAppSelector, useAppDispatch } from '../../app/hooks';
 import {
   selectCurrentData,
   selectEntry,
-  listDataFilesAsync,
-  loadDatafileAsync,
   selectFileList,
+  selectCurrentDatafile,
+  setCurrentData,
 } from '../data/dataSlice';
-import { useGetDatafileQuery } from '../../services/firebaseApi';
+import {
+  useGetDatafileQuery,
+  useGetMetadataGenerationQuery,
+} from '../../services/firebaseApi';
 
 const dataWorker: Worker = new Worker(
   new URL('dataWorker.ts', import.meta.url),
@@ -26,11 +29,19 @@ export const Editor = () => {
   const elRef = React.useRef<HTMLDivElement | null>(null);
   const editorRef = React.useRef<JSONEditor | null>(null);
   const dispatch = useAppDispatch();
-  const entry = useAppSelector(selectEntry);
-  const datafileList = useAppSelector(selectFileList);
-  const curData = useAppSelector(selectCurrentData);
-  const datafile = useGetDatafileQuery({ fullPath: '', name: '' });
-  console.log('editor::datafile', datafile);
+  // const datafileList = useAppSelector(selectFileList);
+  const currentDatafileEntry = useAppSelector(selectCurrentDatafile);
+  const dataResult = useGetDatafileQuery(currentDatafileEntry, {
+    refetchOnMountOrArgChange: true,
+  });
+  const metadataGenerationResult = useGetMetadataGenerationQuery(
+    currentDatafileEntry,
+    {
+      pollingInterval: 5000,
+    }
+  );
+
+  // console.log('editor::datafile', datafile);
   // const eentry = {
   //   fullPath: '/mkturkfiles/datafiles/Eliaso/2022-04-19T21:13:28_Eliaso.json',
   //   name: '2022-04-19T21:13:28_Eliaso.json',
@@ -52,23 +63,20 @@ export const Editor = () => {
   };
 
   React.useEffect(() => {
+    console.log('METADATA_GENERATION::', metadataGenerationResult);
+    console.log('Editor.tsx::currentDatafileEntry:', currentDatafileEntry);
     console.log('React.useEffect()');
-    console.log('DATAFILE:', datafile);
+    // console.log('DATAFILE:', data.data);
     const container = elRef.current;
     if (container && editorRef) {
       if (editorRef.current === null) {
         console.log('editorRef.current == null');
-        dispatch(listDataFilesAsync(entry))
-          .unwrap()
-          .then((list) => {
-            dispatch(loadDatafileAsync(list[0]));
-            dataWorker.postMessage(list[0]);
-          });
-        const jsonEditor = new JSONEditor(container, { mode: 'tree' }, {});
+        const jsonEditor = new JSONEditor(container, { mode: 'tree' });
         editorRef.current = jsonEditor;
       } else if (editorRef.current !== null) {
-        if (curData !== undefined) {
-          editorRef.current.update(curData);
+        if (dataResult.data !== undefined) {
+          dispatch(setCurrentData(dataResult.data));
+          editorRef.current.update(dataResult.data);
         }
       }
     }
@@ -78,5 +86,5 @@ export const Editor = () => {
 
   // [curData, dispatch, entry, metadata.data]
 
-  return <div id='jsoneditor' ref={elRef}></div>;
+  return <div id="jsoneditor" ref={elRef}></div>;
 };

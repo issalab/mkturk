@@ -10,60 +10,36 @@ import {
   selectCount,
 } from './counterSlice';
 import styles from './Counter.module.css';
-import {
-  selectEntry,
-  listDataFilesAsync,
-  loadDatafileAsync,
-  selectCurrentDatafile,
-  selectFileList,
-} from '../data/dataSlice';
+import { selectEntry, setCurrentDatafile } from '../data/dataSlice';
 
-import {
-  useGetDatafilesListQuery,
-  useGetDatafileQuery,
-} from '../../services/firebaseApi';
+import { useGetDatafilesListQuery } from '../../services/firebaseApi';
 
 export function Counter() {
+  const dispatch = useAppDispatch();
   const count = useAppSelector(selectCount);
   const entry = useAppSelector(selectEntry);
-  // const currentDatafileEntry = useAppSelector(selectCurrentDatafile);
-  const datafileList = useAppSelector(selectFileList);
-  const datafilesList = useGetDatafilesListQuery(entry);
-  console.log(datafilesList);
-  const dispatch = useAppDispatch();
+  const datafilesListResult = useGetDatafilesListQuery(entry);
   const [incrementAmount, setIncrementAmount] = useState('2');
-  const [selectorEntry, setSelectorEntry] = useState({
-    fullPath: '',
-    name: '',
-  });
-
-  const datafileResult = useGetDatafileQuery(selectorEntry, {
-    refetchOnMountOrArgChange: true,
-  });
-  console.log(datafileResult);
-
   const incrementValue = Number(incrementAmount) || 0;
 
-  const selectorRef = React.useRef<HTMLSelectElement | null>(null);
+  // const selectorRef = React.useRef<HTMLSelectElement | null>(null);
 
-  // React.useEffect(() => {
-  //   const selectorContainer = selectorRef.current;
-  //   if (selectorContainer) {
-  //     if (datafileList !== undefined) {
-  //       datafileList.forEach((entry) => {
-  //         const opt = React.useRef<HTMLOptionElement | null>(null);
-  //         selectorRef.current.add()
-  //       })
-  //     }
-  //   }
-  // })
+  React.useEffect(() => {
+    const datafileEntry = {
+      fullPath: datafilesListResult.data?.[0].fullPath,
+      name: datafilesListResult.data?.[0].name,
+      data: {},
+    };
+
+    dispatch(setCurrentDatafile(datafileEntry));
+  });
 
   return (
     <div>
       <div className={styles.row}>
         <button
           className={styles.button}
-          aria-label='Decrement value'
+          aria-label="Decrement value"
           onClick={() => dispatch(decrement())}
         >
           -
@@ -71,7 +47,7 @@ export function Counter() {
         <span className={styles.value}>{count}</span>
         <button
           className={styles.button}
-          aria-label='Increment value'
+          aria-label="Increment value"
           onClick={() => dispatch(increment())}
         >
           +
@@ -80,7 +56,7 @@ export function Counter() {
       <div className={styles.row}>
         <input
           className={styles.textbox}
-          aria-label='Set increment amount'
+          aria-label="Set increment amount"
           value={incrementAmount}
           onChange={(e) => setIncrementAmount(e.target.value)}
         />
@@ -102,36 +78,21 @@ export function Counter() {
         >
           Add If Odd
         </button>
-        <button
-          className={styles.button}
-          // onClick={() => {
-          //   dispatch(listDataFilesAsync(entry))
-          //     .unwrap()
-          //     .then((list) => {
-          //       dispatch(loadDatafileAsync(list[0]));
-          //     });
-          // }}
-        >
-          Load Files
-        </button>
+        <button className={styles.button}>Load Files</button>
         <select
-          name='file-list'
-          id='file-list'
+          name="file-list"
+          id="file-list"
           onChange={(e) => {
             const selectedEntry = {
               name: e.target.value.split('/').slice(-1)[0],
               fullPath: e.target.value,
+              data: {},
             };
-            setSelectorEntry(selectedEntry);
-            // dispatch(
-            //   loadDatafileAsync({
-            //     name: e.target.value.split('/').slice(-1)[0],
-            //     fullPath: e.target.value,
-            //   })
-            // );
+            dispatch(setCurrentDatafile(selectedEntry));
+            console.log(selectedEntry);
           }}
         >
-          {datafileList?.map((datafileEntry) => {
+          {datafilesListResult.data?.map((datafileEntry) => {
             return (
               <option key={datafileEntry.name} value={datafileEntry.fullPath}>
                 {datafileEntry.name}
