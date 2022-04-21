@@ -1,21 +1,35 @@
 import React from 'react';
-import logo from './logo.svg';
+import Container from 'react-bootstrap/Container';
+import Card from 'react-bootstrap/Card';
+import Row from 'react-bootstrap/Row';
+import Col from 'react-bootstrap/Col';
 import { Counter } from './features/counter/Counter';
 import { Editor } from './features/editor/Editor';
 import { Charts } from './features/charts/Charts';
-import './App.css';
+import 'bootstrap/dist/css/bootstrap.min.css';
 
 function App() {
   return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <Counter />
-        {/* <Editor /> */}
-      </header>
+    <Container>
+      <Row className="p-3">
+        <Card className="p-0">
+          <Card.Header>MkTurk::Liveplot</Card.Header>
+          <Card.Body>
+            <Card.Title>Please select a datafile to view.</Card.Title>
+            <Counter />
+          </Card.Body>
+        </Card>
+      </Row>
       <Charts />
-      <Editor />
-    </div>
+      <Row className="p-3">
+        <Card className="p-0">
+          <Card.Header>Data Viewer</Card.Header>
+          <Card.Body>
+            <Editor />
+          </Card.Body>
+        </Card>
+      </Row>
+    </Container>
   );
 }
 

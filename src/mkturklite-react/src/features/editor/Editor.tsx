@@ -63,8 +63,8 @@ export const Editor = () => {
   };
 
   React.useEffect(() => {
-    console.log('METADATA_GENERATION::', metadataGenerationResult);
-    console.log('Editor.tsx::currentDatafileEntry:', currentDatafileEntry);
+    // console.log('METADATA_GENERATION::', metadataGenerationResult);
+    // console.log('Editor.tsx::currentDatafileEntry:', currentDatafileEntry);
     console.log('React.useEffect()');
     // console.log('DATAFILE:', data.data);
     const container = elRef.current;
@@ -76,13 +76,13 @@ export const Editor = () => {
       } else if (editorRef.current !== null) {
         if (dataResult.data !== undefined) {
           dispatch(setCurrentData(dataResult.data));
-          editorRef.current.update(dataResult.data);
+          editorRef.current.set(dataResult.data);
         }
       }
     }
 
     // return unmountEditor;
-  });
+  }, [dataResult.data, dispatch]);
 
   // [curData, dispatch, entry, metadata.data]
 

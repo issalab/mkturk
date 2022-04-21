@@ -30,7 +30,7 @@ interface IDictionary {
   [index: string]: any;
 }
 
-export const RewardChart = () => {
+export const ChoiceChart = () => {
   const currentData: IDictionary = useAppSelector(selectCurrentData);
   const [chartData, setChartData] = useState({
     labels: [],
@@ -63,6 +63,10 @@ export const RewardChart = () => {
     if (Object.keys(currentData).length > 0) {
       const labels: string[] = [];
       const data: number[] = [];
+
+      if (currentData['RewardStage'] !== 0) {
+      }
+
       for (let i = 0; i <= currentData['NRewardMax']; i++) {
         labels.push(i.toString());
         data.push(0);
