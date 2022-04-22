@@ -36,6 +36,15 @@ export const PerformanceChart = () => {
     labels: [],
     datasets: [],
   } as ChartData<'line', number[], unknown>);
+  const [vitals, setVitals] = useState({
+    name: '',
+    percentCorrect: '',
+    numCorrect: '',
+    numTrials: '',
+    numReward: '',
+    rewardVolume: '',
+    timeElapsed: '',
+  });
 
   const chartOptions: ChartOptions<'line'> = {
     scales: {
@@ -125,8 +134,39 @@ export const PerformanceChart = () => {
           },
         ],
       });
+
+      setVitals({
+        name: currentData['Agent'],
+        percentCorrect: (
+          (correctData.reduce((a, b) => a + b) / correctData.length) *
+          100
+        ).toFixed(),
+        numCorrect: correctData.reduce((a, b) => a + b).toString(),
+        numTrials: correctData.length.toString(),
+        numReward: currentData['NReward']
+          .reduce((a: number, b: number) => a + b)
+          .toString(),
+        rewardVolume: (
+          (currentData['NReward'].reduce((a: number, b: number) => a + b) *
+            currentData['RewardPer1000Trials']) /
+          1000
+        ).toFixed(),
+        timeElapsed: (
+          (Date.now() - new Date(currentData['CurrentDate']).getTime()) /
+          60000
+        ).toFixed(),
+      });
     }
   }, [currentData]);
 
-  return <Line data={chartData} options={chartOptions} />;
+  return (
+    <div>
+      <span>
+        {vitals.name}: {vitals.percentCorrect}% (n={vitals.numCorrect} of{' '}
+        {vitals.numTrials}, r={vitals.numReward}={vitals.rewardVolume} mL,{' '}
+        {vitals.timeElapsed} mins)
+      </span>
+      <Line data={chartData} options={chartOptions} />
+    </div>
+  );
 };

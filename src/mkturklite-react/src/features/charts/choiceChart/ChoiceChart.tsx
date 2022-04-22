@@ -50,12 +50,6 @@ export const ChoiceChart = () => {
           text: 'count',
         },
       },
-      xAxes: {
-        title: {
-          display: true,
-          text: 'reward units',
-        },
-      },
     },
   };
 
@@ -64,21 +58,28 @@ export const ChoiceChart = () => {
       const labels: string[] = [];
       const data: number[] = [];
 
-      if (currentData['RewardStage'] !== 0) {
+      if (currentData['RewardStage'] > 0) {
+        // SameDifferent
+        if (currentData['SameDifferent'] > 0) {
+          for (let i = 0; i < currentData['ChoiceGridIndex'].length; i++) {
+            labels.push(
+              `choice ${i}::idx ${currentData['ChoiceGridIndex'][i]}`
+            );
+            const numOccurrence = currentData['Response'].reduce(
+              (a: number, v: number) => (v === i ? a + 1 : a),
+              0
+            );
+            data.push(numOccurrence);
+          }
+        } else {
+          // SR2; M2S
+        }
+      } else {
+        // fountain task
       }
-
-      for (let i = 0; i <= currentData['NRewardMax']; i++) {
-        labels.push(i.toString());
-        data.push(0);
-      }
-
-      currentData['NReward'].forEach((amount: number) => {
-        data[amount]++;
-      });
-
       setChartData({
         labels: labels,
-        datasets: [{ data: data, label: 'Reward' }],
+        datasets: [{ data: data }],
       });
       console.log('RewardChart::currentData', currentData);
     }

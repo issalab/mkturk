@@ -4,6 +4,7 @@ import Card from 'react-bootstrap/Card';
 import { RewardChart } from './rewardChart/RewardChart';
 import { HealthChart } from './healthChart/HealthChart';
 import { PerformanceChart } from './performanceChart/PerformanceChart';
+import { ChoiceChart } from './choiceChart/ChoiceChart';
 
 export function Charts() {
   return (
@@ -38,7 +39,9 @@ export function Charts() {
       </Card>
       <Card className="mb-3 p-0">
         <Card.Header>Choice Bias</Card.Header>
-        <Card.Body>Choice Bias Chart</Card.Body>
+        <Card.Body>
+          <ChoiceChart />
+        </Card.Body>
       </Card>
       <Card className="mb-3 p-0">
         <Card.Header>Object Performance</Card.Header>
