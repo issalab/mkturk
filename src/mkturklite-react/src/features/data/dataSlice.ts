@@ -12,7 +12,7 @@ interface IDictionary {
 interface DataFileEntry {
   fullPath: string;
   name: string;
-  metadata?: string;
+  metadata: string;
   data: IDictionary;
 }
 
@@ -25,7 +25,7 @@ export interface DataState {
 
 const initialState: DataState = {
   note: '',
-  current: { fullPath: '', name: '', data: {} },
+  current: { fullPath: '', name: '', data: {}, metadata: '' },
   list: [],
   entry: 'mkturkfiles/datafiles',
 };
@@ -101,6 +101,9 @@ export const selectCurrentData = (state: RootState) => {
   } else {
     return {};
   }
+};
+export const selectCurrentMetadataGeneration = (state: RootState) => {
+  return state.storage.current.metadata;
 };
 export const selectFileList = (state: RootState) => {
   if (state.storage.list.length > 0) {

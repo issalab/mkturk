@@ -16,6 +16,7 @@ export function Counter() {
   const datafilesListResult = useGetDatafilesListQuery(entry);
 
   React.useEffect(() => {
+    console.log('hello');
     if (
       datafilesListResult.data?.length !== undefined &&
       datafilesListResult.data?.length > 0
@@ -24,6 +25,7 @@ export function Counter() {
         fullPath: datafilesListResult.data?.[0].fullPath,
         name: datafilesListResult.data?.[0].name,
         data: {},
+        metadata: '',
       };
       dispatch(setCurrentDatafile(datafileEntry));
       dispatch(setDatafileList(datafilesListResult.data));
@@ -37,6 +39,7 @@ export function Counter() {
           name: e.target.value.split('/').splice(-1)[0],
           fullPath: e.target.value,
           data: {},
+          metadata: '',
         };
         dispatch(setCurrentDatafile(selectedEntry));
       }}
