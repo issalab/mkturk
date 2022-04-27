@@ -13,15 +13,13 @@ var serial = {};
 var abuff = {
   //receives over webusb pipe
   trec: [],
-  nrec: [],
-  indrec: 0,
 
   //current
   t: [], ph: [], sa: [], currind: 0, dt: [], prev_sa: 0,
 
   //cumulative
   t_cum: [], ph_cum: [],
-  ntraces: 10,
+  ntraces: 2,
 
   //triggers
   ttrig: [], trigON: 0, indtrace: -1,
@@ -192,27 +190,56 @@ serial.Port.prototype.onReceive = (data) => {
   let onReceiveTime = performance.now();
   let textReceived = textDecoder.decode(data);
   port.statustext_received = textReceived;
-  // if (abuff.currind/1000 == Math.round(abuff.currind/1000)){
-  //   console.log( (onReceiveTime - abuff.lastreceive) + ': ' + textReceived)
-  // }
 
-  // var nchar = (textReceived.match(/\,/g) || []).length;
+//---- Parse Arduino Data
+  var nt = textReceived.split('t').length - 1;
   var ns = textReceived.split('s').length - 1;
   var np = textReceived.split('p').length - 1;
-  if (textReceived.includes('s') && textReceived.includes('p') && ns == 1 && np == 1){
-    var inds = textReceived.indexOf('s',0);
-    var indp = textReceived.indexOf('p',0);
 
-    var currvals = [ Number(textReceived.slice(inds+1,indp)) ]
-    var currvalp = [ Number(textReceived.slice(indp+1,textReceived.length)) ]
-  }//IF received valid sample
+  if (nt != ns || ns != np){
+    return; //incomplete sample
+  }
+
+  var cnt = 0;
+  var indt = [];
+  var inds = [];
+  var indp = [];
+  for (i=0; i<=textReceived.length-1; i++){
+    if (textReceived[i] == 't'){
+      indt.push(i)
+    }
+    if (textReceived[i] == 's'){
+      inds.push(i)
+    }
+    if (textReceived[i] == 'p'){
+      indp.push(i)
+    }
+  }//FOR i characters
+
+  var currvalt
+  var currvals
+  var currvalp
+  for (i=0; i<=indt.length-1; i++){
+  }//FOR i values
+//---- Parse Arduino Data
+
+for (var s=0; s<=indt.length-1; s++){
+  currvalt = Number(textReceived.slice(indt[s]+1,inds[s]))/1000 //microsec -> millisec
+  currvals = Number(textReceived.slice(inds[s]+1,indp[s]))
+  if (s <= indt.length-2){
+    currvalp = Number(textReceived.slice(indp[s]+1,indt[s+1]))
+  }
   else{
-    return;
-  }//ELSE incomplete sample
+   currvalp = Number(textReceived.slice(indp[s]+1,textReceived.length))
+  }
+  if (currvalp == NaN){
+    console.log(textReceived)
+  }
 
 //--------- TRIGGER ---------//
   var trigDown = 0;
   if (currvals == 1 && abuff.prev_sa == 0){
+    //TRIGGERED UP -- start new trace
     abuff.trigON = 1
     abuff.indtrace++
     if (abuff.indtrace >= abuff.ntraces){
@@ -226,7 +253,6 @@ serial.Port.prototype.onReceive = (data) => {
 
     abuff.trec = []
     abuff.nrec = []
-    abuff.indrec = 0;
 
     abuff.t=[];
     abuff.ph=[];
@@ -242,46 +268,44 @@ serial.Port.prototype.onReceive = (data) => {
     var trigDown = 1;
   }
   else if (currvals == 0){
+    //TRIGGERED DOWN
     abuff.trigON = 0; //stop storing until next trigger
   }//IF trigger OFF
   abuff.prev_sa = currvals
 //--------- TRIGGER ---------//
 
-
 //--------- CURRENT ---------//
+  var dt=currvalt;
   if (typeof(abuff.ttrig[abuff.indtrace]) != "undefined"){
-    var dt = onReceiveTime - abuff.ttrig[abuff.indtrace]
+    var dtpipe = onReceiveTime - abuff.ttrig[abuff.indtrace]
   }//IF trigger
-  else{ dt = onReceiveTime} //no triggers yet
+  else{ var dtpipe = onReceiveTime} //no triggers yet
 
   if (trigDown){console.log('***** TRIGGERED DOWN ' + Math.round(dt) + ' ms')}
   
   abuff.t[abuff.currind] = dt;
   if (abuff.currind > 0){ abuff.dt[abuff.currind-1] = abuff.t[abuff.currind] - abuff.t[abuff.currind-1] }
-  abuff.sa[abuff.currind] = currvals[0];
-  abuff.ph[abuff.currind] = currvalp[0];
+  abuff.sa[abuff.currind] = currvals;
+  abuff.ph[abuff.currind] = currvalp;
 
-  abuff.trec[abuff.indrec] = dt;
-  abuff.nrec[abuff.indrec] = currvalp.length;
+  abuff.trec[abuff.currind] = dtpipe;
 
   //---------- Update plot data (0:time  1:sc  2:photodiode)
   if (abuff.trigON){
-    dataRunning.addRow([  abuff.t[abuff.currind],
-                          abuff.sa[abuff.currind],
-                          abuff.ph[abuff.currind]  ])
-
     if (abuff.ntrials >= 1){
       var prevind = abuff.indtrace - 1
-      if (prevind < 0){prevind = abuff.ntraces-1};
-      if (abuff.currind <= abuff.t_cum[prevind].length-1){
-        dataCumulative.addRow([  abuff.t_cum[prevind][abuff.currind],
-                               0,
-                               abuff.ph_cum[prevind][abuff.currind] ])
-      }
-    } //IF
+      if (prevind < 0){ prevind = abuff.ntraces-1 };
+      var yprev = everpolate.linear(abuff.t[abuff.currind], abuff.t_cum[prevind], abuff.ph_cum[prevind]);
+      yprev = yprev[0]
+    }
+    else{
+      var yprev = null;
+    }
 
+    dataRunning.addRow([  abuff.t[abuff.currind],
+                          yprev,
+                          abuff.ph[abuff.currind] ])
     abuff.currind++
-    abuff.indrec++
   }
 //--------- CURRENT ---------//
 
@@ -293,58 +317,48 @@ serial.Port.prototype.onReceive = (data) => {
       abuff.ph_cum[abuff.indtrace] = []
     }
     abuff.t_cum[abuff.indtrace][abuff.t_cum[abuff.indtrace].length] = dt
-    abuff.ph_cum[abuff.indtrace][abuff.ph_cum[abuff.indtrace].length] = currvalp[0]
+    abuff.ph_cum[abuff.indtrace][abuff.ph_cum[abuff.indtrace].length] = currvalp
   }//IF triggered
 //--------- CUMULATIVE ---------//
 
   if (trigDown){
     updatePlots()
-
-    // //report first timepoint below threshold
-    // var darkthresh = 250
-    // var darkthresh = 300
-
-    // const isLargeNumber = (element) => element < 260;
-    // abuff.tdrop[abuff.tdrop.length] = Math.round(abuff.t[abuff.ph.findIndex(isLargeNumber)])
-    // console.log('~~TDROP~> ' + abuff.tdrop + ' MS');
-    // console.log('~~TDROP~> ' + abuff.tdrop[abuff.tdrop.length-1] + ' MS');
-
-    // const isLargeNumber2 = (element) => element > 280;
-    // abuff.tdrop2[abuff.tdrop2.length] = Math.round(abuff.t[abuff.ph.findIndex(isLargeNumber2)])
-    // console.log('~~TRISE~> ' + abuff.tdrop2 + ' MS');
-    // console.log('~~TRISE~> ' + abuff.tdrop2[abuff.tdrop.length-1] + ' MS');
   } //IF triggered down, then plot
+}//FOR s samples
 }//FUNCTION onReceive
 
 function updatePlots(){
-
-
 //----- Sampling stats
-var pipe = {dt: [], dur: 0, nsamples: 0, SR: 0}
-for (var i=0; i<=abuff.trec.length-1; i++){
-  if (i>0){
-    pipe.dt[i-1] = abuff.trec[i] - abuff.trec[i-1]
-  }
-  pipe.nsamples = pipe.nsamples + abuff.nrec[i]
-}
-pipe.dur = abuff.trec[abuff.trec.length-1]
-pipe.SR = pipe.nsamples/(pipe.dur)
+  var pipe = {dt: [], dur: 0, npackets: 0, SR: 0}
+  for (var i=0; i<=abuff.trec.length-1; i++){
+    if ( i>0 && abuff.trec[i] != abuff.trec[i-1] ){
+      pipe.dt.push(abuff.trec[i] - abuff.trec[i-1])
+      pipe.npackets = pipe.npackets + 1
+    }
+  }//FOR i
+  pipe.dur = abuff.trec[abuff.trec.length-1]
+  pipe.SR = pipe.npackets/(pipe.dur)
 
-console.log('SR=' + Math.round(abuff.ph.length / pipe.dur ) + ' kHz (pipe: ' + Math.round(pipe.SR) + ')');
-console.log('ANALOG: dt=[' + Math.min(...abuff.dt) + ', ' + Math.max(...abuff.dt) + '] ms')
+  console.log('SR=' + Math.round(abuff.ph.length / pipe.dur ) + ' kHz (pipe: ' + Math.round(pipe.SR) + ')');
+  console.log('ANALOG: dt=[' + Math.min(...abuff.dt) + ', ' + Math.max(...abuff.dt) + '] ms')
+
+  document.getElementById('titletext').innerHTML = 
+          'MkPhotodiode &nbsp&nbsp' + 
+          '<font color=green>Trial ' + abuff.ntrials + '&nbsp&nbsp</font>' + 
+          "<font size=-1>" + Math.round(100*abuff.ph.length / pipe.dur )/100 + ' kHz ' +
+          '(pipe: ' + Math.round(pipe.SR*100)/100 + ') </font>'
 //----- Sampling stats
 
 //----- Display stats
-const isSmallNumber = (element) => element < 0.3*(Math.max(...abuff.ph) - Math.min(...abuff.ph)) + Math.min(...abuff.ph);
-abuff.tdrop[abuff.ntrials] = Math.round(abuff.t[abuff.ph.findIndex(isSmallNumber)])
+  const isSmallNumber = (element) => element < 0.3*(Math.max(...abuff.ph) - Math.min(...abuff.ph)) + Math.min(...abuff.ph);
+  abuff.tdrop[abuff.ntrials] = Math.round(abuff.t[abuff.ph.findIndex(isSmallNumber)])
 
-const isLargeNumber = (element) => element > 0.7*(Math.max(...abuff.ph) - Math.min(...abuff.ph)) + Math.min(...abuff.ph);
-abuff.trise[abuff.ntrials] = Math.round(abuff.t[abuff.ph.findIndex(isLargeNumber)])
-console.log('tRise~>' + abuff.trise[abuff.ntrials] + ', tDrop~>' + abuff.tdrop[abuff.ntrials] + ' ms');
+  const isLargeNumber = (element) => element > 0.7*(Math.max(...abuff.ph) - Math.min(...abuff.ph)) + Math.min(...abuff.ph);
+  abuff.trise[abuff.ntrials] = Math.round(abuff.t[abuff.ph.findIndex(isLargeNumber)])
+  console.log('tRise~>' + abuff.trise[abuff.ntrials] + ', tDrop~>' + abuff.tdrop[abuff.ntrials] + ' ms');
 
-var prevind = abuff.indtrace - 1
-if (prevind < 0){prevind = abuff.ntraces-1};
-if (abuff.ntrials>=1){
+  var prevind = abuff.indtrace - 1
+  if (prevind < 0){prevind = abuff.ntraces-1};
 
   var dt = 0.5; //milliseconds
   var tmax = abuff.t[abuff.ph.length-1];
@@ -352,40 +366,43 @@ if (abuff.ntrials>=1){
   var tinterp = [...Array(npoints).keys() ].map( i => i*dt);
   var xinterp = everpolate.linear(tinterp, abuff.t, abuff.ph);
 
-  var tmax = abuff.t_cum[prevind][abuff.ph_cum[prevind].length-1];
-  var npoints = Math.round(tmax/dt)
-  var tinterp = [...Array(npoints).keys() ].map( i => i*dt);
-  var yinterp = everpolate.linear(tinterp, abuff.t_cum[prevind], abuff.ph_cum[prevind]);
+  if (abuff.ntrials>=1){
+    var tmax = abuff.t_cum[prevind][abuff.ph_cum[prevind].length-1];
+    var npoints = Math.round(tmax/dt)
+    var tinterp_prev = [...Array(npoints).keys() ].map( i => i*dt);
+    var yinterp = everpolate.linear(tinterp_prev, abuff.t_cum[prevind], abuff.ph_cum[prevind]);
 
-  try {
-    r = pcorr(xinterp, yinterp);
-    r = Math.round(r*100)/100
-  } catch (error) {
-    console.log('error computing correlation')    
-  }
-  console.log('Trial ' + abuff.ntrials + 'v' + (abuff.ntrials-1) + ' ' 
-              + abuff.indtrace + 'v' + prevind
-              + ' ---- dstart=' + Math.round(abuff.trise[abuff.ntrials] - abuff.trise[abuff.ntrials-1])
-              + ' ddur=' + Math.round(abuff.t[abuff.ph.length-1] - abuff.t_cum[prevind][abuff.ph_cum[prevind].length-1])
-              + ' r=' + r )
-  abuff.corr[abuff.ntrials-1] = r;
-}
+    try {
+      r = pcorr(xinterp, yinterp);
+      r = Math.round(r*100)/100
+    } catch (error) {
+      console.log('error computing correlation')    
+    }
+    abuff.corr[abuff.ntrials-1] = r;
+
+    console.log('Trial ' + abuff.ntrials + 'v' + (abuff.ntrials-1) + ' ' 
+                + abuff.indtrace + 'v' + prevind
+                + ' ---- dstart=' + Math.round(abuff.trise[abuff.ntrials] - abuff.trise[abuff.ntrials-1])
+                + ' ddur=' + Math.round(abuff.t[abuff.ph.length-1] - abuff.t_cum[prevind][abuff.ph_cum[prevind].length-1])
+                + ' r=' + r )
+
+    //Update displaystat chip
+    var str = '<font size=+2>' + 'rise,fall,dur ' +
+          '<font color=green><b>' +
+          Math.round(abuff.trise[abuff.ntrials]) + ', ' + //rise
+          Math.round(abuff.tdrop[abuff.ntrials]) + ', ' + //fall
+          Math.round(abuff.t[abuff.ph.length-1]) + '</font></b> &nbsp(' + //dur
+          Math.round(abuff.trise[abuff.ntrials] - abuff.trise[abuff.ntrials-1]) + ', ' + //drise
+          Math.round(abuff.tdrop[abuff.ntrials] - abuff.tdrop[abuff.ntrials-1]) + ', ' + //dfall
+          Math.round(abuff.t[abuff.ph.length-1] - abuff.t_cum[prevind][abuff.ph_cum[prevind].length-1]) + ') ms' + //ddur
+          '  ______  r=' + r + '</font>'; //correlation
+    document.getElementById("displaystatschip").innerHTML = str;
+  }//IF >1 trial
 //----- Display stats
 
-
-//---------- Update plot
-  // dataRunning.setValue(abuff.currind+1,0,dt)
-  // dataRunning.setValue(abuff.currind+1,1,currvalp[0])
-  // dataRunning.setValue(abuff.currind+1,2,currvals[0])
-
-  cumulativeOptions.hAxis = {viewWindow: {min: 0, max: abuff.t[abuff.t.length-1]} }
-  lineCumulative.draw(dataCumulative, google.charts.Line.convertOptions(cumulativeOptions));
-
-  runningOptions.hAxis = {viewWindow: {min: 0, max: abuff.t[abuff.t.length-1]} }
+  runningOptions.hAxis = {viewWindow: {min: 0, max: tinterp[tinterp.length-1]} }
   lineRunning.draw(dataRunning, google.charts.Line.convertOptions(runningOptions));
-
   dataRunning.removeRows(0,dataRunning.getNumberOfRows());
-  dataCumulative.removeRows(0,dataCumulative.getNumberOfRows());
 
   abuff.lastdraw = performance.now();
 }//FUNCTION updatePlot
@@ -399,18 +416,6 @@ async function readLoop(port) {
     port.onReceiveError(error);
   }
 }//FUNCTION readLoop
-
-
-function binTimeSeries(t,x,dt){
-  var count = 0;
-  var tbin = []
-  var xbin = [];
-  for (var tbin = 0; tbin <= Math.round(t[t.length-1]); tbin=tbin+dt){
-
-  } //FOR i
-} //FUNCTION binTimeSeries
-
-
 
 function pcorr(x, y)
 {

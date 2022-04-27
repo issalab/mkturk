@@ -10,17 +10,9 @@
     //Running photodiode plot
     dataRunning = new google.visualization.DataTable();
     lineRunning = new google.charts.Line(document.getElementById('running_plot_card'))
-    dataRunning.addColumn('number', 'milliseconds');
-    dataRunning.addColumn('number', 'SampleCommand');
-    dataRunning.addColumn('number', 'Photodiode');
-
-    //Cumulative triggered traces plot
-    dataCumulative = new google.visualization.DataTable();
-    lineCumulative = new google.charts.Line(document.getElementById('cumulative_plot_card'))
-    dataCumulative.addColumn('number', 'milliseconds');
-    dataCumulative.addColumn('number', 'SampleCommand');
-    dataCumulative.addColumn('number', 'Photodiode');
-    console.log('Created google line charts: running + triggered')
+    dataRunning.addColumn('number', 'time (ms)');
+    dataRunning.addColumn('number', 'Previous');
+    dataRunning.addColumn('number', 'Current');
   }//FUNCTION DRAWCHART()
 
   //================== CONNECT WEBUSB ==================//

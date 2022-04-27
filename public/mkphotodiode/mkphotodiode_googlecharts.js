@@ -1,43 +1,6 @@
-var cumulativeOptions = {
-  chart: {
-    title: 'PREVIOUS'
-  },
-  width: 1200,
-  height: 600,
-  allowAsync: true,
-  animation: {
-    duration: 0,
-    easing:'linear',
-    startup: false,
-  },
-  legend: {
-    position: 'none'
-  },
-  // axes:{
-  //   x: {
-  //     0: {label: 'time (ms)'},
-  //   },
-
-  //   y: {
-  //     0: {label: 'Photodiode'},
-  //   } 
-  // }
-  series: {
-    0: {axis: 'PD'},
-    1: {axis: 'SC'}
-  },
-  axes:{
-    y: {
-      PD: {label: 'Photodiode'},
-      SC: {label: 'Sample Command'}
-    }
-  }
-}//cumulativeOptions
-
-
 var runningOptions = {
   chart: {
-    title: 'CURRENT'
+    title: 'Current (red) vs Previous (gray)'
   },
   width: 1200,
   height: 600,
@@ -51,13 +14,17 @@ var runningOptions = {
     position: 'none'
   },
   series: {
-    0: {axis: 'PD'},
-    1: {axis: 'SC'}
+    0: {color: "grey"},
   },
   axes:{
     y: {
-      PD: {label: 'Photodiode'},
-      SC: {label: 'Sample Command'}
-    }
-  }
+      label: 'Photodiode',
+    },
+  },
+  vAxes: {
+      0: {
+        title:'Photodiode',
+        textStyle: {color: 'red'}
+      }
+    }  
 }//runningOptions

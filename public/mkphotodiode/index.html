@@ -31,14 +31,18 @@
 					</div>
 
 			  	<!-- Connect Button -->
-			    <div class="mdl-card mdl-shadow--2dp mdl-cell mdl-cell--12-col-desktop mdl-cell--8-col-tablet mdl-cell--4-col-phone" id="scale-card">
+<!-- 			    <div class="mdl-card mdl-shadow--2dp mdl-cell mdl-cell--12-col-desktop mdl-cell--8-col-tablet mdl-cell--4-col-phone" id="scale-card"> -->
+
+			  <div>
 			      <button class="mdl-button mdl-js-button mdl-button--raised mdl-js-ripple-effect" id="connectusb">
 			        CONNECT ARDUINO
 			      </button>
-			    </div>
 
-			  	<!-- Cumulative plot -->
-			    <div class="mdl-card mdl-shadow--2dp mdl-cell mdl-cell--12-col-desktop mdl-cell--8-col-tablet mdl-cell--4-col-phone mdl-cell--stretch" id="cumulative_plot_card">
+			  
+						<span class="mdl-chip">
+						    <span class="mdl-chip__text" id="displaystatschip"> <b> DisplayStats </b> </span>
+						</span>
+			  
 			    </div>
 
 			  	<!-- Running plot -->
@@ -74,9 +78,7 @@
 			}//FUNCTION connectHardwareButtonPromise
 
 			var dataRunning=null
-			var dataCumulative=null
 			var lineRunning=null
-			var lineCumulative=null
 		</script>
 
     <script src="/__/firebase/8.2.3/firebase-app.js"></script>
