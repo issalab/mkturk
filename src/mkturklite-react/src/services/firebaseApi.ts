@@ -98,6 +98,9 @@ export const firebaseApi = createApi({
             .catch((e: Error) => {
               console.error('getDatafile::getDownloadURL error:', e);
             });
+          if (data['code'] == 403) {
+            throw 'error';
+          }
           return { data: data };
         } catch {
           return { error: 'getDatafile::failed' };

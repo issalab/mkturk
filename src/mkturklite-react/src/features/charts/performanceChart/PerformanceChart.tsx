@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import Row from 'react-bootstrap/Row';
 
 import { useAppSelector } from '../../../app/hooks';
 
@@ -44,6 +45,7 @@ export const PerformanceChart = () => {
     numReward: '',
     rewardVolume: '',
     timeElapsed: '',
+    lastTrial: '',
   });
 
   const chartOptions: ChartOptions<'line'> = {
@@ -155,17 +157,28 @@ export const PerformanceChart = () => {
           (Date.now() - new Date(currentData['CurrentDate']).getTime()) /
           60000
         ).toFixed(),
+        lastTrial: new Date(
+          new Date(currentData['CurrentDate']).getTime() +
+            currentData['EndTime'].slice(-1)[0]
+        ).toLocaleTimeString(),
       });
     }
   }, [currentData]);
 
   return (
     <div>
-      <span>
-        {vitals.name}: {vitals.percentCorrect}% (n={vitals.numCorrect} of{' '}
-        {vitals.numTrials}, r={vitals.numReward}={vitals.rewardVolume} mL,{' '}
-        {vitals.timeElapsed} mins)
-      </span>
+      <Row>
+        <span style={{ whiteSpace: 'nowrap' }}>
+          {vitals.name}: {vitals.percentCorrect}% (n={vitals.numCorrect} of{' '}
+          {vitals.numTrials}, r={vitals.numReward}={vitals.rewardVolume} mL,{' '}
+          {vitals.timeElapsed} mins)
+        </span>
+      </Row>
+      <Row>
+        <span style={{ whiteSpace: 'nowrap' }}>
+          Last Trial: {vitals.lastTrial}
+        </span>
+      </Row>
       <Line data={chartData} options={chartOptions} />
     </div>
   );

@@ -34,39 +34,68 @@ export const Editor = () => {
   const metadataGenerationResult = useGetMetadataGenerationQuery(
     currentDatafileEntry,
     {
-      pollingInterval: 5000,
+      pollingInterval: 1000,
+      refetchOnMountOrArgChange: true,
     }
+  );
+
+  // const dataResult = useGetDatafileQuery(currentDatafileEntry, {
+  //   refetchOnMountOrArgChange: true,
+  // });
+  console.log(
+    metadataGenerationResult.data,
+    currentMetadataGeneration,
+    metadataGenerationResult.data == currentMetadataGeneration
   );
 
   const dataResult = useGetDatafileQuery(currentDatafileEntry, {
     refetchOnMountOrArgChange: true,
   });
 
+  console.log('metadataGenerationResult:', metadataGenerationResult);
   console.log('dataResult:', dataResult);
+  // console.log('dataResult:', data, 'requestId:', requestId);
 
-  const unmountEditor = () => {
-    console.log('unmountEditor::editorRef:', editorRef);
-    editorRef.current?.destroy();
-  };
+  // const unmountEditor = () => {
+  //   console.log('unmountEditor::editorRef:', editorRef);
+  //   editorRef.current?.destroy();
+  // };
 
   React.useEffect(() => {
-    console.log('React.useEffect()');
     const container = elRef.current;
     if (container && editorRef) {
       if (editorRef.current === null) {
-        // console.log('editorRef.current == null');
         const jsonEditor = new JSONEditor(container, { mode: 'tree' });
         editorRef.current = jsonEditor;
+        console.log('jsoneditor GET', jsonEditor.get());
       } else if (editorRef.current !== null) {
         if (
-          dataResult.data !== undefined &&
-          metadataGenerationResult.data != currentMetadataGeneration
+          !dataResult.isError &&
+          !dataResult.isFetching &&
+          !dataResult.isLoading &&
+          dataResult.isSuccess &&
+          !metadataGenerationResult.isError &&
+          !metadataGenerationResult.isFetching &&
+          !metadataGenerationResult.isLoading &&
+          metadataGenerationResult.isSuccess
         ) {
-          console.log('new data loaded i think:', Date.now());
-          dispatch(setCurrentDatafileGeneration(metadataGenerationResult.data));
-          dispatch(setCurrentData(dataResult.data));
-          editorRef.current.set(dataResult.data);
-          metadataGenerationResult.refetch();
+          if (metadataGenerationResult.data !== currentMetadataGeneration) {
+            console.log('DISPATCH');
+            dispatch(
+              setCurrentDatafileGeneration(metadataGenerationResult.data)
+            );
+            dispatch(setCurrentData(dataResult.data));
+            if (Object.keys(editorRef.current.get()).length === 0) {
+              editorRef.current.set(dataResult.data);
+            } else {
+              editorRef.current.update(dataResult.data);
+            }
+            metadataGenerationResult.refetch();
+            dataResult.refetch();
+          }
+        }
+
+        if (dataResult.isError) {
           dataResult.refetch();
         }
       }

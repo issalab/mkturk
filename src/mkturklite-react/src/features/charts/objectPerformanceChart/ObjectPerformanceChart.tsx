@@ -61,48 +61,21 @@ export const ChoiceChart = () => {
       if (currentData['RewardStage'] > 0) {
         // SameDifferent
         if (currentData['SameDifferent'] > 0) {
-          for (let i = 0; i < currentData['ChoiceGridIndex'].length; i++) {
-            labels.push(
-              `choice ${i}::idx ${currentData['ChoiceGridIndex'][i]}`
-            );
-            const numOccurrence = currentData['Response'].reduce(
-              (a: number, v: number) => (v === i ? a + 1 : a),
-              0
-            );
-            data.push(numOccurrence);
-          }
         } else {
           // SR2
           if (
             currentData['ObjectGridIndex'] !== undefined &&
             currentData['ObjectGridIndex'].length > 0
           ) {
-            for (let i = 0; i < currentData['ObjectGridIndex'].length; i++) {
-              labels.push(
-                currentData['ImageBagsTest'][i].split('/').slice(-1)[0]
-              );
+            for (let i = 0; i < currentData['SampleObjects'].length; i++) {
+              labels.push(currentData['SampleObjects'][i]);
 
-              const numOccurrence = currentData['Response'].reduce(
-                (a: number, v: number) => (v === i ? a + 1 : a),
-                0
-              );
-
-              data.push(numOccurrence);
+              for (let j = 0; j < currentData['Sample'][0].length; j++) {}
             }
           }
         }
       } else {
         // fountain task
-        labels.push('outside fix');
-        labels.push('inside fix');
-
-        const numOccurrenceOutsideFix = currentData['Response'].reduce(
-          (a: number, v: number) => (v === 0 ? a + 1 : a),
-          0
-        );
-
-        data.push(numOccurrenceOutsideFix);
-        data.push(currentData['Response'].length - numOccurrenceOutsideFix);
       }
       setChartData({
         labels: labels,

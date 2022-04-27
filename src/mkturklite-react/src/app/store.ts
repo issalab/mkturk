@@ -13,9 +13,10 @@ export const store = configureStore({
     [firebaseApi.reducerPath]: firebaseApi.reducer,
   },
   middleware: (getDefaultMiddleware) =>
-    getDefaultMiddleware()
-      // .concat(dataApiSlice.middleware)
-      .concat(firebaseApi.middleware),
+    getDefaultMiddleware({
+      immutableCheck: false,
+      serializableCheck: false,
+    }).concat(firebaseApi.middleware),
 });
 
 export type AppDispatch = typeof store.dispatch;
