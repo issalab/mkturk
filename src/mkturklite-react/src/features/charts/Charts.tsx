@@ -5,6 +5,8 @@ import { RewardChart } from './rewardChart/RewardChart';
 import { HealthChart } from './healthChart/HealthChart';
 import { PerformanceChart } from './performanceChart/PerformanceChart';
 import { ChoiceChart } from './choiceChart/ChoiceChart';
+import { ObjectPerformanceChart } from './objectPerformanceChart/ObjectPerformanceChart';
+import { TrialChart } from './trialChart/TrialChart';
 
 export function Charts() {
   return (
@@ -17,7 +19,9 @@ export function Charts() {
       </Card>
       <Card className="mb-3 p-0">
         <Card.Header>Trial</Card.Header>
-        <Card.Body>Trial Chart</Card.Body>
+        <Card.Body>
+          <TrialChart />
+        </Card.Body>
       </Card>
       <Card className="mb-3 p-0">
         <Card.Header>Health Diagnosis</Card.Header>
@@ -45,7 +49,9 @@ export function Charts() {
       </Card>
       <Card className="mb-3 p-0">
         <Card.Header>Object Performance</Card.Header>
-        <Card.Body>Object Performance Chart</Card.Body>
+        <Card.Body>
+          <ObjectPerformanceChart />
+        </Card.Body>
       </Card>
       <Card className="p-0">
         <Card.Header>Reward Amount</Card.Header>

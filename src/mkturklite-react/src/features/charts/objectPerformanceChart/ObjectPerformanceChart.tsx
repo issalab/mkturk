@@ -30,7 +30,7 @@ interface IDictionary {
   [index: string]: any;
 }
 
-export const ChoiceChart = () => {
+export const ObjectPerformanceChart = () => {
   const currentData: IDictionary = useAppSelector(selectCurrentData);
   const [chartData, setChartData] = useState({
     labels: [],
@@ -47,7 +47,7 @@ export const ChoiceChart = () => {
       yAxes: {
         title: {
           display: true,
-          text: 'count',
+          text: 'performance (%)',
         },
       },
     },
@@ -69,8 +69,21 @@ export const ChoiceChart = () => {
           ) {
             for (let i = 0; i < currentData['SampleObjects'].length; i++) {
               labels.push(currentData['SampleObjects'][i]);
-
-              for (let j = 0; j < currentData['Sample'][0].length; j++) {}
+              let correctCount = 0;
+              let totalCount = 0;
+              for (let j = 0; j < currentData['Sample'][0].length; j++) {
+                if (
+                  currentData['SampleBagIdx'][currentData['Sample'][0][j]] == i
+                ) {
+                  totalCount++;
+                  if (
+                    currentData['Response'][j] == currentData['CorrectItem'][j]
+                  ) {
+                    correctCount++;
+                  }
+                }
+              }
+              data.push((correctCount / totalCount) * 100);
             }
           }
         }
@@ -79,7 +92,7 @@ export const ChoiceChart = () => {
       }
       setChartData({
         labels: labels,
-        datasets: [{ data: data }],
+        datasets: [{ data: data, backgroundColor: 'rgba(54, 162, 235, 0.2)' }],
       });
       console.log('RewardChart::currentData', currentData);
     }
