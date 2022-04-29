@@ -7,6 +7,7 @@ import { PerformanceChart } from './performanceChart/PerformanceChart';
 import { ChoiceChart } from './choiceChart/ChoiceChart';
 import { ObjectPerformanceChart } from './objectPerformanceChart/ObjectPerformanceChart';
 import { TrialChart } from './trialChart/TrialChart';
+import { RealtimeChart } from './realtimeChart/RealtimeChart';
 
 export function Charts() {
   return (
@@ -35,7 +36,9 @@ export function Charts() {
       </Card>
       <Card className="mb-3 p-0">
         <Card.Header>Realtime Stream</Card.Header>
-        <Card.Body>Realtime Stream Chart</Card.Body>
+        <Card.Body>
+          <RealtimeChart />
+        </Card.Body>
       </Card>
       <Card className="mb-3 p-0">
         <Card.Header>Reaction Time</Card.Header>

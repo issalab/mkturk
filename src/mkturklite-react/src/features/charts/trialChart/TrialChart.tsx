@@ -76,41 +76,41 @@ export const TrialChart = () => {
         }
       );
 
-      console.log('correctData:', correctData);
-
-      // const smallAvgData: number[] = []; // 5 trials average
-      const bigAvgData: number[] = []; // 100 trials average
       const labels = currentData['EndTime'].map((time: number) => {
         const currentDateInMs = new Date(currentData['CurrentDate']).getTime();
         return new Date(time + currentDateInMs);
       });
 
-      const smallAvgData = currentData['EndTime'].map((time: number) => {
-        return 1;
-      });
+      const trialCountList: number[] = []; // trial count at every trial
+      const correctResponseCountList: number[] = []; // correct response count at every trial
 
-      // for (let i = 0; i < correctData.length; i++) {
-      //   labels.push(new Date(currentData[]))
+      for (let i = 0; i < currentData['Response'].length; i++) {
+        const trialCount = i + 1;
+        trialCountList.push(trialCount);
 
-      // }
+        const correctResponseCount = correctData
+          .slice(0, i + 1)
+          .reduce((prev, cur) => prev + cur, 0);
+        correctResponseCountList.push(correctResponseCount);
+      }
 
       setChartData({
         labels: labels,
         datasets: [
           {
-            data: smallAvgData,
-            label: 'current average',
+            data: trialCountList,
+            label: 'Trial',
             backgroundColor: 'rgba(255, 99, 132, 0.2)',
             borderColor: 'rgb(255, 99, 132)',
-            pointRadius: 0,
+            pointRadius: 1,
             fill: true,
           },
           {
-            data: bigAvgData,
-            label: '100 trials average',
-            backgroundColor: '#6610f2',
-            borderColor: '#6610f2',
-            pointRadius: 0,
+            data: correctResponseCountList,
+            label: 'Performance',
+            backgroundColor: 'rgba(153, 102, 255, 0.2)',
+            borderColor: 'rgb(153, 102, 255)',
+            pointRadius: 1,
             fill: true,
           },
         ],
