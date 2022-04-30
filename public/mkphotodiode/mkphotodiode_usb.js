@@ -15,20 +15,76 @@ var abuff = {
   trec: [],
 
   //current
-  t: [], ph: [], sa: [], currind: 0, dt: [], prev_sa: 0,
+  t0: 0, t: [], ph: [], sa: [], currind: 0, dt: [], prev_sa: 0,
 
   //cumulative
   t_cum: [], ph_cum: [],
   ntraces: 2,
 
-  //triggers
   ttrig: [], trigON: 0, indtrace: -1,
-  tdrop: [], trise: [], corr: [],
+  //triggers
+  tdrop: [], trise: [], dur: [], corr: [],
   ntrials: -1,
 
   lastdraw: performance.now(),
   lastreceive: performance.now(),
 };
+
+let fileMeta = { 
+  activeAgentList: [],
+  activeAgent: '',
+  filename: '',
+  trialnum: -1
+}
+const rtdb = firebase.database();
+let rtdbBroadcastRef = rtdb.ref('instances');
+rtdbBroadcastRef.on('child_added', function(childSnapshot, prevChildKey) {
+  getActiveAgents();
+  console.log(childSnapshot.key + ' is now live; adding agent to list.')
+})//CALLBACK for when agents are added
+
+function getActiveAgents(){
+  rtdbBroadcastRef.once('value').then((snap) => {
+    try {
+       fileMeta.activeAgentList = Object.keys(snap.val());
+
+        var listobj = document.getElementById('agent-list');
+
+        fileMeta.activeAgentList.forEach(agent => {
+            let opt = document.createElement('option');
+            opt.innerHTML = agent;
+            listobj.appendChild(opt)
+          }
+        )//forEach agent
+    } catch (err) {
+      fileMeta.activeAgentList = [];
+      console.error("error: trouble getting active agent list from realtime db");
+    }
+  });  
+}//FUNCTION getActiveAgents
+// getActiveAgents();//Initialize List
+
+function agentSelectionListener(event){
+  fileMeta.activeAgent = event.target.value;
+  rtdb.ref(`instances/${fileMeta.activeAgent}/trialnum`).on('value', (snap) => 
+  {
+    fileMeta.trialnum = snap.val();
+  })
+  getFileMeta()
+}//FUNCTION agentSelectionListener
+
+function getFileMeta(){ 
+  rtdb.ref(`instances/${fileMeta.activeAgent}`).once('value').then( (snap) =>{
+    try {
+      fileMeta.filename = snap.val()['filename'];
+      fileMeta.trialnum = snap.val()['trialnum'];
+    } catch (err) {
+      console.error("error: trouble getting filename & trialnum from realtime db");
+    }
+  } )
+}//FUNCTION getFileMeta
+
+
 //=======(END)======= INITIALIZE VARIABLES =================//
 
 //---------------------------------------------//
@@ -250,6 +306,7 @@ for (var s=0; s<=indt.length-1; s++){
     abuff.t_cum[abuff.indtrace] = []
     abuff.ph_cum[abuff.indtrace] = []
     abuff.ttrig[abuff.indtrace] = onReceiveTime;
+    abuff.t0 = Date.now()
 
     abuff.trec = []
     abuff.nrec = []
@@ -322,6 +379,7 @@ for (var s=0; s<=indt.length-1; s++){
 //--------- CUMULATIVE ---------//
 
   if (trigDown){
+    saveTrialData()
     updatePlots()
   } //IF triggered down, then plot
 }//FOR s samples
@@ -344,10 +402,14 @@ function updatePlots(){
 
   document.getElementById('titletext').innerHTML = 
           'MkPhotodiode &nbsp&nbsp' + 
-          '<font color=green>Trial ' + abuff.ntrials + '&nbsp&nbsp</font>' + 
           "<font size=-1>" + Math.round(100*abuff.ph.length / pipe.dur )/100 + ' kHz ' +
-          '(pipe: ' + Math.round(pipe.SR*100)/100 + ') </font>'
+          '(pipe: ' + Math.round(pipe.SR*100)/100 + ') __ ' + fileMeta.filename + '</font>'
 //----- Sampling stats
+
+//----- MkTurk Meta
+document.getElementById('metatext').innerHTML = 
+          '<font color=blue> Trial_mk ' + fileMeta.trialnum + '</font>'+
+          ' (n=' + abuff.ntrials + ')'
 
 //----- Display stats
   const isSmallNumber = (element) => element < 0.3*(Math.max(...abuff.ph) - Math.min(...abuff.ph)) + Math.min(...abuff.ph);
@@ -356,6 +418,8 @@ function updatePlots(){
   const isLargeNumber = (element) => element > 0.7*(Math.max(...abuff.ph) - Math.min(...abuff.ph)) + Math.min(...abuff.ph);
   abuff.trise[abuff.ntrials] = Math.round(abuff.t[abuff.ph.findIndex(isLargeNumber)])
   console.log('tRise~>' + abuff.trise[abuff.ntrials] + ', tDrop~>' + abuff.tdrop[abuff.ntrials] + ' ms');
+
+  abuff.dur[abuff.ntrials] = abuff.t[abuff.ph.length-1]
 
   var prevind = abuff.indtrace - 1
   if (prevind < 0){prevind = abuff.ntraces-1};
@@ -387,16 +451,36 @@ function updatePlots(){
                 + ' r=' + r )
 
     //Update displaystat chip
-    var str = '<font size=+2>' + 'rise,fall,dur ' +
+    usd1 = getMeanStandardDeviation(abuff.trise)
+    usd2 = getMeanStandardDeviation(abuff.tdrop)
+    usd3 = getMeanStandardDeviation(abuff.dur)
+    usd4 = getMeanStandardDeviation(abuff.corr)
+
+    var d1 = Math.max(...abuff.trise) - Math.min(...abuff.trise);
+    var d2 = Math.max(...abuff.tdrop) - Math.min(...abuff.tdrop);
+    var d3 = Math.max(...abuff.dur) - Math.min(...abuff.dur);
+    var d4 = Math.max(...abuff.corr) - Math.min(...abuff.corr);
+
+    var str = '<font size=+1>' + 'rise, fall, dur ' +
           '<font color=green><b>' +
           Math.round(abuff.trise[abuff.ntrials]) + ', ' + //rise
           Math.round(abuff.tdrop[abuff.ntrials]) + ', ' + //fall
-          Math.round(abuff.t[abuff.ph.length-1]) + '</font></b> &nbsp(' + //dur
+          Math.round(abuff.dur[abuff.ntrials]) + '</font></b> &nbsp(∆=' + //dur
           Math.round(abuff.trise[abuff.ntrials] - abuff.trise[abuff.ntrials-1]) + ', ' + //drise
           Math.round(abuff.tdrop[abuff.ntrials] - abuff.tdrop[abuff.ntrials-1]) + ', ' + //dfall
-          Math.round(abuff.t[abuff.ph.length-1] - abuff.t_cum[prevind][abuff.ph_cum[prevind].length-1]) + ') ms' + //ddur
-          '  ______  r=' + r + '</font>'; //correlation
+          Math.round(abuff.dur[abuff.ntrials] - abuff.dur[abuff.ntrials-1]) + ') ' + //ddur
+          '  r=' + r + '</font>' //correlation
     document.getElementById("displaystatschip").innerHTML = str;
+
+    var str =
+    '<font size=+1><b>Summary:</b> µ=' + 
+      Math.round(usd1[0]) + ', ' + Math.round(usd2[0]) + ', ' + Math.round(usd3[0]) + ', ' + Math.round(usd4[0]*100)/100+
+    '&nbsp&nbsp sd=' + 
+      Math.round(usd1[1]) + ', ' + Math.round(usd2[1]) + ', ' + Math.round(usd3[1]) + ', ' + Math.round(usd4[1]*100)/100 +
+    '&nbsp&nbsp [max-min]='+
+      Math.round(d1) + ', ' + Math.round(d2) + ', ' + Math.round(d3) + ', ' + Math.round(d4*100)/100 + 
+    '</font>'
+    document.getElementById("summarydisplaystatschip").innerHTML = str;
   }//IF >1 trial
 //----- Display stats
 
@@ -436,3 +520,37 @@ function pcorr(x, y)
   x.forEach(reduce);
   return (minLength * sumXY - sumX * sumY) / Math.sqrt((minLength * sumX2 - sumX * sumX) * (minLength * sumY2 - sumY * sumY));
 };
+
+function getMeanStandardDeviation (array) {
+  const n = array.length
+  var mean = array.reduce((a, b) => a + b) / n
+  var sd = Math.sqrt(array.map(x => Math.pow(x - mean, 2)).reduce((a, b) => a + b) / n)
+  return [mean,sd]
+}
+
+function saveTrialData(){
+// Notes for @Hector
+// if (fileMeta.activeAgent is an empty string) ==> then just save to local disk using agent "None"
+//else if there is an activeAgent, then save both to localy disk and bigquery
+
+//Trial num:
+// if (fileMeta.activeAgent is not an empty string)
+// && if (fileMeta.trialnum is >= 0), then use fileMeta.trialnum
+// Else use abuff.ntrials for the trialnum
+
+//on each trial save the data in abuff.t and abuff.ph
+//these are length O(1000) since the data are sampled at 1.5kHz and stimuli last on the order of seconds
+//abuff.t is relative to sample command onset (ie, starts at 0)
+//however, we want absolute time in the same timeframe as timeseries that are saved out to bigquery by mkturk
+// absolute time = abuff.t0 + abuff.t
+// where t0=Date.now() at time of trigger
+
+//Maybe I'm missing something but the actual file contents would simply be an entry for each trial [time,trial,data...]
+//The filename would be the same as the mkturk file name in fileMeta.filename appended with _fileMeta.activeAgent & '_photodiode' added.
+// You could also write fileMeta.activeAgent & fileMeta.filename the first time the file is created
+// to have that information explicitly in the file instead of implicit in the filename.
+
+
+//one thing to check is that data writing can proceed aysynchronously to data reading without interfering.
+//Otherwise, data writing will have to be fast enough to happen during the downtime (intertrial_interval) between sample command triggers
+}

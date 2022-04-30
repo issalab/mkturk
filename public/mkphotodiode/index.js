@@ -15,6 +15,11 @@
     dataRunning.addColumn('number', 'Current');
   }//FUNCTION DRAWCHART()
 
+
+  //================== CONNECT REALTIMEDATABASE ==================//
+  // const rtdb = firebase.database();
+document.getElementById("agent-list").addEventListener("change",agentSelectionListener,false);
+
   //================== CONNECT WEBUSB ==================//
   if (typeof navigator.usb == 'object') {
     document.querySelector('button[id=connectusb]').addEventListener('pointerup', findUSBDevice, false);

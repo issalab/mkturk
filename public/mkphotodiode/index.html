@@ -5,6 +5,7 @@
     <meta name="viewport">
     <meta content="width=device-width, initial-scale=1">
     <meta http-equiv="Content-Type">
+    <title>MkPhotodiode</title>
 
 	<!-- ======== MDL ======== -->
     <link rel="stylesheet" href="http://fonts.googleapis.com/css?family=Roboto:300,400,500,700">
@@ -13,44 +14,76 @@
     <script defer src="https://code.getmdl.io/1.3.0/material.min.js"></script>
 	<!-- ======== MDL (end) ======== -->
 
-	<!-- ======== GOOGLE CHARTS ======== -->
-    <script src="https://www.gstatic.com/charts/loader.js"></script>
-
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:regular,bold,italic,thin,light,bolditalic,black,medium&amp;lang=en">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
+    <link rel="stylesheet" href="https://code.getmdl.io/1.3.0/material.indigo-pink.min.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/jsoneditor/7.0.4/jsoneditor.css" rel="stylesheet">
     <link rel="stylesheet" href="mkphotodiode.css">
+
+		<!-- ======== GOOGLE CHARTS ======== -->
+    <script src="https://www.gstatic.com/charts/loader.js"></script>
+		<script src=https://cdnjs.cloudflare.com/ajax/libs/mathjs/3.3.0/math.min.js></script>
   </head>
 
+	<body class="mdl-demo mdl-color--grey-100 mdl-color-text--grey-700 mdl-base">
+		<div class="mdl-layout mdl-js-layout mdl-layout--fixed-header">
+      <header class="mdl-layout__header mdl-layout__header--scroll mdl-color--primary">       
+        <div class="mdl-layout__header-row">
+          <h3 id="titletext">MkPhotodiode</h3>
+        </div>
+      </header>		
 
-  <body>
-		
-		<div class="mdl-layout mdl-js-layout">
-	    <main class="mdl-layout__content">
-	      <div class="page-content mdl-grid" id="main-container">
+    <main class="mdl-layout__content">
+    	<div class="mdl-layout__tab-panel is-active" id="overview">
 
-					<div>
-						<h4 id="titletext">MkPhotodiode</h4>
-					</div>
+      <button class="mdl-button mdl-js-button mdl-button--raised mdl-js-ripple-effect" id="connectusb">
+        CONNECT ARDUINO
+      </button>
+      
+	      <section class="section--center mdl-grid mdl-grid--no-spacing mdl-shadow--2dp">
+	        <div class="mdl-demo mdl-card mdl-cell mdl-cell--12-col" style="min-height: 0px;">
+	          <div class="mdl-card__supporting-text">
+	            <!-- <h3>Meta</h3> -->
+	            <form style="font-size: 1.5rem;" id="file-list-form">
+	              <label>Active Agents:
+	                <select id="agent-list">
+	                	<option value="">…</option>
+	                </select>
+	              </label>
+	            </select>
+	            </form>
+	            <h3 id="metatext"></h3>
+	          </div>
+	        </div>
+	      </section>
 
-			  	<!-- Connect Button -->
-<!-- 			    <div class="mdl-card mdl-shadow--2dp mdl-cell mdl-cell--12-col-desktop mdl-cell--8-col-tablet mdl-cell--4-col-phone" id="scale-card"> -->
+	      <!-- Trial display stats & waveform -->
+	      <section class="section--center mdl-grid mdl-grid--no-spacing mdl-shadow--2dp">
+	        <div class="mdl-demo mdl-card mdl-cell mdl-cell--12-col" style="min-height: 0px;">
+	          <div class="mdl-card__supporting-text">
+	            <!-- <h3>Waveforms</h3> -->
+	            <div id="displaystats-text" style="height: auto;">
+	              <span class="mdl-chip">
+	                <span class="mdl-chip__text" id="displaystatschip"> <b> DisplayStats </b> </span>
+	              </span>
 
-			  <div>
-			      <button class="mdl-button mdl-js-button mdl-button--raised mdl-js-ripple-effect" id="connectusb">
-			        CONNECT ARDUINO
-			      </button>
+	              <span class="mdl-chip">
+	                <span class="mdl-chip__text" id="summarydisplaystatschip"> <b> SummaryDisplayStats </b> </span>
+	              </span>
 
-			  
-						<span class="mdl-chip">
-						    <span class="mdl-chip__text" id="displaystatschip"> <b> DisplayStats </b> </span>
-						</span>
-			  
-			    </div>
+		            <div class="dashboard" id="performance-dashboard">
 
-			  	<!-- Running plot -->
-			    <div class="mdl-card mdl-shadow--2dp mdl-cell mdl-cell--12-col-desktop mdl-cell--8-col-tablet mdl-cell--4-col-phone mdl-cell--stretch" id="running_plot_card">
-			    </div>
-	      </div> <!-- page-content -->
-			</main> <!-- mdl-layout__content-->
-	  </div> <!-- mdl-layout mdl-js-layout -->
+		                <div class="mdl-card mdl-shadow--2dp mdl-cell mdl-cell--12-col-desktop mdl-cell--8-col-tablet mdl-cell--4-col-phone mdl-cell--stretch" id="running_plot_card">
+		                </div>
+		            </div>
+
+	          </div>
+	        </div>
+	      </section>
+
+    	 </div>
+   	</main>
+ </div>
 
 		<script type="text/javascript">
 			function connectHardwareButtonPromise() {
@@ -83,11 +116,12 @@
 
     <script src="/__/firebase/8.2.3/firebase-app.js"></script>
     <script src="/__/firebase/8.2.3/firebase-auth.js"></script>
+		<script src="/__/firebase/8.2.3/firebase-database.js"></script>
 		<script src="/__/firebase/init.js"></script>
 
+    <script src="mkphotodiode_auth.js"></script>
     <script src="mkphotodiode_usb.js"></script>
     <script src="mkphotodiode_googlecharts.js"></script>
-    <script src="mkphotodiode_auth.js"></script>
 
 		<script src="everpolate.browserified.min.js"></script>
 

@@ -387,6 +387,7 @@ if (ENV.BatteryAPIAvailable) {
     );
   }
 
+  let rtdbBroadcastRef = rtdb.ref('instances/' + ENV.Subject);
   let rtdbAgentRef = rtdb.ref('agents/' + ENV.Subject);
   let rtdbAgentConnectionRef = rtdb.ref(`agents/${ENV.Subject}/numConnections`);
   FLAGS.rtdbDataRef = rtdb.ref('data/' + ENV.Subject);
@@ -727,6 +728,14 @@ if (ENV.BatteryAPIAvailable) {
       purgeTrackingVariables();
       FLAGS.purge = 0;
     } //IF purge
+
+    var frac_correct=0;
+    if (EVENTS['trialseries']['Response'].length>0){
+      var ncorrect = 0;
+      EVENTS['trialseries']['Response'].forEach( (element, index) => { if (element==EVENTS['trialseries']['CorrectItem'][index]){ncorrect++} })    
+      frac_correct = ncorrect/EVENTS['trialseries']['Response'].length
+    }
+    rtdbBroadcastRef.set( { 'trialnum': CURRTRIAL.num, 'filename': ENV.DataFileName, 'performance': frac_correct } );
 
     //======================== 3D SCENE SET-UP =======================//
     if (typeof TASK.THREEJSRenderRatio == 'undefined' || TASK.THREEJSRenderRatio < 0)
