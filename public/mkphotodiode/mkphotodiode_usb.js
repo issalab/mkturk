@@ -6,7 +6,7 @@ var port = {
   connected: false,
 
   USBDeviceType: '',
-  USBDeviceName: '',
+  USBDeviceName: ''
 };
 var serial = {};
 
@@ -28,6 +28,8 @@ var abuff = {
 
   lastdraw: performance.now(),
   lastreceive: performance.now(),
+  manualtriggerval: 0,
+  manualtriggertime: 0
 };
 
 let fileMeta = { 
@@ -147,6 +149,10 @@ async function findUSBDevice(event) {
 
       //Hide manual connect button upon successful connect
       document.querySelector('button[id=connectusb]').style.display = 'none';
+      //Show manual trigger button
+      document.querySelector('button[id=manualtrigger]').style.display = 'block';
+      document.querySelector('button[id=manualtrigger]').style.visibility = 'visible';
+      document.querySelector('button[id=manualtrigger]').style.top = '5%';
     }
   }
 
@@ -180,6 +186,11 @@ async function findUSBDevice(event) {
 
       //Hide manual connect button upon successful connect
       document.querySelector('button[id=connectusb]').style.display = 'none';
+
+      //Show manual trigger button
+      document.querySelector('button[id=manualtrigger]').style.display = 'block';
+      document.querySelector('button[id=manualtrigger]').style.visibility = 'visible';
+      document.querySelector('button[id=manualtrigger]').style.top = '5%';
     } catch (error) {
       console.log(error);
     }
@@ -282,13 +293,17 @@ serial.Port.prototype.onReceive = (data) => {
 for (var s=0; s<=indt.length-1; s++){
   currvalt = Number(textReceived.slice(indt[s]+1,inds[s]))/1000 //microsec -> millisec
   currvals = Number(textReceived.slice(inds[s]+1,indp[s]))
+  if (abuff.manualtriggerval == 2){
+    currvals = 1; //overrided with manual triggering
+  }
+
   if (s <= indt.length-2){
     currvalp = Number(textReceived.slice(indp[s]+1,indt[s+1]))
   }
   else{
    currvalp = Number(textReceived.slice(indp[s]+1,textReceived.length))
   }
-  if (currvalp == NaN){
+  if (currvalp == NaN || currvals == NaN){
     console.log(textReceived)
   }
 
@@ -332,7 +347,16 @@ for (var s=0; s<=indt.length-1; s++){
 //--------- TRIGGER ---------//
 
 //--------- CURRENT ---------//
-  var dt=currvalt;
+  if (abuff.manualtriggerval==0){
+    var dt=currvalt;  
+  }//IF zeroed on arduino already
+  else{
+    if (abuff.currind == 0){
+      abuff.manualtriggertime = currvalt;
+    }
+    var dt = currvalt - abuff.manualtriggertime; 
+  }//ELSE manualtrigger, zero arduino time
+  
   if (typeof(abuff.ttrig[abuff.indtrace]) != "undefined"){
     var dtpipe = onReceiveTime - abuff.ttrig[abuff.indtrace]
   }//IF trigger
@@ -359,7 +383,15 @@ for (var s=0; s<=indt.length-1; s++){
       var yprev = null;
     }
 
+    if (abuff.manualtriggerval > 0){
+      var yprev = abuff.ph[abuff.currind];
+    }
+
     dataRunning.addRow([  abuff.t[abuff.currind],
+                          yprev,
+                          abuff.ph[abuff.currind] ])
+
+    console.log([  abuff.currind, abuff.t[abuff.currind],
                           yprev,
                           abuff.ph[abuff.currind] ])
     abuff.currind++
@@ -379,6 +411,7 @@ for (var s=0; s<=indt.length-1; s++){
 //--------- CUMULATIVE ---------//
 
   if (trigDown){
+    abuff.manualtriggerval = 0;
     saveTrialData()
     updatePlots()
   } //IF triggered down, then plot
@@ -484,6 +517,7 @@ document.getElementById('metatext').innerHTML =
   }//IF >1 trial
 //----- Display stats
 
+//----- Draw plot
   runningOptions.hAxis = {viewWindow: {min: 0, max: tinterp[tinterp.length-1]} }
   lineRunning.draw(dataRunning, google.charts.Line.convertOptions(runningOptions));
   dataRunning.removeRows(0,dataRunning.getNumberOfRows());
@@ -528,11 +562,22 @@ function getMeanStandardDeviation (array) {
   return [mean,sd]
 }
 
+async function toggleTrigger(event){
+  if (abuff.manualtriggerval == 0){
+    abuff.manualtriggerval = 2;
+    document.querySelector('button[id=manualtrigger]').style.color = 'green';
+  }
+  else if (abuff.manualtriggerval == 2){
+    abuff.manualtriggerval = 1; //ready to triggerdown
+    document.querySelector('button[id=manualtrigger]').style.color = 'black';
+  }
+}//FUNCTION toggleTrigger
+
 function saveTrialData(){
 // Notes for @Hector
 // if (fileMeta.activeAgent is an empty string) ==> then just save to local disk using agent "None"
-//else if there is an activeAgent, then save both to localy disk and bigquery
 
+//else if there is an activeAgent, then save both to localy disk and bigquery
 //Trial num:
 // if (fileMeta.activeAgent is not an empty string)
 // && if (fileMeta.trialnum is >= 0), then use fileMeta.trialnum
@@ -553,4 +598,10 @@ function saveTrialData(){
 
 //one thing to check is that data writing can proceed aysynchronously to data reading without interfering.
 //Otherwise, data writing will have to be fast enough to happen during the downtime (intertrial_interval) between sample command triggers
+
+//The last bit is to have mkphotodiode start a new file when the mkturk filename changes or the mkturk trial # goes back to 0.
+// Also note that arduino analog reads at 10-bit resolution, so you don't need to use too many bytes to store the value.
+
+// Photodiode Arduino file: 2022_04_26_send_PhotodiodeSampleCommand_basic01
+// MkTurk Arduino file: 20220427_pump_eyetracker_command
 }

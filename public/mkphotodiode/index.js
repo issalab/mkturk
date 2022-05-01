@@ -26,9 +26,10 @@ document.getElementById("agent-list").addEventListener("change",agentSelectionLi
     document.querySelector('button[id=connectusb]').style.display = 'block';
     document.querySelector('button[id=connectusb]').style.visibility =
       'visible';
-    await connectHardwareButtonPromise();
+    document.querySelector('button[id=manualtrigger]').style.display = 'none';
+    document.querySelector('button[id=manualtrigger]').addEventListener('pointerup', toggleTrigger, false);
 
-    document.querySelector('button[id=connectusb]').style.display = 'none';
+    await connectHardwareButtonPromise();
   }//IF WebUSB API present
   else{
     console.log('WARNING: No WebUSB API found!')
