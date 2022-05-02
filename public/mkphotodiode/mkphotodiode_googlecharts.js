@@ -5,14 +5,15 @@ var runningOptions = {
   width: 1200,
   height: 600,
   allowAsync: true,
+  async: true,
+  enableInteractivity: false,
   animation: {
     duration: 0,
     easing:'linear',
     startup: false,
   },
-  legend: {
-    position: 'none'
-  },
+  legend: { position: 'none' },
+  tooltip: { trigger: 'none' },
   series: {
     0: {color: "grey"},
   },

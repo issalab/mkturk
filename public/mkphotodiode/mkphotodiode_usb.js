@@ -387,13 +387,16 @@ for (var s=0; s<=indt.length-1; s++){
       var yprev = abuff.ph[abuff.currind];
     }
 
-    dataRunning.addRow([  abuff.t[abuff.currind],
-                          yprev,
-                          abuff.ph[abuff.currind] ])
+    // dataRunning.addRow([  abuff.t[abuff.currind],
+    //                       yprev,
+    //                       abuff.ph[abuff.currind] ])
 
-    console.log([  abuff.currind, abuff.t[abuff.currind],
-                          yprev,
-                          abuff.ph[abuff.currind] ])
+    dataRunning.addRow([
+      {v:  abuff.t[abuff.currind], f:''},
+      {v:  yprev, f:''},
+      {v:  abuff.ph[abuff.currind], f:''}
+    ]); //avoid  formatting of domain data to speed  up
+    
     abuff.currind++
   }
 //--------- CURRENT ---------//
