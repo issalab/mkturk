@@ -3,6 +3,11 @@ function displayTrial_prime(ti, gr, fr, sc, ob, id, mkm) {
   // ti=time, gr=grid, fr=frame, sc=screen, ob=scenebag, id=renderparam_index
   let lenArgs = arguments.length;
   updated2d = 0; updated3d = 0;
+  boundingBoxesChoice2D = { x: [], y: [] };
+  boundingBoxesChoice3JS = { x: [], y: [] };
+  boundingBoxesChoice3D = { x: [], y: [] };
+  CURRTRIAL.tsequenceactual = [];
+
 
   var resolveFunc; var errFunc;
   p = new Promise(function (resolve, reject) {
@@ -19,7 +24,9 @@ function displayTrial_prime(ti, gr, fr, sc, ob, id, mkm) {
     }//IF showing frame
 
     //---------------- RENDER THE NEXT FRAME ------------------//
-    if (frame_prime.current <= frame_prime.shown.length - 1) {     
+    if (frame_prime.current <= frame_prime.shown.length - 1) {
+
+// renderShape2D('Blank', [-1], VISIBLECANVAS);
       for (var s = 0; s <= frame_prime.frames[frame_prime.current].length - 1; s++) {
         f = frame_prime.frames[frame_prime.current][s];
         var taskscreen = sc[f].charAt(0).toUpperCase() + sc[f].slice(1);
@@ -42,7 +49,7 @@ function displayTrial_prime(ti, gr, fr, sc, ob, id, mkm) {
         } //ELSE hide 3D when plotting 2D elements like buttons and not keeping (overlaying) sample/test
       } //FOR s screens within frame
 
-      renderShape2D('Blank', [-1], VISIBLECANVAS);
+      // renderShape2D('Blank', [-1], VISIBLECANVAS);
 
       frame_prime.current++;
     } //IF frames remain to be shown
@@ -222,7 +229,6 @@ function displayTrial(ti, gr, fr, sc, ob, id, mkm, trig) {
 
 //------- FUNCTION render3D ---------//
 function render3D(taskscreen, s, f, gr, fr, sc, ob, id) {
-  f = frame.frames[frame.current][s];
   if (taskscreen == 'Sample') {
     var ims = [CURRTRIAL.sampleimage[CURRTRIAL.sequenceclip[f]][fr[f]]]; //fr[f] frame within clip
   } else if (taskscreen == 'Test') {
@@ -233,7 +239,6 @@ function render3D(taskscreen, s, f, gr, fr, sc, ob, id) {
 
   for (var j = 0; j < ob[f].length; j++) {
     renderer.clear();
-
     var [boundingBox, boundingBoxCube, crop] = updateSingleFrame3D(
       taskscreen,
       ob[f][j],
