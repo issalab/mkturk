@@ -271,9 +271,9 @@ for ( var f=0; f<=nframesprime-1; f++){
 			this.samplebag_primed[ sample_index] = f+1;
 		}//ELSE
 
+		sample_filename.push(this.sampleq.filename[ i + (this.sampleq.index.length - n_trials) ]);
 		sample_sequencelabel.push( [ this.samplebag_labels[ sample_index] ])
 		sample_sequenceindex.push( [ this.samplebag_indices[sample_index] ])
-		sample_filename.push(this.sampleq.filename[sample_index]);
 
 		tsequence.push( (frame_cnt+1) * tsingleframe);
 		sequencegridindex.push( [ gridindex ]);
@@ -310,10 +310,9 @@ for ( var f=0; f<=nframesprime-1; f++){
 	}//FOR i trials
 
 	if (f==0){
-		CURRTRIAL.sampleimage = sample_image;
+		var sample_image_frame0 = {sampleimage: sample_image};
 	}
 }//FOR f frames to prime
-	CURRTRIAL.sequenceclip = sequenceclip;
   
 	frame_prime.shown = [];
 	frame_prime.frames = [];
@@ -327,10 +326,12 @@ for ( var f=0; f<=nframesprime-1; f++){
 	await displayTrial_prime(
 	  tsequence, //ti
 	  sequencegridindex,
+	  sequenceclip, //cl
 	  sequenceframe, //fr
 	  sequencetaskscreen, //sc
 	  sample_sequencelabel, //ob
-	  sample_sequenceindex //id
+	  sample_sequenceindex, //id
+	  sample_image_frame0 //ims
 	);
 
 // var ims = [CURRTRIAL.sampleimage[CURRTRIAL.sequenceclip[f]][fr[f]]]; //fr[f] frame within clip

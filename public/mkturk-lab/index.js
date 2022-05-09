@@ -505,7 +505,7 @@ if (ENV.BatteryAPIAvailable) {
 
   //===================== AWAIT INITIALIZE AUTOMATOR =================//
   // Initialize automator - change TASK to that specified by TASK.CurrentAutomatorStage.
-  var num_prebuffer_trials = 200;
+  var num_prebuffer_trials = 300;
   if (TASK.Automator != 0) {
     automator_data = await loadTextfromFirebase(TASK.AutomatorFilePath);
     automateTask(automator_data, trialhistory);
@@ -915,8 +915,9 @@ if (ENV.BatteryAPIAvailable) {
       typeof TASK.NRSVP == 'undefined' || TASK.NRSVP <= 0 ? 1 : ENV.NRSVPMax;
 
     for (let i = 0; i < imgSeqLen; i++) {
+      console.log('index.js ' + i + ' trial ' + CURRTRIAL.num);
       let x = await TQS.get_next_trial();
-      CURRTRIAL.sampleimage[i] = x[0];
+      CURRTRIAL.images.sampleimage[i] = x[0];
       CURRTRIAL.sampleindex[i] = x[1];
 
       // Sample can have multiple sequential scenes (items are over time; eg, RSVP)
@@ -927,7 +928,7 @@ if (ENV.BatteryAPIAvailable) {
       // Test can have multiple simultaneous scenes (items are over space; ev, MtS)
       if (i == 0) {
         // IF first image
-        CURRTRIAL.testimages[i] = x[2];
+        CURRTRIAL.images.testimages[i] = x[2];
         CURRTRIAL.testindices[i] = x[3];
         CURRTRIAL.test_scenebag_labels[i] = x[7];
         CURRTRIAL.test_scenebag_indices[i] = x[8];
@@ -1153,16 +1154,18 @@ if (ENV.BatteryAPIAvailable) {
 
       if (TASK.FixationUsesSample <= 0) {
         // IF !FixationUsesSample, show fixation dot
-        await displayTrial(CANVAS.tsequencepre,[CURRTRIAL.fixationgridindex],[0],CANVAS.sequencepre,[0],[0],mkm);
+        await displayTrial(CANVAS.tsequencepre,[CURRTRIAL.fixationgridindex],[0],[0],CANVAS.sequencepre,[0],[0],[],mkm);
       } else if (TASK.FixationUsesSample > 0) {
         // IF FixationUsesSample, show image/movie
         displayTrial(
           CURRTRIAL.tsequencedesired,
           CURRTRIAL.sequencegridindex,
+          CURRTRIAL.sequenceclip,
           CURRTRIAL.sequenceframe,
           CURRTRIAL.sequencetaskscreen,
           CURRTRIAL.sequencelabel,
           CURRTRIAL.sequenceindex,
+          CURRTRIAL.images,
           mkm
         );
         await moviestart_promise();
@@ -1300,7 +1303,7 @@ if (ENV.BatteryAPIAvailable) {
       frame.current = 0;
       if (FLAGS.waitingforTouches > 0) {
         // blank out screen
-        await displayTrial(CANVAS.tsequenceblank,[-1],[0],CANVAS.sequenceblank,[0],[0],mkm);
+        await displayTrial(CANVAS.tsequenceblank,[-1],[0],[0],CANVAS.sequenceblank,[0],[0],[],mkm);
       }
     } //WHILE waiting for NFixations
     //============ (end) WHILE RUN FIXATION SCREEN ============//
@@ -1408,10 +1411,12 @@ if (ENV.NDisplayPrime > 0){
       displayTrial_prime(
           CURRTRIAL.tsequencedesired,
           CURRTRIAL.sequencegridindex,
+          CURRTRIAL.sequenceclip,
           CURRTRIAL.sequenceframe,
           CURRTRIAL.sequencetaskscreen,
           CURRTRIAL.sequencelabel,
           CURRTRIAL.sequenceindex,
+          CURRTRIAL.images,
           mkm
         );
       await sleep(1000/ENV.FrameRateDisplay+2);
@@ -1441,10 +1446,12 @@ if (ENV.NDisplayPrime > 0){
         let p2 = displayTrial(
           CURRTRIAL.tsequencedesired,
           CURRTRIAL.sequencegridindex,
+          CURRTRIAL.sequenceclip,
           CURRTRIAL.sequenceframe,
           CURRTRIAL.sequencetaskscreen,
           CURRTRIAL.sequencelabel,
           CURRTRIAL.sequenceindex,
+          CURRTRIAL.images,
           mkm,FLAGS.savedata
         );
 
@@ -1510,10 +1517,12 @@ if (ENV.NDisplayPrime > 0){
         await displayTrial(
           CURRTRIAL.tsequencedesired,
           CURRTRIAL.sequencegridindex,
+          CURRTRIAL.sequenceclip,
           CURRTRIAL.sequenceframe,
           CURRTRIAL.sequencetaskscreen,
           CURRTRIAL.sequencelabel,
           CURRTRIAL.sequenceindex,
+          CURRTRIAL.images,
           mkm, FLAGS.savedata
         );
       } //ELSE !RSVP
@@ -1947,10 +1956,12 @@ if (ENV.NDisplayPrime > 0){
       await displayTrial(
         CANVAS.tsequencepost,
         Array(lenTsequencePost).fill(-1),
+        Array(lenTsequencePost).fill(-1),   
         range(0, lenTsequencePost - 1, 1),
         CANVAS.sequencepost,
         Array(lenTsequencePost).fill(0),
         Array(lenTsequencePost).fill(0),
+        [],
         mkm
       );
     } else if (CURRTRIAL.correct) {
@@ -1984,9 +1995,9 @@ if (ENV.NDisplayPrime > 0){
         renderShape2D(CANVAS.sequencepost[0], -1, VISIBLECANVAS);
         let lenTsequencePost = CANVAS.tsequencepost.length;
         let p1 = displayTrial(CANVAS.tsequencepost,
-          Array(lenTsequencePost).fill(-1),range(0, lenTsequencePost - 1, 1),
+          Array(lenTsequencePost).fill(-1),Array(lenTsequencePost).fill(-1),range(0, lenTsequencePost - 1, 1),
           CANVAS.sequencepost,
-          Array(lenTsequencePost).fill(0), Array(lenTsequencePost).fill(0),
+          Array(lenTsequencePost).fill(0), Array(lenTsequencePost).fill(0), [],
           mkm
         );
 
@@ -2032,13 +2043,13 @@ if (ENV.NDisplayPrime > 0){
       renderShape2D(CANVAS.sequencepost[0], -1, VISIBLECANVAS);
       let lenSequencepost = CANVAS.sequencepost.length;
       let p1 = displayTrial(CANVAS.tsequencepost,
-        Array(lenSequencepost).fill(-1),range(0, lenSequencepost - 1, 1),
+        Array(lenSequencepost).fill(-1),Array(lenTsequencePost).fill(-1),range(0, lenSequencepost - 1, 1),
         CANVAS.sequencepost,
-        Array(lenSequencepost).fill(0), Array(lenSequencepost).fill(0),mkm
+        Array(lenSequencepost).fill(0), Array(lenSequencepost).fill(0),[],mkm
       );
 
       let numTrialsToBufferPunishPeriod = 50;
-      let p2 = TQS.generate_trials(numTrialsToBufferPunishPeriod * TASK.RSVP);
+      let p2 = TQS.generate_trials(numTrialsToBufferPunishPeriod * TASK.NRSVP);
       playSound(3);
       CURRTRIAL.reinforcementtime = Date.now() - ENV.CurrentDate.valueOf();
       logEVENTS('ReinforcementTime',CURRTRIAL.reinforcementtime,'trialseries');

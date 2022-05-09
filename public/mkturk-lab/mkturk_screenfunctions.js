@@ -1,5 +1,5 @@
 //================== IMAGE RENDERING ==================//
-function displayTrial_prime(ti, gr, fr, sc, ob, id, mkm) {
+function displayTrial_prime(ti, gr, cl, fr, sc, ob, id, ims, mkm) {
   // ti=time, gr=grid, fr=frame, sc=screen, ob=scenebag, id=renderparam_index
   let lenArgs = arguments.length;
   updated2d = 0; updated3d = 0;
@@ -25,8 +25,6 @@ function displayTrial_prime(ti, gr, fr, sc, ob, id, mkm) {
 
     //---------------- RENDER THE NEXT FRAME ------------------//
     if (frame_prime.current <= frame_prime.shown.length - 1) {
-
-// renderShape2D('Blank', [-1], VISIBLECANVAS);
       for (var s = 0; s <= frame_prime.frames[frame_prime.current].length - 1; s++) {
         f = frame_prime.frames[frame_prime.current][s];
         var taskscreen = sc[f].charAt(0).toUpperCase() + sc[f].slice(1);
@@ -34,22 +32,29 @@ function displayTrial_prime(ti, gr, fr, sc, ob, id, mkm) {
         if (s == 0) { var taskscreen0 = taskscreen; } //IF primary screen
 
         if (taskscreen == 'Sample' || taskscreen == 'Test') {
+          if (taskscreen == 'Sample') {
+            var im = [ ims.sampleimage[cl[f]][fr[f]] ]; //fr[f] frame within clip
+          } else if (taskscreen == 'Test') {
+            var clip = 0;
+            var im = ims.testimages[clip][fr[f]];
+          }
+
           if (FLAGS.usecanvas2D == 0){
     //RENDER 3D (transfers to 2D & filters)
-            render3D(taskscreen, s, f, gr, fr, sc, ob, id);
+            render3D(taskscreen, s, f, gr, fr, sc, ob, id, im);
             const defaultFilter = 'blur(0px) brightness(100%) contrast(100%) grayscale(0%) hue-rotate(0deg) invert(0%) opacity(100%) saturate(100%) sepia(0%)';
             VISIBLECANVAS.getContext('2d').filter = defaultFilter; //restore 2D filter
           } //IF 3D canvas
           else if (FLAGS.usecanvas2D == 1){
     //RENDER 2D Sample/Test Image
-            render2D(taskscreen, s, f, gr, fr, sc, ob, id, VISIBLECANVAS);  
+            render2D(taskscreen, s, f, gr, fr, sc, ob, id, im, VISIBLECANVAS);  
           } //ELSEIF 2D canvas
         }//IF sample || test
         else {
         } //ELSE hide 3D when plotting 2D elements like buttons and not keeping (overlaying) sample/test
       } //FOR s screens within frame
 
-      // renderShape2D('Blank', [-1], VISIBLECANVAS);
+      renderShape2D('Blank', [-1], VISIBLECANVAS);
 
       frame_prime.current++;
     } //IF frames remain to be shown
@@ -70,7 +75,7 @@ function displayTrial_prime(ti, gr, fr, sc, ob, id, mkm) {
 } //FUNCTION displayTrial
 
 //================== IMAGE RENDERING ==================//
-function displayTrial(ti, gr, fr, sc, ob, id, mkm, trig) {
+function displayTrial(ti, gr, cl, fr, sc, ob, id, ims, mkm, trig) {
   // ti=time, gr=grid, fr=frame, sc=screen, ob=scenebag, id=renderparam_index
   let lenArgs = arguments.length;
   updated2d = 0; updated3d = 0;
@@ -115,15 +120,22 @@ function displayTrial(ti, gr, fr, sc, ob, id, mkm, trig) {
         if (s == 0) { var taskscreen0 = taskscreen; } //IF primary screen
 
         if (taskscreen == 'Sample' || taskscreen == 'Test') {
+          if (taskscreen == 'Sample') {
+            var im = [ ims.sampleimage[cl[f]][fr[f]] ]; //fr[f] frame within clip
+          } else if (taskscreen == 'Test') {
+            var clip = 0;
+            var im = ims.testimages[clip][fr[f]];
+          }
+
           if (FLAGS.usecanvas2D == 0){
     //RENDER 3D (transfers to 2D & filters)
-            render3D(taskscreen, s, f, gr, fr, sc, ob, id);
+            render3D(taskscreen, s, f, gr, fr, sc, ob, id, im);
             const defaultFilter = 'blur(0px) brightness(100%) contrast(100%) grayscale(0%) hue-rotate(0deg) invert(0%) opacity(100%) saturate(100%) sepia(0%)';
             VISIBLECANVAS.getContext('2d').filter = defaultFilter; //restore 2D filter
           } //IF 3D canvas
           else if (FLAGS.usecanvas2D == 1){
     //RENDER 2D Sample/Test Image
-            render2D(taskscreen, s, f, gr, fr, sc, ob, id, VISIBLECANVAS);  
+            render2D(taskscreen, s, f, gr, fr, sc, ob, id, im, VISIBLECANVAS);
             updated3d = 0;
           } //ELSEIF 2D canvas
         }//IF sample || test
@@ -228,14 +240,8 @@ function displayTrial(ti, gr, fr, sc, ob, id, mkm, trig) {
 } //FUNCTION displayTrial
 
 //------- FUNCTION render3D ---------//
-function render3D(taskscreen, s, f, gr, fr, sc, ob, id) {
-  if (taskscreen == 'Sample') {
-    var ims = [CURRTRIAL.sampleimage[CURRTRIAL.sequenceclip[f]][fr[f]]]; //fr[f] frame within clip
-  } else if (taskscreen == 'Test') {
-    var clip = 0;
-    var ims = CURRTRIAL.testimages[clip][fr[f]];
-  }
-  renderer.autoClear = false;
+function render3D(taskscreen, s, f, gr, fr, sc, ob, id, im) {
+  renderer.autoClear = false;    
 
   for (var j = 0; j < ob[f].length; j++) {
     renderer.clear();
@@ -245,7 +251,7 @@ function render3D(taskscreen, s, f, gr, fr, sc, ob, id) {
       id[f][j],
       fr[f],
       gr[f][j],
-      ims[j]
+      im[j]
     );
 
     if (
@@ -399,20 +405,11 @@ function render3D(taskscreen, s, f, gr, fr, sc, ob, id) {
 } //FUNCTION render3D
 
 //------- FUNCTION render2D ---------//
-async function render2D(taskscreen, s, f, gr, fr, sc, ob, id, canvasobj) {
+async function render2D(taskscreen, s, f, gr, fr, sc, ob, id, im, canvasobj) {
 //===== DRAW IMAGE
-  if (taskscreen == 'Sample' || taskscreen == 'Test'){
-    if (taskscreen == 'Sample'){
-      var ims = [CURRTRIAL.sampleimage[CURRTRIAL.sequenceclip[f]][fr[f]]]; //fr[f] frame within clip
-    } //IF sample
-    else if (taskscreen == 'Test') {
-      var clip = 0;
-      var ims = [CURRTRIAL.testimages[clip][fr[f]]];
-    } //IF 2D image
-
-    if (typeof ims != 'undefined' && typeof ims[0] == 'object') {
+    if (typeof im != 'undefined' && typeof im[0] == 'object') {
       for (var j = 0; j <= ob[f].length - 1; j++) {
-        var boundingBox = renderImage2D(ims[j],taskscreen,
+        var boundingBox = renderImage2D(im[j],taskscreen,
                                         ob[f][j],id[f][j],fr[f],
                                         gr[f][j],canvasobj); //render 2D image prior to next frame draw
         if (s == 0 &&
@@ -425,15 +422,6 @@ async function render2D(taskscreen, s, f, gr, fr, sc, ob, id, canvasobj) {
         updated2d = 1;
       } //FOR j display items
     } //IF image available
-  } //IF Sample || Test 2D image
-//===== DRAW SHAPE
-  else {
-    var boundingBox = renderShape2D(taskscreen, gr[f], canvasobj);
-    if (s == 0 && taskscreen == 'Choice') {
-      boundingBoxesChoice2D = boundingBox;
-    }
-    updated2d = 1;
-  }//ELSE 2D shape
 }//FUNCTION render2D
 
 function renderImage2D(
@@ -2521,402 +2509,3 @@ function findDPI(counter = 0) {
     (x) => (++counter, matchMedia(`(max-resolution: ${x}dpi)`).matches)
   );
 }
-
-
-
-//____________________LEGACY________________________
-//____________________LEGACY________________________
-//____________________LEGACY________________________
-
-
-//================== IMAGE RENDERING ==================//
-function displayTrial_legacy_2022_03_28(ti, gr, fr, sc, ob, id, mkm) {
-  let lenArgs = arguments.length;
-  // if (arguments.length == 7) {
-  //  console.log('mkm:', mkm);
-  // }
-  // ti = time, gr = grid, fr = frame
-  // sc = screen, ob = object label, id = index of renderparam
-  var resolveFunc;
-  var errFunc;
-  updated2d = 0;
-  updated3d = 0;
-  boundingBoxesChoice2D = { x: [], y: [] };
-  boundingBoxesChoice3JS = { x: [], y: [] };
-  boundingBoxesChoice3D = { x: [], y: [] };
-  p = new Promise(function (resolve, reject) {
-    resolveFunc = resolve;
-    errFunc = reject;
-  }).then();
-  var start = null;
-  CURRTRIAL.tsequenceactual = [];
-  async function updateCanvas(timestamp) {
-    if (!start) start = timestamp; //IF start has not been set to a float timestamp, set it now.
-
-    if (frame.shown[frame.current - 1] != 1 && frame.current > 0) {
-      CURRTRIAL.tsequenceactual[frame.current - 1] =
-        Math.round(100 * (timestamp - start)) / 100; //in milliseconds, rounded to nearest hundredth of a millisecond
-      frame.shown[frame.current - 1] = 1;
-    } //IF first time shown, store this time as the first transition to the new frame
-
-    if (timestamp - start > ti[frame.current]) {
-      //----- RENDER ALL ELEMENTS
-      renderShape2D('Blank', [-1], VISIBLECANVAS);
-
-      if (frame.current <= frame.shown.length - 1) {
-        //Skip rendering if already did last frame and just waiting for it to show
-        for (var s = 0; s <= frame.frames[frame.current].length - 1; s++) {
-          f = frame.frames[frame.current][s];
-          var taskscreen = sc[f].charAt(0).toUpperCase() + sc[f].slice(1);
-          // console.log('taskscreen:', taskscreen);
-
-          if (s == 0) {
-            var taskscreen0 = taskscreen;
-          } //IF primary screen
-
-          //------------------- DISPLAY THE FRAME 2D ---------------------//
-
-          //------------------- DISPLAY THE FRAME 3D ---------------------//
-          if (taskscreen == 'Sample' || taskscreen == 'Test') {
-            render3D(taskscreen, s, f, gr, fr, sc, ob, id);
-          } //IF sample || test
-          else {
-            updated3d = 0;
-          } //ELSE hide 3D when plotting 2D elements like buttons and not keeping (overlaying) sample/test
-
-          //RENDER 2D directly onscreen
-          const defaultFilter =
-            'blur(0px) brightness(100%) contrast(100%) grayscale(0%) hue-rotate(0deg) invert(0%) opacity(100%) saturate(100%) sepia(0%)';
-          VISIBLECANVAS.getContext('2d').filter = defaultFilter;
-          render2D(taskscreen, s, f, gr, fr, sc, ob, id, VISIBLECANVAS);
-
-          if (
-            taskscreen == 'Touchfix' ||
-            taskscreen == 'Sample' ||
-            taskscreen == 'Blank'
-          ) {
-            //Overlay fixation dot
-            if (typeof gr[f] == 'number') {
-              renderShape2D('FixationDot', gr[f], VISIBLECANVAS);
-            } else {
-              renderShape2D('FixationDot', gr[f][0], VISIBLECANVAS);
-            }
-
-            if (port.connected && TASK.Photodiode > 0) {
-              renderShape2D(
-                'PhotodiodeSquare',
-                [ENV.PhotodiodeSquareX, ENV.PhotodiodeSquareY],
-                VISIBLECANVAS
-              );
-            } //IF port.connected
-          } //IF touchfix || sample
-        } //FOR s screens within frame
-
-        //----- (1) Merge Bounding Boxes
-        if (updated2d) {
-          boundingBoxesChoice3D.x = boundingBoxesChoice2D.x;
-          boundingBoxesChoice3D.y = boundingBoxesChoice2D.y;
-        }
-        if (updated3d) {
-          boundingBoxesChoice3D.x = boundingBoxesChoice3JS.x;
-          boundingBoxesChoice3D.y = boundingBoxesChoice3JS.y;
-        }
-
-        //----- MkModel Logic
-        if (lenArgs == 7 && mkm) {
-          if (TASK.SameDifferent > 0) {
-            if (taskscreen == 'Sample' && !mkm.hasSampleFeatures) {
-              let ctx = mkm.cvs.getContext('2d');
-              ctx.clearRect(0, 0, mkm.cvs.width, mkm.cvs.height);
-              let label = CURRTRIAL.sample_scenebag_label[0][0];
-              let params = {
-                image: IMAGES.Sample[label].IMAGES,
-                object: IMAGES.Sample[label].OBJECTS,
-                idx: CURRTRIAL.sample_scenebag_index[0][0],
-                ViewportPPI: ENV.ViewportPPI,
-                ScreenRatio: ENV.ScreenRatio,
-                offsettop: CANVAS.offsettop,
-                boundingBoxes3D: boundingBoxesChoice3D,
-                boundingBoxes2D: boundingBoxesChoice2D,
-              };
-
-              ctx.drawImage(
-                VISIBLECANVAS,
-                mkmBoundingBox.sx,
-                mkmBoundingBox.sy,
-                mkmBoundingBox.sWidth,
-                mkmBoundingBox.sHeight,
-                0,
-                0,
-                224,
-                224
-              );
-              let featureVec = mkm.featureExtractor.execute(
-                mkm.normalizePixelValues(mkm.cvs),
-                mkm.outputNode
-              );
-              featureVec = featureVec.reshape(mkm.inputShape);
-
-              if (CURRTRIAL.num < TASK.ModelConfig.trainIdx) {
-                let oneHotIdx = mkm.getOneHotIdx(
-                  CURRTRIAL.sample_scenebag_label[0][0]
-                );
-                mkm.dataObj.yTrainLabels.push(oneHotIdx);
-                mkm.dataObj.yTrain.push(mkm.oneHotArr[oneHotIdx]);
-                mkm.dataObj.xTrain.push(featureVec);
-              } else {
-                let oneHotIdx = mkm.getOneHotIdx(
-                  CURRTRIAL.sample_scenebag_label[0][0]
-                );
-                mkm.dataObj.xTest.push(featureVec);
-                // mkm.dataObj.yTest.push(CURRTRIAL.sample_scenebag_label[0][0]);
-                mkm.dataObj.yTest.push(oneHotIdx);
-              }
-              // mkm.cvs SANITY CHECK CODE
-              let mkmodelsRef = storageRef.child('mkturkfiles/mkmodels/');
-              let cvsData = mkm.cvs.toDataURL();
-              let path = `${TASK.Agent}/${ENV.CurrentDate.toJSON()}/${
-                CURRTRIAL.num
-              }_sample.png`;
-              mkmodelsRef.child(path).putString(cvsData, 'data_url');
-              // ctx2.clearRect(0, 0, EYETRACKERCANVAS.width, EYETRACKERCANVAS.height);
-              mkm.hasSampleFeatures = true;
-            } else if (taskscreen == 'Test' && !mkm.hasTestFeatures) {
-              let ctx = mkm.cvs.getContext('2d');
-              ctx.clearRect(0, 0, mkm.cvs.width, mkm.cvs.height);
-              let label = CURRTRIAL.test_scenebag_labels[0][0];
-              let params = {
-                image: IMAGES.Test[label].IMAGES,
-                object: IMAGES.Test[label].OBJECTS,
-                idx: CURRTRIAL.test_scenebag_indices[0][0],
-                ViewportPPI: ENV.ViewportPPI,
-                ScreenRatio: ENV.ScreenRatio,
-                offsettop: CANVAS.offsettop,
-                boundingBoxes3D: boundingBoxesChoice3D,
-                boundingBoxes2D: boundingBoxesChoice2D,
-              };
-
-              ctx.drawImage(
-                VISIBLECANVAS,
-                mkmBoundingBox.sx,
-                mkmBoundingBox.sy,
-                mkmBoundingBox.sWidth,
-                mkmBoundingBox.sHeight,
-                0,
-                0,
-                224,
-                224
-              );
-              let featureVec = mkm.featureExtractor.execute(
-                mkm.normalizePixelValues(mkm.cvs),
-                mkm.ouputNode
-              );
-              featureVec = featureVec.reshape(mkm.inputShape);
-
-              if (CURRTRIAL.num < TASK.ModelConfig.trainIdx) {
-                let oneHotIdx = mkm.getOneHotIdx(
-                  CURRTRIAL.test_scenebag_labels[0][0]
-                );
-                mkm.dataObj.yTrainLabels.push(oneHotIdx);
-                mkm.dataObj.yTrain.push(mkm.oneHotArr[oneHotIdx]);
-                mkm.dataObj.xTrain.push(featureVec);
-              } else {
-                let oneHotIdx = mkm.getOneHotIdx(
-                  CURRTRIAL.test_scenebag_labels[0][0]
-                );
-                mkm.dataObj.xTest.push(featureVec);
-                // mkm.dataObj.yTest.push(CURRTRIAL.test_scenebag_labels[0][0]);
-                mkm.dataObj.yTest.push(oneHotIdx);
-              }
-
-              // mkm.cvs SANITY CHECK HERE
-              let mkmodelsRef = storageRef.child('mkturkfiles/mkmodels/');
-              let cvsData = mkm.cvs.toDataURL();
-              let path = `${TASK.Agent}/${ENV.CurrentDate.toJSON()}/${
-                CURRTRIAL.num
-              }_test.png`;
-              mkmodelsRef.child(path).putString(cvsData, 'data_url');
-              // ctx2.clearRect(0, 0, EYETRACKERCANVAS.width, EYETRACKERCANVAS.height);
-              mkm.hasTestFeatures = true;
-            } else if (
-              taskscreen == 'Choice' &&
-              mkm.hasSampleFeatures &&
-              mkm.hasTestFeatures
-            ) {
-              mkm.hasSampleFeatures = false;
-              mkm.hasTestFeatures = false;
-            }
-          } else {
-            if (taskscreen == 'Sample' && !mkm.hasSampleFeatures) {
-              let ctx = mkm.cvs.getContext('2d');
-              ctx.clearRect(0, 0, mkm.cvs.width, mkm.cvs.height);
-              let label = CURRTRIAL.sample_scenebag_label[0][0];
-              let params = {
-                image: IMAGES.Sample[label].IMAGES,
-                object: IMAGES.Sample[label].OBJECTS,
-                idx: CURRTRIAL.sample_scenebag_index[0][0],
-                ViewportPPI: ENV.ViewportPPI,
-                ScreenRatio: ENV.ScreenRatio,
-                offsettop: CANVAS.offsettop,
-                boundingBoxes3D: boundingBoxesChoice3D,
-                boundingBoxes2D: boundingBoxesChoice2D,
-              };
-
-              // let mkmBoundingBox = mkm.getMkModelBoundingBox(params);
-              let camName = Object.keys(IMAGES['Sample'][label].CAMERAS)[0];
-
-              let cam = CAMERAS['Sample'][label][camName];
-
-              let img = IMAGES['Sample'][label];
-              let fov = (cam.fov * Math.PI) / 180;
-              let heightThreeJS =
-                2 *
-                Math.tan(fov / 2) *
-                (cam.position.z + img.IMAGES.sizeTHREEJS / 2);
-              let srcHeight =
-                (img.IMAGES.sizeTHREEJS / heightThreeJS) *
-                VISIBLECANVASWEBGL.height;
-
-              // mkmBoundingBox SANITY CHECK CODE
-              // console.log(`SAMPLE sx=${mkmBoundingBox.sx}; sy=${mkmBoundingBox.sy}; sWidth=${mkmBoundingBox.sWidth}; sHeight=${mkmBoundingBox.sHeight}`);
-              // let visiblecvs = document.getElementById('canvasvisiblewebgl');
-              // let ctx2 = visiblecvs.getContext('webgl2');
-              // ctx2.rect(mkmBoundingBox.sx, mkmBoundingBox.sy, mkmBoundingBox.sWidth, mkmBoundingBox.sHeight);
-              // ctx2.stroke();
-
-              // ctx.drawImage(VISIBLECANVAS, mkmBoundingBox.sx, mkmBoundingBox.sy, mkmBoundingBox.sWidth, mkmBoundingBox.sHeight, 0, 0, 224, 224);
-              // ctx.drawImage(VISIBLECANVASWEBGL, mkmBoundingBox.sx, mkmBoundingBox.sy, mkmBoundingBox.sWidth, mkmBoundingBox.sHeight, 0, 0, 224, 224);
-              // let sx = Math.round(boundingBoxesChoice3D.x[0][0] + IMAGEMETA.THREEJStoPixels) * 2 + 10;
-
-              let sx =
-                ENV.XGridCenter[CURRTRIAL.samplegridindex] * 2 - srcHeight / 2;
-              let sy =
-                ENV.YGridCenter[CURRTRIAL.samplegridindex] * 2 - srcHeight / 2;
-              let sw = srcHeight;
-              let sh = sw;
-              console.log('sx:', sx, 'sy:', sy, 'sw:', sw, 'sh:', sh);
-              ctx.drawImage(VISIBLECANVAS, sx, sy, sw, sh, 0, 0, 224, 224);
-
-              if (
-                TASK.ModelConfig.saveImages == 3 &&
-                CURRTRIAL.num < TASK.ModelConfig.trainIdx
-              ) {
-                let path = `${
-                  TASK.Agent
-                }/${ENV.CurrentDate.toJSON()}/sample_train_${
-                  CURRTRIAL.num
-                }.png`;
-                // let modelCvs = mkm.cvs.toDataURL();
-                storageRef
-                  .child('mkturkfiles/mkmodels/')
-                  .child(path)
-                  .putString(mkm.cvs.toDataURL(), 'data_url');
-              }
-
-              // console.log(mkm.featureExtractor);
-              let hello = mkm.featureExtractor.execute(
-                mkm.normalizePixelValues(mkm.cvs),
-                'module_apply_default/resnet_v2_50/block4/unit_3/bottleneck_v2/conv2/Relu'
-              );
-              console.log('last conv:', hello);
-              let featureVec = mkm.featureExtractor.execute(
-                mkm.normalizePixelValues(mkm.cvs),
-                mkm.ouputNode
-              );
-              console.log('featureVec:', featureVec);
-              console.log('mkm.outputNode:', mkm.outputNode);
-
-              featureVec = featureVec.reshape(mkm.inputShape);
-              if (CURRTRIAL.num < TASK.ModelConfig.trainIdx) {
-                console.log('CURRTRIAL.num:', CURRTRIAL.num);
-                mkm.dataObj.xTrain.push(featureVec);
-                let oneHotIdx = mkm.getOneHotIdx(CURRTRIAL.correctitem);
-                mkm.dataObj.yTrainLabels.push(oneHotIdx);
-                mkm.dataObj.yTrain.push(mkm.oneHotArr[oneHotIdx]);
-              } else {
-                let oneHotIdx = mkm.getOneHotIdx(CURRTRIAL.correctitem);
-                mkm.dataObj.xTest.push(featureVec);
-                // mkm.dataObj.yTest.push(CURRTRIAL.sample_scenebag_label[0][0]);
-                mkm.dataObj.yTest.push(oneHotIdx);
-              }
-              // mkm.cvs SANITY CHECK CODE
-              // let mkmodelsRef = storageRef.child('mkturkfiles/mkmodels/');
-              // let cvsData = mkm.cvs.toDataURL();
-              // let path = (
-              //  `${TASK.Agent}/${ENV.CurrentDate.toJSON()}/${CURRTRIAL.num}_sample.png`
-              // );
-              // mkmodelsRef.child(path).putString(cvsData, 'data_url');
-              // ctx2.clearRect(0, 0, EYETRACKERCANVAS.width, EYETRACKERCANVAS.height);
-              mkm.hasSampleFeatures = true;
-            } else if (taskscreen != 'Sample' && mkm.hasSampleFeatures) {
-              mkm.hasSampleFeatures = false;
-            }
-          }
-        } //IF MkModel
-
-        //----- (2) Update Status
-        updated2d = 0;
-        updated3d = 0;
-        if (FLAGS.movieplaying == 0) {
-          FLAGS.movieplaying = 1;
-          if (typeof waitforMovieStart != 'undefined') {
-            waitforMovieStart.next();
-          }
-        } //IF movieplaying
-
-        //----- (3) Save Out Images
-        if (
-          (taskscreen0 == 'Sample' || taskscreen0 == 'Test') &&
-          TASK.Agent == 'SaveImages' &&
-          FLAGS.savedata == 1
-        ) {
-          if (
-            (FLAGS.movieper[taskscreen0][ob[frame.current][0]][
-              id[frame.current][0]
-            ] < 1 &&
-              (frame.current == 0 ||
-                sc[frame.current] != sc[frame.current - 1] ||
-                ob[frame.current][0] != ob[frame.current - 1][0] ||
-                id[frame.current][0] != id[frame.current - 1][0])) || //if !movie, save when screen changes
-            FLAGS.movieper[taskscreen0][ob[frame.current][0]][
-              id[frame.current][0]
-            ] >= 1
-          ) {
-            //OR movie
-            saveScreenshot(
-              VISIBLECANVAS,
-              CURRTRIAL.num,
-              taskscreen0,
-              frame.current,
-              ob[frame.current],
-              id[frame.current]
-            );
-          } //IF need to save out this frame
-        } //IF sample or test screen & save out images
-
-        frame.current++;
-      } //IF haven't rendered last frame
-    } //IF time to show new frame
-    //---------------- (end) DISPLAY THE FRAME ------------------//
-
-    if (frame.current >= frame.shown.length) {
-      frame.current = frame.shown.length;
-    } //IF prematurely ending movies externally
-
-    if (frame.shown[frame.shown.length - 1] != 1) {
-      window.requestAnimationFrame(updateCanvas);
-    } //IF frames left to show
-    else {
-      FLAGS.movieplaying = 0;
-      if (typeof waitforMovieFinish != 'undefined') {
-        waitforMovieFinish.next();
-      }
-      resolveFunc(CURRTRIAL.tsequenceactual);
-    } //ELSE all frames shown, promise resolve, exit animation loop
-  } //FUNCTION updateCanvas
-
-  //Kick off async work with window.requestAnimationFrame:
-  //Goes on next screen refresh and syncs to browser's refresh rate on separate clock (not js clock)
-  window.requestAnimationFrame(updateCanvas);
-  return p;
-} //FUNCTION displayTrial_legacy_2022_03_28
