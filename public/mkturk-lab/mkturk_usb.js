@@ -169,7 +169,7 @@ serial.Port.prototype.onReceive = (data) => {
   let onReceiveTime = Date.now();
   let textReceived = textDecoder.decode(data);
   port.statustext_received = textDecoder.decode(data);
-
+  
   if (textReceived.includes('sa')) {
     if (textReceived.includes('1')) {
       logEVENTS(
@@ -190,26 +190,27 @@ serial.Port.prototype.onReceive = (data) => {
   //rfid
   var tagstart = port.statustext_received.indexOf('{tag', 0);
 
-  //EYE - waits for "///" to be robust
-  if (
-    port.statustext_received.indexOf('/') != -1 &&
-    eyebuffer.accumulateEye < 3
-  ) {
+  //EYE
+  if ( port.statustext_received.includes('///') ) {
+    if (port.statustext_received.length > 40){
+      return;
+    }
+console.log(port.statustext_received + 't: ' + performance.now());
+    
     for (var q = 0; q <= port.statustext_received.length - 1; q++) {
       if (port.statustext_received[q] == '/') {
         var lastslash = q;
-        eyebuffer.accumulateEye++;
       }
-    }
-    if (eyebuffer.accumulateEye == 3) {
-      //strip start characters (eg, '/') up front
-      port.statustext_received = port.statustext_received.slice(
-        lastslash + 1,
-        port.statustext_received.length - 1
-      );
-      ENV.Eye.TrackEye = 1;
-    } //IF '///'
-  } //IF '/'
+    }//FOR q char
+
+    //strip start characters (eg, '/') up front
+    port.statustext_received = port.statustext_received.slice(
+      lastslash + 1,
+      port.statustext_received.length
+    );
+    ENV.Eye.TrackEye = 1;
+    eyebuffer.accumulateEye=3;
+  } //IF '///'
 
   //=============== RFID ===============//
   if (tagstart >= 0) {
@@ -253,8 +254,7 @@ serial.Port.prototype.onReceive = (data) => {
   else if (eyebuffer.accumulateEye >= 3) {
     // eye: arduino sends one character at a time, but have to handle the case of receiving 2 characters
 
-    eyebuffer.buffer += port.statustext_received; //accumulate ascii vals
-
+    eyebuffer.buffer = port.statustext_received; //accumulate ascii vals
     var n_character_close = 0;
     if (
       port.statustext_received.indexOf('}') >= 0 &&
@@ -289,7 +289,8 @@ serial.Port.prototype.onReceive = (data) => {
           ENV.Eye.CalibYTransform
         ); //Calibrated
       } else {
-        xy = ['nan', 'nan'];
+        xy = ['null', 'null'];
+        console.log('recording null eye values')
       }
 
       // STORE calibrated eye signal

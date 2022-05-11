@@ -305,6 +305,10 @@ for (var s=0; s<=indt.length-1; s++){
   }
   if (currvalp == NaN || currvals == NaN){
     console.log(textReceived)
+
+    //BigQuery prefers null over NaN
+    if (currvalp == NaN){ currvalp = null }
+    if (currvals == NaN){ currvals = null }
   }
 
 //--------- TRIGGER ---------//
