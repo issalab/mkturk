@@ -1,5 +1,5 @@
 import * as functions from 'firebase-functions';
-import { BigQuery } from '@google-cloud/bigquery';
+import { BigQuery, TableMetadata } from '@google-cloud/bigquery';
 import * as DeviceDetector from 'device-detector-js';
 import * as admin from 'firebase-admin';
 // const cors = require('cors')({ origin: true });
@@ -60,6 +60,15 @@ interface MturkUserData {
   wid: string;
   token: string;
   task: string;
+}
+
+interface PhotodiodeData {
+  agent: string;
+  filename: string;
+  trial_num: number;
+  timestamp: any;
+  photodiodeValue: Array<number | null>;
+  t: number[];
 }
 
 // interface MturkSurvey {
@@ -155,6 +164,43 @@ const createTableOptions = {
     field: 'timestamp',
   },
 };
+
+export const bqInsertPhotodiodeData = functions.https.onCall(
+  (row: PhotodiodeData) => {
+    const bq = new BigQuery();
+    const dataset = bq.dataset('photodiode');
+    const table = dataset.table(row.agent);
+
+    table
+      .exists()
+      .then(async (tableExists) => {
+        if (tableExists[0]) {
+          row.timestamp = new Date(row.timestamp);
+          table.insert(row, {}, insertHandler);
+          return 'success';
+        } else {
+          dataset
+            .createTable(row.agent, photodiodeTableOptions)
+            .then(([table]) => {
+              row.timestamp = new Date(row.timestamp);
+              table.insert(row, {}, insertHandler);
+            })
+            .catch((error) => {
+              console.error(
+                '[bqInsertPhotodiodeData]::dataset.createTable() Error:',
+                error
+              );
+              return error;
+            });
+          return 'success';
+        }
+      })
+      .catch((error) => {
+        console.error('[bqInsertPhotodiodeData]::table.exists() Error:', error);
+        return error;
+      });
+  }
+);
 
 export const bqInsertTouchData = functions.https.onCall((rows: touchData[]) => {
   const bq = new BigQuery();
@@ -327,64 +373,6 @@ export const createTokenOnServer = functions.https.onCall((data, context) => {
   console.log('data:', data);
   return 'hi';
 });
-
-// export const createTokenOnServer = functions.https.onCall(
-//   async (idToken: string, context) => {
-//     return admin
-//       .auth()
-//       .verifyIdToken(idToken)
-//       .then((decodedToken) => {
-//         if (decodedToken.labMember) {
-//           const db = admin.firestore();
-//           return db
-//             .collection('labmembers')
-//             .where('uid', '==', decodedToken.uid)
-//             .get()
-//             .then(async (querySnapshot) => {
-//               const docs = querySnapshot.docs;
-//               if (docs.length !== 1) {
-//                 return {
-//                   result: 'error',
-//                   clientToken: '',
-//                   message: 'more than one user has the same uid',
-//                 };
-//               } else {
-//                 const clientToken = await admin
-//                   .auth()
-//                   .createCustomToken(decodedToken.uid);
-//                 return db
-//                   .collection('labmembers')
-//                   .doc(docs[0].id)
-//                   .update({ clientToken: clientToken })
-//                   .then(() => {
-//                     return {
-//                       result: 'success',
-//                       clientToken: clientToken,
-//                       message: 'clientToken created',
-//                     };
-//                   })
-//                   .catch((error) => {
-//                     return {
-//                       result: 'error',
-//                       clientToken: '',
-//                       message: error,
-//                     };
-//                   });
-//               }
-//             });
-//         } else {
-//           return {
-//             result: 'error',
-//             clientToken: '',
-//             message: 'user is not a lab member',
-//           };
-//         }
-//       })
-//       .catch((error) => {
-//         return { result: 'error', clientToken: '', message: error };
-//       });
-//   }
-// );
 
 export const isMturkUser = functions.https.onCall(async (idToken: string) => {
   try {
@@ -891,6 +879,44 @@ const touchDataSchema = {
 
 const touchDataTableOptions = {
   schema: touchDataSchema,
+  timePartitioning: {
+    type: 'DAY',
+    field: 'timestamp',
+  },
+};
+
+const photodiodeTableSchema = {
+  fields: [
+    {
+      name: 'agent',
+      type: 'STRING',
+      mode: 'REQUIRED',
+    },
+    {
+      name: 'timestamp',
+      type: 'TIMESTAMP',
+      mode: 'REQUIRED',
+    },
+    {
+      name: 'photodiode',
+      type: 'INTEGER',
+      mode: 'REPEATED',
+    },
+    {
+      name: 'trial_num',
+      type: 'INTEGER',
+      mode: 'REQUIRED',
+    },
+    {
+      name: 't',
+      type: 'INTEGER',
+      mode: 'REPEATED',
+    },
+  ],
+};
+
+const photodiodeTableOptions: TableMetadata = {
+  schema: photodiodeTableSchema,
   timePartitioning: {
     type: 'DAY',
     field: 'timestamp',
