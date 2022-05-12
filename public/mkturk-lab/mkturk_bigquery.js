@@ -78,10 +78,13 @@ function saveEyeDatatoBigQuery() {
 		}//IF after trial start minus 2 seconds
 	}//FOR i events
 
-	bqInsertEyeData(eyedata);
-
-	console.log("BIGQUERY: Upload EyeData");
-
+	if (eyedata.length > 0){
+		bqInsertEyeData(eyedata);
+		console.log("BIGQUERY: Upload EyeData");
+	}
+	else{
+		console.log('no eye data to upload to bigquery')
+	}
 	//reset eye event accumulation in mkturk (reduce memory load)
 	EVENTS[eventtype][eventname] = {};
 

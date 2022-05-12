@@ -193,9 +193,10 @@ serial.Port.prototype.onReceive = (data) => {
   //EYE
   if ( port.statustext_received.includes('///') ) {
     if (port.statustext_received.length > 40){
+      console.log('eyetracker fell behind')
       return;
     }
-console.log(port.statustext_received + 't: ' + performance.now());
+// console.log(port.statustext_received + 't: ' + performance.now());
     
     for (var q = 0; q <= port.statustext_received.length - 1; q++) {
       if (port.statustext_received[q] == '/') {

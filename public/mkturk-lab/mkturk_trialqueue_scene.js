@@ -323,16 +323,18 @@ for ( var f=0; f<=nframesprime-1; f++){
 	  frame_prime.frames[q] = [q];
 	} // FOR q frames
 
-	await displayTrial_prime(
-	  tsequence, //ti
-	  sequencegridindex,
-	  sequenceclip, //cl
-	  sequenceframe, //fr
-	  sequencetaskscreen, //sc
-	  sample_sequencelabel, //ob
-	  sample_sequenceindex, //id
-	  sample_image_frame0 //ims
-	);
+	if (tsequence.length > 0){
+		await displayTrial_prime(
+			tsequence, //ti
+			sequencegridindex,
+			sequenceclip, //cl
+			sequenceframe, //fr
+			sequencetaskscreen, //sc
+			sample_sequencelabel, //ob
+			sample_sequenceindex, //id
+			sample_image_frame0 //ims
+		  );	  
+	}
 
 // var ims = [CURRTRIAL.sampleimage[CURRTRIAL.sequenceclip[f]][fr[f]]]; //fr[f] frame within clip
 
@@ -341,38 +343,6 @@ for ( var f=0; f<=nframesprime-1; f++){
 // sc -- taskscreen: movie_sequence == CURRTRIAL.sequencetaskscreen
 // ob -- TQS.get_next_trial[5] == TQS.samplebag_labels[sample_index] == CURRTRIAL.sample_scenebag_label
 // id -- TQS.get_next_trial[6] == TQS.samplebag_indices[sample_index] == CURRTRIAL.sample_scenebag_index
-
-// RSVP clip == CURRTRIAL.sequenceclip
-//	CURRTRIAL.sampleimage == sample_image[0] = await this.IB.get_by_name(sample_filename);
-//  if (taskscreen == 'Sample') {
-//		var ims = [CURRTRIAL.sampleimage[CURRTRIAL.sequenceclip[f]][fr[f]]]; //fr[f] frame within clip
-// 	} else if (taskscreen == 'Test') {
-//		var clip = 0;
-//		var ims = CURRTRIAL.testimages[clip][fr[f]];
-// 	}
-
-// // Create Movie Sequence
-//       [movie_sequence, movie_tsequence, movie_framenum] =
-//         createMovieSeq_frames('Sample', blankdurationpre, sampleon, TASK.SampleOFF, ENV.FrameRateMovie);
-//       movie_tsequence = movie_tsequence.map((a) => { return a + t0; });
-
-//       CURRTRIAL.tsequencedesired.push(...movie_tsequence);
-//       CURRTRIAL.sequencegridindex.push(...Array(movie_tsequence.length).fill([TASK.SampleGridIndex]));
-//       CURRTRIAL.sequenceclip.push(...Array(movie_tsequence.length).fill(i));
-//       CURRTRIAL.sequenceframe.push(...movie_framenum);
-//       CURRTRIAL.sequencetaskscreen.push(...movie_sequence);
-//       CURRTRIAL.sequencelabel.push(...Array(movie_tsequence.length).fill(CURRTRIAL.sample_scenebag_label[i]));
-//       CURRTRIAL.sequenceindex.push(...Array(movie_tsequence.length).fill(CURRTRIAL.sample_scenebag_index[i]));
-
-      // await displayTrial_prime(
-      //     CURRTRIAL.tsequencedesired,
-      //     CURRTRIAL.sequencegridindex,
-      //     CURRTRIAL.sequenceframe,
-      //     CURRTRIAL.sequencetaskscreen,
-      //     CURRTRIAL.sequencelabel,
-      //     CURRTRIAL.sequenceindex,
-      //     mkm
-      //   );
 } //FUNCTION generate_trials
 
 

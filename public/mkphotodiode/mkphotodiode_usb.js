@@ -72,6 +72,10 @@ function agentSelectionListener(event){
   {
     fileMeta.trialnum = snap.val();
   })
+  rtdb.ref(`instances/${fileMeta.activeAgent}/filename`).on('value', (snap) => 
+  {
+    fileMeta.filename = snap.val();
+  })
   getFileMeta()
 }//FUNCTION agentSelectionListener
 

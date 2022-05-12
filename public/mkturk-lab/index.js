@@ -2041,11 +2041,11 @@ if (ENV.NDisplayPrime > 0){
       }
 
       renderShape2D(CANVAS.sequencepost[0], -1, VISIBLECANVAS);
-      let lenSequencepost = CANVAS.sequencepost.length;
+      let lenSequencePost = CANVAS.sequencepost.length;
       let p1 = displayTrial(CANVAS.tsequencepost,
-        Array(lenSequencepost).fill(-1),Array(lenTsequencePost).fill(-1),range(0, lenSequencepost - 1, 1),
+        Array(lenSequencePost).fill(-1),Array(lenSequencePost).fill(-1),range(0, lenSequencePost - 1, 1),
         CANVAS.sequencepost,
-        Array(lenSequencepost).fill(0), Array(lenSequencepost).fill(0),[],mkm
+        Array(lenSequencePost).fill(0), Array(lenSequencePost).fill(0),[],mkm
       );
 
       let numTrialsToBufferPunishPeriod = 50;

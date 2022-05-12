@@ -25,16 +25,13 @@ unsigned long currentTime = millis();
 char receivedSampleCmdChars[numChars];
 char receivedSampleCmdCharsEye[numChars];
 boolean newSampleCmd = false;
-boolean newSampleCmdEye = false;
 const int sampleCmdPin = A2; //CAMERA TRIGGER PIN, also for future external devices
 const int sampleCmdLEDPin=5;
 int sampleCmd;
-int sampleCmdEye;
 int prevSampleCmd = 0;
 char sampleCmdStartMarker = '$';
 char sampleCmdEndMarker = '%';
 char sampleCmdOutMarker[] = "sa";
-char timeOutMarker[] = "tm";
 
 // EYE TRACKER
 SoftwareSerial mySerialEYE(8, 9);
@@ -81,7 +78,6 @@ void recvEyeTracker() {
 
     val = mySerialEYE.read();
     str.concat(val);
-//    Serial.print(val);
     if (val == eyeEndMarker){
       Serial.print(str);
       Serial.flush();
