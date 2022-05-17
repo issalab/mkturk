@@ -181,9 +181,9 @@ export const bqInsertPhotodiodeData = functions.https.onCall(
         } else {
           dataset
             .createTable(row.agent, photodiodeTableOptions)
-            .then(([table]) => {
+            .then(([newTable]) => {
               row.timestamp = new Date(row.timestamp);
-              table.insert(row, {}, insertHandler);
+              newTable.insert(row, {}, insertHandler);
             })
             .catch((error) => {
               console.error(
