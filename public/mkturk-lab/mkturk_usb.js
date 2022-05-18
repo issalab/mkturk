@@ -168,27 +168,16 @@ serial.Port.prototype.onReceive = (data) => {
   let textDecoder = new TextDecoder();
   let onReceiveTime = Date.now();
   let textReceived = textDecoder.decode(data);
-  port.statustext_received = textDecoder.decode(data);
+  port.statustext_received = textReceived;
   
   if (textReceived.includes('sa')) {
     if (textReceived.includes('1')) {
-      logEVENTS(
-        'SampleCommandReturnTime',
-        onReceiveTime - ENV.CurrentDate.valueOf(),
-        'trialseries'
-      );
+      logEVENTS('SampleCommandReturnTime',onReceiveTime - ENV.CurrentDate.valueOf(),'trialseries');
     } else if (textReceived.includes('0')) {
-      logEVENTS(
-        'SampleCommandOffReturnTime',
-        onReceiveTime - ENV.CurrentDate.valueOf(),
-        'trialseries'
-      );
+      logEVENTS('SampleCommandOffReturnTime',onReceiveTime - ENV.CurrentDate.valueOf(),'trialseries');
     } //IF 1
     return;
-  } //IF "sa", samplecommand
-
-  //rfid
-  var tagstart = port.statustext_received.indexOf('{tag', 0);
+  }//IF "sa", samplecommand
 
   //EYE
   if ( port.statustext_received.includes('///') ) {
@@ -196,7 +185,6 @@ serial.Port.prototype.onReceive = (data) => {
       console.log('eyetracker fell behind')
       return;
     }
-// console.log(port.statustext_received + 't: ' + performance.now());
     
     for (var q = 0; q <= port.statustext_received.length - 1; q++) {
       if (port.statustext_received[q] == '/') {
@@ -213,15 +201,14 @@ serial.Port.prototype.onReceive = (data) => {
     eyebuffer.accumulateEye=3;
   } //IF '///'
 
+  //RFID
+  var tagstart = port.statustext_received.indexOf('{tag', 0);
+
   //=============== RFID ===============//
   if (tagstart >= 0) {
     //rfid: arduino sends whole tag at once
     var tagend = port.statustext_received.indexOf('}', 0);
-    logEVENTS(
-      'RFIDTag',
-      port.statustext_received.slice(tagstart + 4, tagend),
-      'timeseries'
-    );
+    logEVENTS('RFIDTag',port.statustext_received.slice(tagstart + 4, tagend),'timeseries');
 
     var nrfid = Object.keys(EVENTS['timeseries']['RFIDTag']).length;
     if (nrfid >= 2) {
@@ -421,6 +408,16 @@ serial.Port.prototype.onReceiveError = (error) => {
 //PORT - transferOut
 serial.Port.prototype.writepumpdurationtoUSB = async function (data) {
   let msgstr = '{' + data.toString() + '}'; // start(<), end(>) characters
+  let textEncoder = new TextEncoder();
+  await this.device_.transferOut(4, textEncoder.encode(msgstr));
+
+  port.statustext_sent = 'TRANSFERRED CHAR --> USB:' + msgstr;
+  updateHeadsUpDisplayDevices();
+}; //port.writepumpdurationUSB
+
+//PORT - pause eyetracker
+serial.Port.prototype.writepumptopauseeyetoUSB = async function (data) {
+  let msgstr = '{' + data + '}'; // start(<), end(>) characters
   let textEncoder = new TextEncoder();
   await this.device_.transferOut(4, textEncoder.encode(msgstr));
 

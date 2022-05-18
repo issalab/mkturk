@@ -272,7 +272,6 @@ if (ENV.BatteryAPIAvailable) {
   if (TASK.Agent == 'SaveImages') {
     FLAGS.DirHandle = await window.showDirectoryPicker();
     TASK.ImageBagsSample.forEach(async (sceneFilePath) => {
-      console.log('HI');
       let sceneFileName = sceneFilePath.split('/').slice(-1)[0];
       let sceneFileDir = sceneFilePath
         .split('/')
@@ -550,6 +549,7 @@ if (ENV.BatteryAPIAvailable) {
     if (FLAGS.need2loadParameters == 1) {
       if (port.connected) {
         port.writeSampleCommandTriggertoUSB('0');
+        port.writepumptopauseeyetoUSB('|');//pause eyetracker
       }
       FLAGS.need2loadParameters = await loadParametersfromFirebase(
         ENV.ParamFileName
@@ -899,6 +899,10 @@ if (ENV.BatteryAPIAvailable) {
       TASK.BackgroundColor2D = '#7F7F7F';
     }
     document.body.style.background = TASK.BackgroundColor2D;
+
+    if (CURRTRIAL.num <= 0){
+      port.writepumptopauseeyetoUSB('~');//resume eyetracker
+    }
     //========================(END) 3D SCENE SET-UP =======================//
 
     //============ SELECT SAMPLE & TEST IMAGES ============//
@@ -2059,10 +2063,15 @@ if (ENV.NDisplayPrime > 0){
 
     if (port.connected && FLAGS.savedata) {
       port.writeSampleCommandTriggertoUSB('0');
+      // Log trial end time
+      CURRTRIAL.endtime = Date.now() - ENV.CurrentDate.valueOf();
+      await sleep(3);
+    }
+    else{
+      // Log trial end time
+      CURRTRIAL.endtime = Date.now() - ENV.CurrentDate.valueOf();      
     }
 
-    // Log trial end time
-    CURRTRIAL.endtime = Date.now() - ENV.CurrentDate.valueOf();
     logEVENTS('EndTime', CURRTRIAL.endtime, 'trialseries');
     //============ (end) DELIVER REWARD/PUNISH ============//
 
@@ -2118,7 +2127,8 @@ if (ENV.NDisplayPrime > 0){
 
           ENV.Eye.calibration = 0;
         } //IF enough points
-      } else if (FLAGS.savedata == 1 && ENV.Eye.calibration == 0) {
+      }//IF ENV.Eye.calibration==1
+      else if (FLAGS.savedata == 1 && ENV.Eye.calibration == 0) {
         // ELSEIF test eye calibration
         if (CURRTRIAL.fixationtouchevent == 'theld') {
           // IF held fixation
@@ -2141,7 +2151,7 @@ if (ENV.NDisplayPrime > 0){
             ENV.Eye.CalibTestMSE
           );
         }
-      }
+      }//ELSEIF calibrate test data
 
       if (typeof EVENTS['timeseries']['EyeData'][0] != 'undefined') {
         let firstTimestamp = new Date(EVENTS['timeseries']['EyeData'][0][1]);
