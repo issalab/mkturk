@@ -9,6 +9,9 @@ import {
   FullMetadata,
   StorageReference,
 } from 'firebase/storage';
+
+import { getDatabase, ref as rtdbRef, onValue } from 'firebase/database';
+
 import {
   getAuth,
   getRedirectResult,
@@ -57,6 +60,7 @@ getRedirectResult(auth)
   });
 
 const storage = getStorage();
+const rtdb = getDatabase();
 
 export const firebaseApi = createApi({
   reducerPath: 'firebaseApi',

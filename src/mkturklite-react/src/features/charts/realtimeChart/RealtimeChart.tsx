@@ -3,6 +3,9 @@ import { useAppSelector } from '../../../app/hooks';
 import { selectCurrentData } from '../../data/dataSlice';
 import Button from 'react-bootstrap/Button';
 import Row from 'react-bootstrap/Row';
+import { getDatabase, ref, onValue, push, update } from 'firebase/database';
+
+const rtdb = getDatabase();
 
 interface IDictionary {
   [index: string]: any;
@@ -25,6 +28,13 @@ export const RealtimeChart = () => {
     y: null,
   });
 
+  const [streamState, setStreamState] = useState({
+    active: false,
+    agent: '',
+    currentDate: '',
+    agentClientRef: ref(rtdb),
+  });
+
   const handleClick = () => {
     const tmp = buttonString.current;
     setButtonString({
@@ -34,9 +44,38 @@ export const RealtimeChart = () => {
     });
   };
 
-  const handleRealtimeData = () => {};
+  // const handleRealtimeData = () => {};
+  const tmpRef = ref(rtdb, 'data/' + streamState.agent);
+  onValue(tmpRef, (snapshot) => {
+    const data = snapshot.val();
+    console.log('VAL DATA', data);
+    return data;
+  });
 
   React.useEffect(() => {
+    // Request realtime data & setup canvas
+    if (!streamState.active && buttonString.on) {
+      if (currentData !== undefined) {
+        const agentClientKey = push(
+          ref(rtdb, 'agents/' + currentData.agent)
+        ).key;
+
+        setStreamState({
+          agentClientRef: ref(
+            rtdb,
+            'agent/' + currentData.agent + '/' + agentClientKey
+          ),
+        });
+        const agentClientRef = ref(
+          rtdb,
+          'agent/' + currentData.agent + '/' + agentClientKey
+        );
+        if (agentClientKey != null) {
+          update();
+        }
+      }
+    }
+
     if (buttonString.on) {
       const canvas = canvasRef.current;
       if (
@@ -44,13 +83,19 @@ export const RealtimeChart = () => {
         currentData !== undefined &&
         Object.keys(currentData).length > 0
       ) {
+        canvas.style.display = 'block';
         console.log('SCREAMM', currentData);
         canvas.width = currentData['workspace'][2] * currentData['CanvasRatio'];
         canvas.height =
           currentData['ViewportPixels'][1] - currentData['offsettop'];
       }
+    } else {
+      const canvas = canvasRef.current;
+      if (canvas) {
+        canvas.style.display = 'none';
+      }
     }
-  }, [currentData, buttonString.on]);
+  }, [currentData, buttonString.on, val]);
 
   return (
     <div>
