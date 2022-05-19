@@ -3,7 +3,15 @@ import { useAppSelector } from '../../../app/hooks';
 import { selectCurrentData } from '../../data/dataSlice';
 import Button from 'react-bootstrap/Button';
 import Row from 'react-bootstrap/Row';
-import { getDatabase, ref, onValue, push, update } from 'firebase/database';
+import {
+  getDatabase,
+  ref,
+  onValue,
+  push,
+  update,
+  off,
+  remove,
+} from 'firebase/database';
 
 const rtdb = getDatabase();
 
@@ -21,7 +29,7 @@ export const RealtimeChart = () => {
   });
 
   const [realtimeData, setRealtimeData] = useState({
-    boundingBoxes: {},
+    boundingBoxes: [],
     meta: null,
     timestamp: '',
     x: null,
@@ -32,8 +40,9 @@ export const RealtimeChart = () => {
     active: false,
     agent: '',
     currentDate: '',
-    agentClientRef: ref(rtdb),
   });
+
+  const [agentClientRef, setAgentClientRef] = useState(ref(rtdb));
 
   const handleClick = () => {
     const tmp = buttonString.current;
@@ -42,38 +51,60 @@ export const RealtimeChart = () => {
       next: tmp,
       on: !buttonString.on,
     });
-  };
 
-  // const handleRealtimeData = () => {};
-  const tmpRef = ref(rtdb, 'data/' + streamState.agent);
-  onValue(tmpRef, (snapshot) => {
-    const data = snapshot.val();
-    console.log('VAL DATA', data);
-    return data;
-  });
-
-  React.useEffect(() => {
-    // Request realtime data & setup canvas
-    if (!streamState.active && buttonString.on) {
-      if (currentData !== undefined) {
+    if (currentData !== undefined) {
+      if (streamState.active) {
+        off(ref(rtdb, 'data/' + currentData['Agent']), 'value');
+        remove(agentClientRef)
+          .then((val) => {
+            console.log('VAL removed:', val);
+          })
+          .catch((err) => {
+            console.error('VAL Error:', err);
+          });
+        setStreamState({
+          active: false,
+          agent: '',
+          currentDate: '',
+        });
+      } else {
         const agentClientKey = push(
-          ref(rtdb, 'agents/' + currentData.agent)
+          ref(rtdb, 'agents/' + currentData['Agent'])
         ).key;
 
-        setStreamState({
-          agentClientRef: ref(
-            rtdb,
-            'agent/' + currentData.agent + '/' + agentClientKey
-          ),
-        });
-        const agentClientRef = ref(
-          rtdb,
-          'agent/' + currentData.agent + '/' + agentClientKey
+        setAgentClientRef(
+          ref(rtdb, 'agents/' + currentData['Agent'] + '/' + agentClientKey)
         );
+
         if (agentClientKey != null) {
-          update();
+          update(ref(rtdb, 'agents/' + currentData['Agent']), {
+            [agentClientKey]: true,
+          });
         }
+
+        onValue(ref(rtdb, 'data/' + currentData['Agent']), (snapshot) => {
+          const data = snapshot.val();
+
+          setRealtimeData({
+            boundingBoxes: data.boundingBoxes,
+            meta: data.meta,
+            timestamp: data.timestamp,
+            x: data.x,
+            y: data.y,
+          });
+        });
+
+        setStreamState({
+          active: true,
+          agent: currentData['Agent'],
+          currentDate: currentData['CurrentDate'],
+        });
       }
+    }
+  };
+
+  React.useEffect(() => {
+    if (streamState.active && buttonString.on) {
     }
 
     if (buttonString.on) {
@@ -95,7 +126,7 @@ export const RealtimeChart = () => {
         canvas.style.display = 'none';
       }
     }
-  }, [currentData, buttonString.on, val]);
+  }, [currentData, buttonString.on, streamState]);
 
   return (
     <div>
