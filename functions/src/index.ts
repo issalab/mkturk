@@ -893,6 +893,11 @@ const photodiodeTableSchema = {
       mode: 'REQUIRED',
     },
     {
+      name: 'filename',
+      type: 'STRING',
+      mode: 'REQUIRED',
+    },
+    {
       name: 'timestamp',
       type: 'TIMESTAMP',
       mode: 'REQUIRED',
@@ -909,7 +914,7 @@ const photodiodeTableSchema = {
     },
     {
       name: 't',
-      type: 'INTEGER',
+      type: 'FLOAT64',
       mode: 'REPEATED',
     },
   ],
