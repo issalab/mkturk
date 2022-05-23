@@ -10,6 +10,9 @@ var pd = {
 
 //================== AUTHENTICATE GOOGLE ==================//
 const auth = firebase.auth();
+const functions = firebase.functions();
+
+const bqInsertPhotodiodeData = functions.httpsCallable('bqInsertPhotodiodeData');
 var provider = new firebase.auth.GoogleAuthProvider();
 provider.addScope('https://www.googleapis.com/auth/contacts.readonly');
 

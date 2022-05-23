@@ -23,13 +23,14 @@ var abuff = {
 
   ttrig: [], trigON: 0, indtrace: -1,
   //triggers
-  tdrop: [], trise: [], dur: [], corr: [],
+  tdrop: [], trise: [], dur: [], corr: [], tsc: [], trial: [],
   ntrials: -1,
 
   lastdraw: performance.now(),
   lastreceive: performance.now(),
   manualtriggerval: 0,
-  manualtriggertime: 0
+  manualtriggertime: 0,
+  plotdata: 0
 };
 
 let fileMeta = { 
@@ -157,6 +158,10 @@ async function findUSBDevice(event) {
       document.querySelector('button[id=manualtrigger]').style.display = 'block';
       document.querySelector('button[id=manualtrigger]').style.visibility = 'visible';
       document.querySelector('button[id=manualtrigger]').style.top = '5%';
+      //Show plot data button
+      document.querySelector('button[id=plotdata]').style.display = 'block';
+      document.querySelector('button[id=plotdata]').style.visibility = 'visible';
+      document.querySelector('button[id=plotdata]').style.top = '5%';
     }
   }
 
@@ -195,6 +200,10 @@ async function findUSBDevice(event) {
       document.querySelector('button[id=manualtrigger]').style.display = 'block';
       document.querySelector('button[id=manualtrigger]').style.visibility = 'visible';
       document.querySelector('button[id=manualtrigger]').style.top = '5%';
+      //Show plot data button
+      document.querySelector('button[id=plotdata]').style.display = 'block';
+      document.querySelector('button[id=plotdata]').style.visibility = 'visible';
+      document.querySelector('button[id=plotdata]').style.top = '5%';
     } catch (error) {
       console.log(error);
     }
@@ -380,7 +389,7 @@ for (var s=0; s<=indt.length-1; s++){
   abuff.trec[abuff.currind] = dtpipe;
 
   //---------- Update plot data (0:time  1:sc  2:photodiode)
-  if (abuff.trigON){
+  if (abuff.trigON && abuff.plotdata == 1){
     if (abuff.ntrials >= 1){
       var prevind = abuff.indtrace - 1
       if (prevind < 0){ prevind = abuff.ntraces-1 };
@@ -395,16 +404,14 @@ for (var s=0; s<=indt.length-1; s++){
       var yprev = abuff.ph[abuff.currind];
     }
 
-    // dataRunning.addRow([  abuff.t[abuff.currind],
-    //                       yprev,
-    //                       abuff.ph[abuff.currind] ])
-
     dataRunning.addRow([
       {v:  abuff.t[abuff.currind], f:''},
       {v:  yprev, f:''},
       {v:  abuff.ph[abuff.currind], f:''}
-    ]); //avoid  formatting of domain data to speed  up
-    
+    ]); //avoid  formatting of domain data to speed  up    
+  }//IF not saving data, then plot
+
+  if (abuff.trigON){
     abuff.currind++
   }
 //--------- CURRENT ---------//
@@ -423,6 +430,7 @@ for (var s=0; s<=indt.length-1; s++){
 
   if (trigDown){
     abuff.manualtriggerval = 0;
+
     saveTrialData()
     updatePlots()
   } //IF triggered down, then plot
@@ -456,6 +464,7 @@ document.getElementById('metatext').innerHTML =
           ' (n=' + abuff.ntrials + ')'
 
 //----- Display stats
+  abuff.tsc[abuff.ntrials] = abuff.t0;
   const isSmallNumber = (element) => element < 0.3*(Math.max(...abuff.ph) - Math.min(...abuff.ph)) + Math.min(...abuff.ph);
   abuff.tdrop[abuff.ntrials] = Math.round(abuff.t[abuff.ph.findIndex(isSmallNumber)])
 
@@ -528,12 +537,14 @@ document.getElementById('metatext').innerHTML =
   }//IF >1 trial
 //----- Display stats
 
-//----- Draw plot
-  runningOptions.hAxis = {viewWindow: {min: 0, max: tinterp[tinterp.length-1]} }
-  lineRunning.draw(dataRunning, google.charts.Line.convertOptions(runningOptions));
-  dataRunning.removeRows(0,dataRunning.getNumberOfRows());
+  //----- Draw plot
+  if (abuff.plotdata == 1){
+    runningOptions.hAxis = {viewWindow: {min: 0, max: tinterp[tinterp.length-1]} }
+    lineRunning.draw(dataRunning, google.charts.Line.convertOptions(runningOptions));
+    dataRunning.removeRows(0,dataRunning.getNumberOfRows());
 
-  abuff.lastdraw = performance.now();
+    abuff.lastdraw = performance.now();  
+  }//IF plotting
 }//FUNCTION updatePlot
 
 async function readLoop(port) {
@@ -584,35 +595,27 @@ async function toggleTrigger(event){
   }
 }//FUNCTION toggleTrigger
 
+async function togglePlotData(event){
+    if (abuff.plotdata == 0){
+      abuff.plotdata = 1;
+      document.querySelector('button[id=plotdata]').style.color = 'green';
+    }//IF start saving
+    else {
+      abuff.plotdata = 0;
+      document.querySelector('button[id=plotdata]').style.color = 'black';
+    }//ELSE stop plotting
+}//FUNCTION togglePlotData
+
 function saveTrialData(){
-// Notes for @Hector
-// if (fileMeta.activeAgent is an empty string) ==> then just save to local disk using agent "None"
-
-//else if there is an activeAgent, then save both to localy disk and bigquery
-//Trial num:
-// if (fileMeta.activeAgent is not an empty string)
-// && if (fileMeta.trialnum is >= 0), then use fileMeta.trialnum
-// Else use abuff.ntrials for the trialnum
-
-//on each trial save the data in abuff.t and abuff.ph
-//these are length O(1000) since the data are sampled at 1.5kHz and stimuli last on the order of seconds
-//abuff.t is relative to sample command onset (ie, starts at 0)
-//however, we want absolute time in the same timeframe as timeseries that are saved out to bigquery by mkturk
-// absolute time = abuff.t0 + abuff.t
-// where t0=Date.now() at time of trigger
-
-//Maybe I'm missing something but the actual file contents would simply be an entry for each trial [time,trial,data...]
-//The filename would be the same as the mkturk file name in fileMeta.filename appended with _fileMeta.activeAgent & '_photodiode' added.
-// You could also write fileMeta.activeAgent & fileMeta.filename the first time the file is created
-// to have that information explicitly in the file instead of implicit in the filename.
-
-
-//one thing to check is that data writing can proceed aysynchronously to data reading without interfering.
-//Otherwise, data writing will have to be fast enough to happen during the downtime (intertrial_interval) between sample command triggers
-
-//The last bit is to have mkphotodiode start a new file when the mkturk filename changes or the mkturk trial # goes back to 0.
-// Also note that arduino analog reads at 10-bit resolution, so you don't need to use too many bytes to store the value.
-
-// Photodiode Arduino file: 2022_04_26_send_PhotodiodeSampleCommand_basic01
-// MkTurk Arduino file: 20220427_pump_eyetracker_command
-}
+  const data = {
+    agent: fileMeta.activeAgent,
+    filename: fileMeta.filename,
+    trial_num: fileMeta.trialnum,
+    timestamp: abuff.t0,
+    photodiode: abuff.ph,
+    t: abuff.t
+  }
+  if (fileMeta.activeAgent !== '') {
+    bqInsertPhotodiodeData(data);
+  }
+}//FUNCTION saveTrialData

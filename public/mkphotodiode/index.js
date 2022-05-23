@@ -28,6 +28,8 @@ document.getElementById("agent-list").addEventListener("change",agentSelectionLi
       'visible';
     document.querySelector('button[id=manualtrigger]').style.display = 'none';
     document.querySelector('button[id=manualtrigger]').addEventListener('pointerup', toggleTrigger, false);
+    document.querySelector('button[id=plotdata]').style.display = 'none';
+    document.querySelector('button[id=plotdata]').addEventListener('pointerup', togglePlotData, false);
 
     await connectHardwareButtonPromise();
   }//IF WebUSB API present

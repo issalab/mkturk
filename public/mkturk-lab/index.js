@@ -2065,7 +2065,7 @@ if (ENV.NDisplayPrime > 0){
       port.writeSampleCommandTriggertoUSB('0');
       // Log trial end time
       CURRTRIAL.endtime = Date.now() - ENV.CurrentDate.valueOf();
-      await sleep(3);
+      await sleep(5);
     }
     else{
       // Log trial end time
