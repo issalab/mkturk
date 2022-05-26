@@ -186,6 +186,8 @@ ImageHeightPixels: The height of the sample image in pixels. The image height is
 
 ImageWidthPixels: The width of the sample image in pixels. The image width is used as the unit for the horizontal dimension.
 
+NDisplayPrime: how many frames of sample movie to render before rendering sample movie. Calls a second parallel rAF that draws to the same canvas but then covers with blank (gray) screen. In some cases, priming helps obtain more reliable hardware display times when using webgl canvas.
+
 NRSVPMin: set to be TASK.NRSVP. Guaranteed one reward if fixate for NRSVPMin images
 
 NRSVPMax: set to TASK.NRSVPMax (if present); otherwise, set to TASK.NRSVP. Bonus rewards are given in an exponential fashion for fixating up to TASK.NRSVPMax images.

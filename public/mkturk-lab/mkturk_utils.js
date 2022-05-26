@@ -39,25 +39,6 @@
   };
 })(window);
 
-/* Randomize array element order in-place.  Using Fisher-Yates shuffle algorithm. http://bost.ocks.org/mike/shuffle/ */
-// To test your shuffling algorithm: go to http://bost.ocks.org/mike/shuffle/compare.html
-function shuffleArray(array) {
-  // Expand to index vector if needed
-  if (array.length == 1) {
-    var len = array[0];
-    for (var i = 0; i <= len - 1; i++) {
-      array[i] = i;
-    }
-  }
-  for (var i = array.length - 1; i > 0; i--) {
-    var j = Math.floor(Math.random() * (i + 1));
-    var temp = array[i];
-    array[i] = array[j];
-    array[j] = temp;
-  }
-  return array;
-}
-
 // convert base64 to buffer array (from: http://stackoverflow.com.80bola.com/questions/27524283/save-image-to-dropbox-with-data-from-canvas?rq=1)
 function _base64ToArrayBuffer(base64) {
   base64 = base64.split('data:image/png;base64,').join('');
@@ -130,25 +111,6 @@ function shuffle(array) {
     array[randomIndex] = temporaryValue;
   }
 
-  return array;
-}
-
-/* Randomize array element order in-place.  Using Fisher-Yates shuffle algorithm. http://bost.ocks.org/mike/shuffle/ */
-// To test your shuffling algorithm: go to http://bost.ocks.org/mike/shuffle/compare.html
-function shuffleArray(array) {
-  // Expand to index vector if needed
-  if (array.length == 1) {
-    var len = array[0];
-    for (var i = 0; i <= len - 1; i++) {
-      array[i] = i;
-    }
-  }
-  for (var i = array.length - 1; i > 0; i--) {
-    var j = Math.floor(Math.random() * (i + 1));
-    var temp = array[i];
-    array[i] = array[j];
-    array[j] = temp;
-  }
   return array;
 }
 
@@ -401,117 +363,6 @@ function timeout(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
-function objectomeImageNamesToLatentVars(imagefilepaths, imagelabels) {
-  var images = {
-    ImageSetDir: '',
-    Nouns: [],
-    Objects: [],
-    BagNames: [],
-    BagIdx: [],
-    HashesPrefix: [],
-  };
-  var object = {
-    ty: [],
-    tz: [],
-    rxy: [],
-    rxz: [],
-    ryz: [],
-    scale: [],
-  };
-
-  images.ImageSetDir =
-    imagefilepaths[0].slice(0, imagefilepaths[0].indexOf('objectome')) +
-    'objectome/';
-
-  for (var i = 0; i <= imagefilepaths.length - 1; i++) {
-    images.BagIdx[i] = imagelabels[i];
-    var strs = imagefilepaths[i].split('/'); //split path into words
-
-    // Noun, object model, image folder
-    var findnext = 0;
-    for (var j = 0; j <= strs.length - 1; j++) {
-      if (findnext == 0 && strs[j] == 'objectome') {
-        findnext++;
-      } else if (findnext == 1) {
-        images.Nouns[images.BagIdx[i]] = strs[j];
-        findnext++;
-      } //else if noun
-      else if (findnext == 2) {
-        images.Objects[images.BagIdx[i]] = strs[j];
-        findnext++;
-      } //else if object
-      else if (findnext == 3) {
-        images.BagNames[images.BagIdx[i]] = strs[j];
-        findnext++;
-      } //else if folder
-    } //for j strs
-
-    // Hash, ty, tz, rxy,rxz, ryz,scale
-    var findnext = 0;
-    var paramstrs = strs[strs.length - 1].split('_');
-
-    // initialize to NaN in case meta not specified in filename
-    object.ty[i] = NaN;
-    object.tz[i] = NaN;
-    object.rxy[i] = NaN;
-    object.rxz[i] = NaN;
-    object.ryz[i] = NaN;
-    object.scale[i] = NaN;
-
-    //remove file extension
-    paramstrs[paramstrs.length - 1] = paramstrs[paramstrs.length - 1].slice(
-      0,
-      paramstrs[paramstrs.length - 1].indexOf('.png')
-    );
-    for (var j = 0; j <= paramstrs.length - 1; j++) {
-      if (findnext == 0 && paramstrs[j] == images.Nouns[images.BagIdx[i]]) {
-        findnext++;
-      } else if (findnext == 1) {
-        images.HashesPrefix[i] = paramstrs[j].slice(0, 7); //first 8 characters of hash
-        findnext++;
-      } else if (findnext == 2) {
-        if (paramstrs[j].indexOf('ty') != -1) {
-          object.ty[i] = Number(
-            paramstrs[j].slice(paramstrs[j].indexOf('ty') + 2)
-          );
-        }
-
-        if (paramstrs[j].indexOf('tz') != -1) {
-          object.tz[i] = Number(
-            paramstrs[j].slice(paramstrs[j].indexOf('tz') + 2)
-          );
-        }
-
-        if (paramstrs[j].indexOf('rxy') != -1) {
-          object.rxy[i] = Number(
-            paramstrs[j].slice(paramstrs[j].indexOf('rxy') + 3)
-          );
-        }
-
-        if (paramstrs[j].indexOf('rxz') != -1) {
-          object.rxz[i] = Number(
-            paramstrs[j].slice(paramstrs[j].indexOf('rxz') + 3)
-          );
-        }
-
-        if (paramstrs[j].indexOf('ryz') != -1) {
-          object.ryz[i] = Number(
-            paramstrs[j].slice(paramstrs[j].indexOf('ryz') + 3)
-          );
-        }
-
-        if (paramstrs[j].indexOf('s') != -1) {
-          object.scale[i] = Number(
-            paramstrs[j].slice(paramstrs[j].indexOf('s') + 1)
-          );
-        }
-      } //else latent vars
-    } //for j params
-  } //for i images
-
-  return [images, object];
-} //FUNCTION objectomeImageNamesToLatentVars
-
 function objectomeSceneNamesToLatentVars(scenefilepaths, scenelabels, scenes) {
   var images = {
     ImageSetDir: '',
@@ -684,4 +535,10 @@ function skipHardwareDevice(event) {
   event.preventDefault(); // prevents additional downstream call of click listener
   localStorage.setItem('ConnectUSB', 0);
   waitforClick.next(1);
+}
+
+function getMeanStandardDeviation (array) {
+  const n = array.length
+  const mean = array.reduce((a, b) => a + b) / n
+  return [mean, Math.sqrt(array.map(x => Math.pow(x - mean, 2)).reduce((a, b) => a + b) / n)]
 }

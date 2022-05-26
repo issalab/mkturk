@@ -9,8 +9,37 @@ async function loadTextfromFirebase(textfile_path) {
   return response.json();
 } //ReadFromFirebase
 
-//------------- LOAD IMAGE --------------//
-async function loadImagefromFirebase(imagefile_path) {
+//------------- LOAD IMAGE AS IMAGE or AS TEXTURE --------------//
+async function loadImagefromFirebase(imagefile_path){
+if (FLAGS.usecanvas2D){
+  try{
+    var imagefileRef = await storage.ref().child(imagefile_path)
+    var url = await imagefileRef.getDownloadURL()
+    .catch((error) => console.log(error));
+
+    return new Promise(
+      function(resolve, reject){
+        try {
+          var image = new Image(); 
+          image.crossOrigin = "Anonymous"; //to allow saving of a 'tainted canvas', see https://developer.mozilla.org/en-US/docs/Web/HTML/CORS_enabled_image
+          image.onload = function(){
+            updateImageLoadingAndDisplayText('Loaded: ' + imagefile_path)
+            console.log('Loaded IMG: ' + imagefile_path)
+            resolve(image)        
+          }
+          image.src = url
+        } //TRY
+        catch (error){
+          console.log(error)
+        } //CATCH
+      }
+    ) //Promise
+  }
+  catch (error){
+    console.log(error)
+  }  
+} //IF 2D canvas
+else if (FLAGS.usecanvas2D == 0){
   try {
     var texturefileRef = await storage.ref().child(imagefile_path);
     var url = await texturefileRef
@@ -24,18 +53,16 @@ async function loadImagefromFirebase(imagefile_path) {
         loader.load(url, function (texture) {
           resolve(texture);
           texture.encoding = THREE.sRGBEncoding;
-          // texture.wrapS = THREE.RepeatWrapping;
-          // texture.repeat.x = - 1;
         });
       } catch (error) {
-        //try
         console.log(error);
       } //catch
     }); // Promise
   } catch (error) {
     console.log(error);
   }
-} //ReadFromFirebase
+}//ELSEIF 3D canvas
+} //LOADIMAGEFROMFIREBASE
 
 //------------- LOAD MESH --------------//
 async function loadMeshfromFirebase(meshfile_path) {
@@ -192,9 +219,15 @@ async function getFileListFirebase(dir) {
 
 //------- LIST IMAGES FROM MULTIPLE FOLDERS -------//
 async function loadImageBagPathsParallelFirebase(imagebagroots) {
-  var imagepath_promises = imagebagroots.map((file) =>
-    getFileListFirebase(file)
-  ); // returns a nested array of paths for the backgroundCube
+  if (FLAGS.usecanvas2D){
+    var imagepath_promises = imagebagroots.map(file => getFileListRecursiveFirebase(file,'.png')); //create array of recursive path load Promises  
+  }
+  else if (!FLAGS.usecanvas2D){
+    var imagepath_promises = imagebagroots.map((file) =>
+      getFileListFirebase(file)
+    ); // returns a nested array of paths for the backgroundCube  
+  }
+
   var funcreturn = await Promise.all(imagepath_promises);
   //Assemble images and add labels
   var bagitems_paths = []; // Can also be paths to a single .png file.
@@ -224,24 +257,20 @@ async function loadImageArrayfromFirebase(imagepathlist) {
       );
       return;
     }
+    if (imagepathlist.length == 0){
+      return []
+    }
 
     if (imagepathlist.length > MAX_SIMULTANEOUS_REQUESTS) {
       console.log(
-        'FIREBASE: Chunking your ' +
-          imagepathlist.length +
-          ' image requests into ' +
-          Math.ceil(imagepathlist.length / MAX_SIMULTANEOUS_REQUESTS) +
-          ' chunks of (up to) ' +
-          MAX_SIMULTANEOUS_REQUESTS +
-          ' each. '
+        'FIREBASE: Chunking your ' + imagepathlist.length +
+          ' image requests into ' + Math.ceil(imagepathlist.length / MAX_SIMULTANEOUS_REQUESTS) +
+          ' chunks of (up to) ' + MAX_SIMULTANEOUS_REQUESTS + ' each. '
       );
       var image_array = [];
 
-      for (
-        var i = 0;
-        i < Math.ceil(imagepathlist.length / MAX_SIMULTANEOUS_REQUESTS);
-        i++
-      ) {
+      for (var i = 0; i < Math.ceil(imagepathlist.length / MAX_SIMULTANEOUS_REQUESTS); i++)
+      {
         var lb = i * MAX_SIMULTANEOUS_REQUESTS;
         var ub = i * MAX_SIMULTANEOUS_REQUESTS + MAX_SIMULTANEOUS_REQUESTS;
         var partial_pathlist = imagepathlist.slice(lb, ub);

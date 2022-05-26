@@ -70,9 +70,6 @@ async function updateEventDataonFirestore(EVENTS) {
     Object.keys(EVENTS['trialseries']).includes('ReinforcementTime') &&
     Array.isArray(EVENTS['trialseries']['ReinforcementTime'])
   ) {
-    console.log(
-      `EVENTS.trialseries.ReinforcementTime: ${EVENTS.trialseries.ReinforcementTime}`
-    );
     // clean and replace empty cells in a sparse array with -1;
     // May solve https://github.com/issalab/mkturk/issues/31
     EVENTS['trialseries']['ReinforcementTime'] = Array.from(
