@@ -1718,15 +1718,15 @@ function updateObjectSingleFrame(
   objects.rotation.set(0, 0, 0);
   //Object axis changes as object rotates
   var axis = new THREE.Vector3(1, 0, 0); //x-axis
-  var angle = THREE.Math.degToRad(objRotation[0]);
+  var angle = THREE.MathUtils.degToRad(objRotation[0]);
   objects.rotateOnWorldAxis(axis, angle);
 
   var axis = new THREE.Vector3(0, 1, 0); //y-axis
-  var angle = THREE.Math.degToRad(objRotation[1]);
+  var angle = THREE.MathUtils.degToRad(objRotation[1]);
   objects.rotateOnWorldAxis(axis, angle);
 
   var axis = new THREE.Vector3(0, 0, 1); //z-axis
-  var angle = THREE.Math.degToRad(objRotation[2]);
+  var angle = THREE.MathUtils.degToRad(objRotation[2]);
   objects.rotateOnWorldAxis(axis, angle);
 
   //====TRANSLATION

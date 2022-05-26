@@ -256,9 +256,8 @@ async function readTrialHistoryFromFirebase(filepaths) {
 
         //Start time (fixation dot appears) of trial
         const starttime = data.TRIALEVENTS.StartTime[i_trial];
-        trialhistory;
+        trialhistory.starttime.push(starttime);
       }
-      starttime.push(starttime);
     }
   }
   console.log(
