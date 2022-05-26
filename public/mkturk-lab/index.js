@@ -900,7 +900,7 @@ if (ENV.BatteryAPIAvailable) {
     }
     document.body.style.background = TASK.BackgroundColor2D;
 
-    if (CURRTRIAL.num <= 0){
+    if (CURRTRIAL.num <= 0 && port.connected){
       port.writepumptopauseeyetoUSB('~');//resume eyetracker
     }
     //========================(END) 3D SCENE SET-UP =======================//

@@ -350,6 +350,7 @@ for (var s=0; s<=indt.length-1; s++){
     abuff.dt=[0];
 
     abuff.ntrials++
+
     console.log('\n')
     console.log('***** TRIGGERED UP')
   }//IF received trigger
@@ -430,6 +431,7 @@ for (var s=0; s<=indt.length-1; s++){
 
   if (trigDown){
     abuff.manualtriggerval = 0;
+    abuff.trial[abuff.ntrials] = fileMeta.trialnum;
 
     saveTrialData()
     updatePlots()
