@@ -168,58 +168,47 @@ serial.Port.prototype.onReceive = (data) => {
   let textDecoder = new TextDecoder();
   let onReceiveTime = Date.now();
   let textReceived = textDecoder.decode(data);
-  port.statustext_received = textDecoder.decode(data);
-
+  port.statustext_received = textReceived;
+  
   if (textReceived.includes('sa')) {
     if (textReceived.includes('1')) {
-      logEVENTS(
-        'SampleCommandReturnTime',
-        onReceiveTime - ENV.CurrentDate.valueOf(),
-        'trialseries'
-      );
+      logEVENTS('SampleCommandReturnTime',onReceiveTime - ENV.CurrentDate.valueOf(),'trialseries');
     } else if (textReceived.includes('0')) {
-      logEVENTS(
-        'SampleCommandOffReturnTime',
-        onReceiveTime - ENV.CurrentDate.valueOf(),
-        'trialseries'
-      );
+      logEVENTS('SampleCommandOffReturnTime',onReceiveTime - ENV.CurrentDate.valueOf(),'trialseries');
     } //IF 1
     return;
-  } //IF "sa", samplecommand
+  }//IF "sa", samplecommand
 
-  //rfid
-  var tagstart = port.statustext_received.indexOf('{tag', 0);
-
-  //EYE - waits for "///" to be robust
-  if (
-    port.statustext_received.indexOf('/') != -1 &&
-    eyebuffer.accumulateEye < 3
-  ) {
+  //EYE
+  if ( port.statustext_received.includes('///') ) {
+    if (port.statustext_received.length > 40){
+      console.log('eyetracker fell behind')
+      return;
+    }
+    
     for (var q = 0; q <= port.statustext_received.length - 1; q++) {
       if (port.statustext_received[q] == '/') {
         var lastslash = q;
-        eyebuffer.accumulateEye++;
       }
-    }
-    if (eyebuffer.accumulateEye == 3) {
-      //strip start characters (eg, '/') up front
-      port.statustext_received = port.statustext_received.slice(
-        lastslash + 1,
-        port.statustext_received.length - 1
-      );
-      ENV.Eye.TrackEye = 1;
-    } //IF '///'
-  } //IF '/'
+    }//FOR q char
+
+    //strip start characters (eg, '/') up front
+    port.statustext_received = port.statustext_received.slice(
+      lastslash + 1,
+      port.statustext_received.length
+    );
+    ENV.Eye.TrackEye = 1;
+    eyebuffer.accumulateEye=3;
+  } //IF '///'
+
+  //RFID
+  var tagstart = port.statustext_received.indexOf('{tag', 0);
 
   //=============== RFID ===============//
   if (tagstart >= 0) {
     //rfid: arduino sends whole tag at once
     var tagend = port.statustext_received.indexOf('}', 0);
-    logEVENTS(
-      'RFIDTag',
-      port.statustext_received.slice(tagstart + 4, tagend),
-      'timeseries'
-    );
+    logEVENTS('RFIDTag',port.statustext_received.slice(tagstart + 4, tagend),'timeseries');
 
     var nrfid = Object.keys(EVENTS['timeseries']['RFIDTag']).length;
     if (nrfid >= 2) {
@@ -253,8 +242,7 @@ serial.Port.prototype.onReceive = (data) => {
   else if (eyebuffer.accumulateEye >= 3) {
     // eye: arduino sends one character at a time, but have to handle the case of receiving 2 characters
 
-    eyebuffer.buffer += port.statustext_received; //accumulate ascii vals
-
+    eyebuffer.buffer = port.statustext_received; //accumulate ascii vals
     var n_character_close = 0;
     if (
       port.statustext_received.indexOf('}') >= 0 &&
@@ -289,7 +277,8 @@ serial.Port.prototype.onReceive = (data) => {
           ENV.Eye.CalibYTransform
         ); //Calibrated
       } else {
-        xy = ['nan', 'nan'];
+        xy = ['null', 'null'];
+        console.log('recording null eye values')
       }
 
       // STORE calibrated eye signal
@@ -356,28 +345,12 @@ serial.Port.prototype.onReceive = (data) => {
         waitforEvent.next(event_xytt); //send to hold_promise generator
       } //if generated created
 
-      // 	var eyedatalen = Object.keys(EVENTS['timeseries']['EyeData']).length
-      // if (eyedatalen > 1){
-      // 	var dt = EVENTS['timeseries']['EyeData'][eyedatalen-1][1] - EVENTS['timeseries']['EyeData'][eyedatalen-2][1]
-      // 	eyebuffer.dt = eyebuffer.dt + dt
-      // }
-
       eyebuffer.success = eyebuffer.success + 1;
-      // if ( eyedatalen%20 == 0 ){
-      // 	port.statustext_received = 'Parsed EYE: xy_raw(calib)= ' + Math.round(x*100)/100 + ', ' + Math.round(y*100)/100 +
-      // 							', ' + Math.round(w*100)/100 + ', ' + Math.round(a*100)/100 +
-      // 							' (' + Math.round(10*xy[0])/10 + ',' + Math.round(10*xy[1])/10 + ') ' +
-      // 							' @ ' + new Date().toLocaleTimeString("en-US") +
-      // 							' dt=' + dt + 'ms' + 'buff=' + eyebuffer.buffer + port.statustext_received
-      // 	console.log(port.statustext_received)
-      // 	updateHeadsUpDisplayDevices()
-      // } //SUBSAMPLE
 
       if (n_character_close == 1) {
         eyebuffer.buffer = '';
         eyebuffer.accumulateEye = 0;
       } else if (n_character_close == 2) {
-        //received "}/"
         eyebuffer.buffer = '';
         eyebuffer.accumulateEye = 1;
       }
@@ -386,11 +359,6 @@ serial.Port.prototype.onReceive = (data) => {
     //=============== FAILED TO PARSE EYE DATA ===============//
     else if (eyebuffer.buffer.length >= eyebuffer.maxbufferlength_HARDCODED) {
       eyebuffer.fail = eyebuffer.fail + 1;
-      // port.statustext_received = 'EYE PARSE FAILED : buffer size exceeded without end character:' +
-      // 						eyebuffer.buffer + ' bits: ' + port.statustext_received +
-      // 						' @ ' + new Date().toLocaleTimeString("en-US")
-      // updateHeadsUpDisplayDevices()
-
       eyebuffer.buffer = '';
       eyebuffer.accumulateEye = 0;
     } //ELSE didn't receive end character
@@ -444,7 +412,16 @@ serial.Port.prototype.writepumpdurationtoUSB = async function (data) {
   await this.device_.transferOut(4, textEncoder.encode(msgstr));
 
   port.statustext_sent = 'TRANSFERRED CHAR --> USB:' + msgstr;
-  // console.log(port.statustext_sent)
+  updateHeadsUpDisplayDevices();
+}; //port.writepumpdurationUSB
+
+//PORT - pause eyetracker
+serial.Port.prototype.writepumptopauseeyetoUSB = async function (data) {
+  let msgstr = '{' + data + '}'; // start(<), end(>) characters
+  let textEncoder = new TextEncoder();
+  await this.device_.transferOut(4, textEncoder.encode(msgstr));
+
+  port.statustext_sent = 'TRANSFERRED CHAR --> USB:' + msgstr;
   updateHeadsUpDisplayDevices();
 }; //port.writepumpdurationUSB
 
@@ -456,7 +433,6 @@ serial.Port.prototype.writeSampleCommandTriggertoUSB = async function (data) {
   await this.device_.transferOut(4, textEncoder.encode(msgstr)); //SANITY CHECK what the 4 is
 
   port.statustext_sent = 'TRANSFERRED SampleCommandSignal --> USB:' + msgstr;
-  console.log(port.statustext_sent);
   updateHeadsUpDisplayDevices();
 }; //port.writepumpdurationUSB
 
@@ -502,7 +478,6 @@ function pingUSB() {
     port.device_.transferOut(4, textEncoder.encode(msgstr));
 
     port.statustext_sent = 'PINGING! TRANSFERRED CHAR --> USB:' + msgstr;
-    console.log(port.statustext_sent);
     updateHeadsUpDisplayDevices();
 
     pingTimer = setTimeout(function () {
@@ -512,6 +487,8 @@ function pingUSB() {
   }
 } //FUNCTION pingUSB
 
+//____________________LEGACY________________________
+//____________________LEGACY________________________
 //____________________LEGACY________________________
 
 //PORT - send pump duration to arduino
@@ -523,7 +500,6 @@ serial.Port.prototype.writepumpdurationtoUSBBYTE = async function (data) {
   await this.device_.transferOut(4, view);
 
   port.statustext_sent = 'TRANSFERRED BYTE --> USB:' + view;
-  console.log(port.statustext_sent);
   updateHeadsUpDisplayDevices();
 };
 

@@ -1,0 +1,45 @@
+#weight-display {
+  display: block;
+  font-family: Roboto;
+  color: brown;
+  font-style: normal;
+  font-weight: 700;
+  font-size: 100px;
+  line-height: 140px;
+  text-align: center;
+}
+
+#main-container {
+  display: flex;
+  align-items: stretch;
+}
+
+#editor-card {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}
+
+#entry-form {
+  display: grid;
+  grid-template-rows: repeat(5, minmax(0, 1fr));
+  padding-left: 20px;
+  padding-right: 20px;
+  padding-top: 20px;
+}
+
+.mdl-textfield {
+  width: 100%;
+  align-items: center;
+}
+
+#entry-buttons {
+  margin-left: auto;
+  margin-right: 0;
+}
+
+#plot-card {
+  padding: 20px;
+  min-height: 350px;
+}

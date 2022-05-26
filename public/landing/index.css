@@ -49,7 +49,19 @@
   text-align: center;
 }
 
-#mkscale-link {
+#mkcolony-link {
+  display: block;
+  font-family: Roboto;
+  color: white;
+  font-style: normal;
+  font-weight: 700;
+  font-size: 60px;
+  line-height: 60px;
+  text-decoration: none;
+  text-align: center;
+}
+
+#mkphotodiode-link {
   display: block;
   font-family: Roboto;
   color: white;
@@ -61,14 +73,14 @@
   text-align: center;
 }
 
-#mkcolony-link {
+#mkscale-link {
   display: block;
   font-family: Roboto;
   color: white;
   font-style: normal;
   font-weight: 700;
-  font-size: 60px;
-  line-height: 60px;
+  font-size: 40px;
+  line-height: 40px;
   text-decoration: none;
   text-align: center;
 }
