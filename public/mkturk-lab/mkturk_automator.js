@@ -205,28 +205,59 @@ async function readTrialHistoryFromFirebase(filepaths) {
   for (var i = 0; i < filepaths.length; i++) {
     const data = await loadTextfromFirebase(filepaths[i]);
 
-    let numTrials = data.TRIALEVENTS.Response.length;
-    // Iterate over TRIALs
-    for (let i_trial = 0; i_trial < numTrials; i_trial++) {
-      //Correct/incorrect trial
-      const correct =
-        data.TRIALEVENTS.Response[i_trial] ==
-        data.TRIALEVENTS.CorrectItem[i_trial]
-          ? 1
-          : 0;
-      trialhistory.correct.push(correct);
+    // if mturk, only load trialhistory if same hitid
+    if (ENV.MTurkWorkerId) {
+      if (ENV.HITId) {
+        if (data.ENV.HITId == ENV.HITId) {
+          let numTrials = data.TRIALEVENTS.Response.length;
+          // Iterate over TRIALs
+          for (let i_trial = 0; i_trial < numTrials; i_trial++) {
+            //Correct/incorrect trial
+            const correct =
+              data.TRIALEVENTS.Response[i_trial] ==
+              data.TRIALEVENTS.CorrectItem[i_trial]
+                ? 1
+                : 0;
+            trialhistory.correct.push(correct);
 
-      //Response
-      const response = data.TRIALEVENTS.Response[i_trial];
-      trialhistory.response.push(response);
+            //Response
+            const response = data.TRIALEVENTS.Response[i_trial];
+            trialhistory.response.push(response);
 
-      //Current automator stage
-      const currentStage = stageHash(data.TASK);
-      trialhistory.trainingstage.push(currentStage);
+            //Current automator stage
+            const currentStage = stageHash(data.TASK);
+            trialhistory.trainingstage.push(currentStage);
 
-      //Start time (fixation dot appears) of trial
-      const starttime = data.TRIALEVENTS.StartTime[i_trial];
-      trialhistory.starttime.push(starttime);
+            //Start time (fixation dot appears) of trial
+            const starttime = data.TRIALEVENTS.StartTime[i_trial];
+            trialhistory.starttime.push(starttime);
+          }
+        }
+      }
+    } else {
+      let numTrials = data.TRIALEVENTS.Response.length;
+      // Iterate over TRIALs
+      for (let i_trial = 0; i_trial < numTrials; i_trial++) {
+        //Correct/incorrect trial
+        const correct =
+          data.TRIALEVENTS.Response[i_trial] ==
+          data.TRIALEVENTS.CorrectItem[i_trial]
+            ? 1
+            : 0;
+        trialhistory.correct.push(correct);
+
+        //Response
+        const response = data.TRIALEVENTS.Response[i_trial];
+        trialhistory.response.push(response);
+
+        //Current automator stage
+        const currentStage = stageHash(data.TASK);
+        trialhistory.trainingstage.push(currentStage);
+
+        //Start time (fixation dot appears) of trial
+        const starttime = data.TRIALEVENTS.StartTime[i_trial];
+        trialhistory.starttime.push(starttime);
+      }
     }
   }
   console.log(
