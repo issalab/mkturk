@@ -33,7 +33,12 @@ function displayTrial_prime(ti, gr, cl, fr, sc, ob, id, ims, mkm) {
 
         if (taskscreen == 'Sample' || taskscreen == 'Test') {
           if (taskscreen == 'Sample') {
-            var im = [ ims.sampleimage[cl[f]][fr[f]] ]; //fr[f] frame within clip
+            try{
+            var im = [ ims.sampleimage[cl[f]][fr[f]] ]; //fr[f] frame within clip              
+            }
+            catch{
+              console.log('here')
+            }
           } else if (taskscreen == 'Test') {
             var clip = 0;
             var im = ims.testimages[clip][fr[f]];
@@ -155,6 +160,7 @@ function displayTrial(ti, gr, cl, fr, sc, ob, id, ims, mkm, trig) {
         } //IF !savedata, underlay grid
 
     //RENDER 2D SHAPE (Choice/Reward/Punish)
+    
         if ( taskscreen == 'Choice' || taskscreen == 'Reward' || taskscreen == 'Punish') {
           var boundingBox = renderShape2D(taskscreen, gr[f], VISIBLECANVAS);
           if (s == 0 && taskscreen == 'Choice') {
@@ -163,10 +169,14 @@ function displayTrial(ti, gr, cl, fr, sc, ob, id, ims, mkm, trig) {
           updated2d = 1;
         }
 
-    //OVERLAY Fixation Dot
+    //Blue Fixation Circle
+        if ( taskscreen == 'Touchfix' ){
+          renderShape2D(taskscreen, gr[f], VISIBLECANVAS);          
+        }//IF touchfix
+
+    //OVERLAY White Fixation Square
         if ( taskscreen == 'Touchfix' || taskscreen == 'Sample' || taskscreen == 'Blank' )
         {
-          //Overlay fixation dot
           if (typeof gr[f] == 'number') { renderShape2D('FixationDot', gr[f], VISIBLECANVAS); }
           else { renderShape2D('FixationDot', gr[f][0], VISIBLECANVAS); }
         } //IF touchfix || sample
@@ -360,7 +370,10 @@ function render3D(taskscreen, s, f, gr, fr, sc, ob, id, im) {
     // mkm.boundingBoxVisibleCanvas = [left, top, swidth_2d, sheight_2d];
 
     // Transfer 3D Canvas to 2D Canvas
-    if (TASK.Agent == 'SaveImages') {
+    if ( TASK.Agent == 'SaveImages'
+          && typeof(TASK.SaveImagesResolution) != "undefined"
+          && TASK.SaveImagesResolution>0 )
+    {
       VISIBLECANVAS.getContext('2d').drawImage(
         renderer.domElement,
         Math.round(sx),
@@ -516,44 +529,19 @@ function renderShape2D(sc, gr, canvasobj) {
       break;
     case 'Touchfix':
       if (TASK.SameDifferent <= 0) {
-        bufferFixationUsingDot(
-          ENV.FixationColor,
-          gr,
-          ENV.FixationRadius,
-          canvasobj
-        );
+        bufferFixationUsingDot(ENV.FixationColor,gr,ENV.FixationRadius,canvasobj);
       } //IF !same-different
       else if (TASK.SameDifferent > 0) {
-        bufferFixationUsingTriangle(
-          ENV.ChoiceColor,
-          gr,
-          ENV.FixationRadius,
-          canvasobj
-        );
+        bufferFixationUsingTriangle(ENV.ChoiceColor,gr,ENV.FixationRadius,canvasobj);
       } //IF same-different
       break;
     case 'FixationDot':
       if (ENV.FixationDotRadius > 0) {
-        renderSquareOnCanvas(
-          ENV.FixationDotColor,
-          gr,
-          ENV.FixationSquareWidth,
-          canvasobj
-        );
+        renderSquareOnCanvas(ENV.FixationDotColor,gr,ENV.FixationSquareWidth,canvasobj);
       }
-      if (
-        ENV.FixationWindowRadius > 0 &&
-        FLAGS.savedata == 0 &&
-        FLAGS.underlayGridPoints == 1
-      ) {
-        renderFixationWindow(
-          ENV.XGridCenter,
-          ENV.YGridCenter,
-          gr,
-          ENV.FixationWindowRadius,
-          ENV.CanvasRatio,
-          canvasobj
-        );
+      if ( ENV.FixationWindowRadius > 0 && FLAGS.savedata == 0 && FLAGS.underlayGridPoints == 1)
+      {
+        renderFixationWindow(ENV.XGridCenter, ENV.YGridCenter, gr, ENV.FixationWindowRadius, ENV.CanvasRatio,canvasobj);
       } //IF !savedata, overlay fixation window
       break;
     case 'PhotodiodeSquare':
@@ -564,12 +552,7 @@ function renderShape2D(sc, gr, canvasobj) {
         renderSquareOnCanvas('black', gr, ENV.PhotodiodeSquareWidth, canvasobj);
       } //ELSE go back to blank
     case 'Choice':
-      return bufferChoiceUsingCircleSquare(
-        ENV.ChoiceColor,
-        ENV.ChoiceRadius,
-        gr,
-        canvasobj
-      );
+      return bufferChoiceUsingCircleSquare(ENV.ChoiceColor,ENV.ChoiceRadius,gr,canvasobj);
     case 'Reward':
       renderReward(canvasobj);
       break;

@@ -103,6 +103,8 @@ Pump: 1=adafruit peristaltic 2=submersible centrifugal tcs 3=diaphragm pump tcs 
 
 **SampleOFF:** Duration in milliseconds that a gray screen is presented after the sample image before the response screen. This implements the delay in a DMS task. SampleOFF=0, leads to no delay
 
+SaveImagesResolution: For SaveImages, allows user to set total canvas size for threeJS renders to SaveImagesResolution x SaveImagesResolution in pixels. Default if SaveImagesResolution is not specified is to use full threejs square window for canvas that is rendered to (and subsequently saved out).
+
 Separated: 0=subject was paired with conspecific during task, 1=individual housed was separated from conspecific
 
 Species: marmoset, macaque, or human

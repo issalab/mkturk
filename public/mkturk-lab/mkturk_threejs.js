@@ -421,13 +421,15 @@ async function addToScene(taskscreen) {
             FLAGS.movieper[taskscreen][classlabel][i] =
               IMAGES[taskscreen][classlabel].LIGHTS[lt].visible[i].length;
           }
-        } // FOR n images
+        } // FOR i images
       } // IF Sample || Test
     } //FOR lt lights
 
     //==== OBJECTS
     // const orig = new THREE.MeshPhysicalMaterial()
-    for (let obj in IMAGES[taskscreen][classlabel].OBJECTS) {
+    for (let obj in IMAGES[taskscreen][classlabel].OBJECTS) { 
+      IMAGES[taskscreen][classlabel].OBJECTS[obj].boundingBox2DPixels=[];     
+
       let objects = OBJECTS[taskscreen][classlabel].meshes[obj].scene;
       let materialparam = IMAGES[taskscreen][classlabel].OBJECTS[obj].material;
 
@@ -462,8 +464,7 @@ async function addToScene(taskscreen) {
       let dimArr = [bbdim.x, bbdim.y, bbdim.z];
       let maxLen = Math.max.apply(null, dimArr);
 
-      IMAGES[taskscreen][classlabel].OBJECTS[obj].intrinsicMeshBoundingBox =
-        dimArr;
+      IMAGES[taskscreen][classlabel].OBJECTS[obj].intrinsicMeshBoundingBox = dimArr;
       IMAGES[taskscreen][classlabel].OBJECTS[obj].intrinsicMeshMaxDim = maxLen;
 
       /**
@@ -631,6 +632,11 @@ async function addToScene(taskscreen) {
                 i
               ].length;
           } //IF isArray Object.opacity
+
+          IMAGES[taskscreen][classlabel].OBJECTS[obj].boundingBox2DPixels[i]=[];
+          for (var f=0; f<=FLAGS.movieper[taskscreen][classlabel][i].length-1; f++){
+            IMAGES[taskscreen][classlabel].OBJECTS[obj].boundingBox2DPixels[i][f]=[];
+          }//FOR f frames, initialize array
 
           // ∆mesh for morphing
 
@@ -1039,6 +1045,10 @@ async function addToScene(taskscreen) {
       }
 
       for (let i = 0; i < IMAGES[taskscreen][classlabel].nimages; i++) {
+       if (i==0){
+          IMAGES[taskscreen][classlabel].IMAGES.boundingBoxCube2DPixels=[];
+        }
+
         // IF background image idx isArray
         let imgIdx;
         if (!Array.isArray(IMAGES[taskscreen][classlabel].IMAGES.imageidx[i])) {
@@ -1100,6 +1110,11 @@ async function addToScene(taskscreen) {
           IMAGES[taskscreen][classlabel].IMAGES.visible = [1];
         }
 
+        IMAGES[taskscreen][classlabel].IMAGES.boundingBoxCube2DPixels[i]=[];
+        for (var f=0; f<=FLAGS.movieper[taskscreen][classlabel][i].length-1; f++){
+          IMAGES[taskscreen][classlabel].IMAGES.boundingBoxCube2DPixels[i][f]=[];
+        }//FOR f frames, initialize array
+
         /**
          * 2D Filters
          * available filters:
@@ -1127,7 +1142,7 @@ async function addToScene(taskscreen) {
             } // IF IMAGEFILTERS[key][i] isArray
           } // FOR each filter in IMAGEFILTERS
         } // IF background image filter exists
-      } // FOR n images
+      } // FOR i images
     } //IF  Sample
   } //FOR classlabels
 
@@ -1147,14 +1162,8 @@ async function addToScene(taskscreen) {
   }
 } //FUNCTION addToScene(taskscreen)
 
-function updateSingleFrame3D(
-  taskscreen,
-  classlabels,
-  index,
-  movieframe,
-  gridindex,
-  cubeTexture
-) {
+function updateSingleFrame3D(taskscreen,classlabels,index,movieframe,gridindex,cubeTexture)
+{
   //==== TURN OFF ALL ITEMS
   for (let sceneElem in scene[taskscreen]["children"]) {
     scene[taskscreen]["children"][sceneElem].visible = false;
@@ -1466,11 +1475,7 @@ function updateSingleFrame3D(
         0
       );
       if (Number.isInteger(movieframe)) {
-        nextvisible = chooseArrayElement(
-          nextvisible,
-          movieframe,
-          nextvisible.length - 1
-        );
+        nextvisible = chooseArrayElement(nextvisible,movieframe,nextvisible.length - 1);
       } //IF get movieframe
 
       //OPACITY
@@ -1587,6 +1592,14 @@ function updateSingleFrame3D(
         scenecenterX,
         scenecenterY
       );
+
+      if (Number.isInteger(movieframe)){
+        IMAGES[taskscreen][classlabel].OBJECTS[obj].boundingBox2DPixels[index][movieframe] = boundingBox; 
+      }//IF movieframe
+      else{
+        IMAGES[taskscreen][classlabel].OBJECTS[obj].boundingBox2DPixels[index] = boundingBox;
+      }//ELSE
+
       allBoundingBoxes[classlabel].push(boundingBox);
     } //FOR obj in scene
 
@@ -1605,9 +1618,7 @@ function updateSingleFrame3D(
       );
     } //IF get movieframe
 
-    var backgroundCube = scene[taskscreen].getObjectByName(
-      "backgroundCube" + classlabel
-    );
+    var backgroundCube = scene[taskscreen].getObjectByName("backgroundCube" + classlabel);
     //BACKGROUND VISIBILITY
 
     if (cubeTexture != undefined) {
@@ -1641,10 +1652,18 @@ function updateSingleFrame3D(
       scenecenterX,
       scenecenterY
     );
+
+    if (Number.isInteger(movieframe)){
+      IMAGES[taskscreen][classlabel].IMAGES.boundingBoxCube2DPixels[index][movieframe] = boundingBoxCube;
+    }//IF movieframe
+    else{
+      IMAGES[taskscreen][classlabel].IMAGES.boundingBoxCube2DPixels[index] = boundingBoxCube;
+    }//ELSE
+
     allBoundingBoxCubes[classlabel].push(boundingBoxCube);
-  } //FOR classlabel in classlabels
+  }//FOR classlabel in classlabels
   return [allBoundingBoxes, allBoundingBoxCubes, crop];
-} //FUNCTION updateSingleFrame3D
+}//FUNCTION updateSingleFrame3D
 
 function updateCameraSingleFrame(camera, cameraPosition, camTarget) {
   camera.position.set(cameraPosition[0], cameraPosition[1], cameraPosition[2]);

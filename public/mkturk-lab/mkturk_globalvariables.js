@@ -91,7 +91,6 @@ ENV.ViewportPPI = -1;
 ENV.PhysicalPPI = -1;
 ENV.FrameRateDisplay = 60;
 ENV.FrameRateMovie = 60;
-ENV.NDisplayPrime = 0;
 ENV.PrimeScenes = 1;
 
 ENV.Task = '';

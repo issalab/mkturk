@@ -975,17 +975,14 @@ if (ENV.BatteryAPIAvailable) {
 
       let blankdurationpre;
       if (i == 0) {
-        if (
-          typeof TASK.SamplePRE === 'undefined' ||
-          TASK.SamplePRE === null ||
-          TASK.SamplePRE < 0
-        ) {
+        if ( typeof TASK.SamplePRE === 'undefined' || TASK.SamplePRE === null || TASK.SamplePRE < 0)
+        {
           blankdurationpre = Math.max(100, TASK.SampleOFF);
         } else {
           blankdurationpre = TASK.SamplePRE;
         }
       } else {
-        blankdurationpre = TASK.SampleOFF;
+        blankdurationpre = 0;
       }
 
       // Create Movie Sequence
@@ -1101,11 +1098,7 @@ if (ENV.BatteryAPIAvailable) {
           Math.random() * ENV.XGridCenter.length
         );
       }
-      logEVENTS(
-        'FixationGridIndex',
-        CURRTRIAL.fixationgridindex,
-        'trialseries'
-      );
+      logEVENTS('FixationGridIndex',CURRTRIAL.fixationgridindex,'trialseries');
 
       if (TASK.FixationUsesSample <= 0) {
         // IF !FixationUsesSample, show fixation dot
@@ -1181,10 +1174,7 @@ if (ENV.BatteryAPIAvailable) {
       if (ENV.FixationWindowRadius > 0) {
         // IF FixationWindow, then override object size
         // TODO: contain the scope of funcreturn to each file.
-        funcreturn = getFixationWindowBoundingBox(
-          CURRTRIAL.fixationgridindex,
-          ENV.FixationWindowRadius
-        );
+        funcreturn = getFixationWindowBoundingBox(CURRTRIAL.fixationgridindex,ENV.FixationWindowRadius);
         boundingBoxesFixation.x[0] = funcreturn[0];
         boundingBoxesFixation.y[0] = funcreturn[1];
       } else if (TASK.FixationUsesSample > 0 && ENV.FixationWindowRadius <= 0) {
@@ -1393,38 +1383,6 @@ if (ENV.BatteryAPIAvailable) {
           frame.frames[i].push(idxArr[idxArr.length - 1]);
         }
       }
-
-if (ENV.NDisplayPrime > 0){
-      frame_prime.shown = [];
-      frame_prime.frames = [];
-      frame_prime.current = 0;
-
-      var nframes_pre = Math.round( TASK.SamplePRE*ENV.FrameRateMovie/1000);
-
-      for (let q in CURRTRIAL.sequencetaskscreen) {
-        if (q < ENV.NDisplayPrime + nframes_pre){
-          frame_prime.shown[q] = 0;
-          if (q < nframes_pre){
-            frame_prime.shown[q] = 1;
-            frame_prime.current = q;
-          }
-          frame_prime.frames[q] = [q];
-        }
-      } // FOR q frames
-
-      displayTrial_prime(
-          CURRTRIAL.tsequencedesired,
-          CURRTRIAL.sequencegridindex,
-          CURRTRIAL.sequenceclip,
-          CURRTRIAL.sequenceframe,
-          CURRTRIAL.sequencetaskscreen,
-          CURRTRIAL.sequencelabel,
-          CURRTRIAL.sequenceindex,
-          CURRTRIAL.images,
-          mkm
-        );
-      await sleep(1000/ENV.FrameRateDisplay+2);
-} //IF Prime Display
 
       //Display Sample & Test/Choice
       if (TASK.NRSVP > 0 && TASK.FixationWindowSizeInches > 0) {
@@ -2195,6 +2153,7 @@ if (ENV.NDisplayPrime > 0){
       // Cloud Storage: Save data asynchronously to json
       saveBehaviorDatatoFirebase(TASK, ENV, CANVAS, EVENTS);
 
+if (TASK.Agent != "SaveImages"){
       // Firestore Database: Save data asynchronously to database
       if (FLAGS.createnewfirestore == 1) {
         saveBehaviorDatatoFirestore(TASK, ENV, CANVAS); //write once
@@ -2220,20 +2179,21 @@ if (ENV.NDisplayPrime > 0){
         pingBigQueryDisplayTimesTable();
         console.log('BIGQUERY: ' + 'Kick off save DISPLAY TIMES (trial ' + CURRTRIAL.num +')')
       } //IF BQsaveDisplayTimes
+}//IF !SaveImages, save to databases      
     } //IF savedata
 
     if (FLAGS.need2saveParameters == 1) {
       FLAGS.need2saveParameters = saveParameterstoFirebase(); // Save parameters asynchronously
     }
 
-    await checkParameterFileStatusFirebase();
-    if (
-      new Date().getDate() != ENV.CurrentDate.getDate() ||
-      CURRTRIAL.num == 1000
-    ) {
+if (TASK.Agent != "SaveImages"){
+    await checkParameterFileStatusFirebase();  
+    if ( new Date().getDate() != ENV.CurrentDate.getDate() || CURRTRIAL.num == 1000)
+    {
       updateEventDataonFirestore(EVENTS);
       FLAGS.need2loadParameters = 1;
     } //if new day, start new file or reached 1000 trials
+}//IF !SaveImages
 
     rtdbAgentRef.once('value').then((snap) => {
       try {
@@ -2244,17 +2204,13 @@ if (ENV.NDisplayPrime > 0){
       }
     });
 
-    if (
-      TASK.Agent == 'SaveImages' &&
-      CURRTRIAL.num >= TQS.samplebag_indices.length - 1
-    ) {
+    if ( TASK.Agent == 'SaveImages' && CURRTRIAL.num >= TQS.samplebag_indices.length - 1)
+    {
       return;
-    } //IF saved all images
+    }//IF saved all images
 
-    if (
-      TASK.Species == 'model' &&
-      CURRTRIAL.num >= TQS.samplebag_indices.length - 1
-    ) {
+    if ( TASK.Species == 'model' && CURRTRIAL.num >= TQS.samplebag_indices.length - 1)
+    {
       return;
     }
 

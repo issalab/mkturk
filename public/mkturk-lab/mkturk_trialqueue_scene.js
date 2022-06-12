@@ -277,7 +277,7 @@ for ( var f=0; f<=nframesprime-1; f++){
 
 		tsequence.push( (frame_cnt+1) * tsingleframe);
 		sequencegridindex.push( [ gridindex ]);
-		sequenceclip.push(i);
+		sequenceclip.push(stim_cnt);
 		sequenceframe.push(f)
 		sequencetaskscreen.push('Sample')
 		
@@ -337,7 +337,6 @@ for ( var f=0; f<=nframesprime-1; f++){
 	}
 
 // var ims = [CURRTRIAL.sampleimage[CURRTRIAL.sequenceclip[f]][fr[f]]]; //fr[f] frame within clip
-
 // ti -- tsequence: movie_tsequence == CURRTRIAL.tsequencedesired
 // fr -- frame within clip: movie_framenum == CURRTRIAL.sequenceframe
 // sc -- taskscreen: movie_sequence == CURRTRIAL.sequencetaskscreen
