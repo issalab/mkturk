@@ -2204,10 +2204,16 @@ if (TASK.Agent != "SaveImages"){
       }
     });
 
-    if ( TASK.Agent == 'SaveImages' && CURRTRIAL.num >= TQS.samplebag_indices.length - 1)
-    {
-      return;
-    }//IF saved all images
+  if ( TASK.Agent == 'SaveImages')
+  {
+    if (TASK.NRSVP > 1){
+      if (CURRTRIAL.num >= Math.ceil(TQS.samplebag_indices.length/TASK.NRSVP)) { return }
+    }//IF NRSVP>1
+    else{
+        if (CURRTRIAL.num >= TQS.samplebag_indices.length - 1) { return; }
+    }
+  }//IF saving all images and ran through them once
+
 
     if ( TASK.Species == 'model' && CURRTRIAL.num >= TQS.samplebag_indices.length - 1)
     {
