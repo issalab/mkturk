@@ -985,9 +985,15 @@ if (ENV.BatteryAPIAvailable) {
         blankdurationpre = 0;
       }
 
+      let taskscreen = 'Sample'
+      if (sampleon <=0 && TASK.KeepSampleON){
+        sampleon = 1000/ENV.FrameRateMovie;
+        taskscreen = 'SampleBlank';
+      }//instanstiate one frame if need for test screen, but then hide for sample screen
+
       // Create Movie Sequence
       [movie_sequence, movie_tsequence, movie_framenum] =
-        createMovieSeq_frames('Sample', blankdurationpre, sampleon, TASK.SampleOFF, ENV.FrameRateMovie);
+        createMovieSeq_frames(taskscreen, blankdurationpre, sampleon, TASK.SampleOFF, ENV.FrameRateMovie);
       movie_tsequence = movie_tsequence.map((a) => { return a + t0; });
 
       CURRTRIAL.tsequencedesired.push(...movie_tsequence);
@@ -1346,8 +1352,16 @@ if (ENV.BatteryAPIAvailable) {
 
       // KeepSampleON
       if (TASK.KeepSampleON == 1) {
+        //Remove Blank after Sample if keeping on
+        let idx = CURRTRIAL.sequencetaskscreen.indexOf('SampleBlank');
+        while (idx != -1) {
+          CURRTRIAL.sequencetaskscreen[idx] = 'Sample';
+          idx = CURRTRIAL.sequencetaskscreen.indexOf('SampleBlank', idx + 1);
+        }
+
+        //Add Sample to test screen
         let idxArr = [];
-        let idx = CURRTRIAL.sequencetaskscreen.indexOf('Sample');
+        idx = CURRTRIAL.sequencetaskscreen.indexOf('Sample');
         while (idx != -1) {
           idxArr.push(idx);
           idx = CURRTRIAL.sequencetaskscreen.indexOf('Sample', idx + 1);
@@ -1362,7 +1376,7 @@ if (ENV.BatteryAPIAvailable) {
           // Append last Sample scene rendered
           frame.frames[i].push(idxArr[idxArr.length - 1]);
         }
-      }
+      }//IF KeepSampleON
 
       // KeepTestON
       if (TASK.KeepTestON == 1 && TASK.SameDifferent > 0) {

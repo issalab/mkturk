@@ -122,6 +122,12 @@ function displayTrial(ti, gr, cl, fr, sc, ob, id, ims, mkm, trig) {
         f = frame.frames[frame.current][s];
         var taskscreen = sc[f].charAt(0).toUpperCase() + sc[f].slice(1);
 
+        var blank_out = false;
+        if (s==0 && taskscreen == 'SampleBlank'){
+          taskscreen = 'Sample';
+          blank_out = true;
+        }//only blank if Sample not Test (ie, keepsampleon for test)
+
         if (s == 0) { var taskscreen0 = taskscreen; } //IF primary screen
 
         if (taskscreen == 'Sample' || taskscreen == 'Test') {
@@ -147,6 +153,10 @@ function displayTrial(ti, gr, cl, fr, sc, ob, id, ims, mkm, trig) {
         else {
           updated3d = 0;
         } //ELSE hide 3D when plotting 2D elements like buttons and not keeping (overlaying) sample/test
+
+        if (blank_out){
+          renderShape2D('Blank', [-1], VISIBLECANVAS);
+        }//if blank the screen; usually because of zero ms duration
 
     //OVERLAY GRID
         if (FLAGS.savedata == 0 && s == 0 && FLAGS.underlayGridPoints == 1) {
