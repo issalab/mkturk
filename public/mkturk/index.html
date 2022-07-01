@@ -39,7 +39,9 @@
 		}
 	</script>
 	<!-- <script src="mkturk_installsettings.js"></script> -->
-	<script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs/dist/tf.min.js" type="text/javascript"></script>
+	<!-- <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs/dist/tf.min.js"> </script> -->
+	<script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@2.0.0/dist/tf.min.js"></script>
+
 	<!-- Insert these scripts at the bottom of the HTML, but before you use any Firebase services -->
 	<!-- Firebase App (the core Firebase SDK) is always required and must be listed first -->
 	<script src="/__/firebase/8.2.3/firebase-app.js"></script>
@@ -56,6 +58,7 @@
 <!-- Add ThreeJS -->
 <script src="https://threejs.org/build/three.js"></script>
 <script src="https://threejs.org/examples/js/loaders/GLTFLoader.js"></script>
+<script src="https://threejs.org/examples/js/exporters/GLTFExporter.js"></script>
 <script src="https://threejs.org/examples/js/controls/OrbitControls.js"></script>
 <!-- ************* (END) HEAD *************** -->
 <!-- ************* BODY *************** -->
@@ -99,25 +102,27 @@
 		<button class="mdl-button mdl-js-button mdl-button--raised" id="preemptRFID" style="visibility:hidden; background-color:red; z-index: 102; font-size: 25px; position: absolute; top: 20%; left: 5%; height: 75px; width: 200px; border-radius: 20px">Preempt RFID
    </button>
 		<canvas id="canvasheadsup" width="0" height="0" src="" style="z-index:2; position: absolute; left: 0px; top: 0px;"></canvas>
-		<canvas id="canvasvisible" width="0" height="0" src="" style="z-index:1; position: absolute; left: 0px; top: 0px;"></canvas>
-		<canvas id="canvasvisiblewebgl" width="0" height="0" src="" style="visibility:hidden; z-index:3; position: absolute; left: 0px; top: 0px;"></canvas>
+		<canvas id="canvasvisible" width="0" height="0" src="" style="z-index:0; position: absolute; left: 0px; top: 0px;"></canvas>
+		<canvas id="canvasvisiblewebgl" width="0" height="0" src="" style="visibility:hidden; z-index:1; position: absolute; left: 0px; top: 0px;"></canvas>
 		<canvas id="canvaseyetracker" width="0" height="0" src="" style="z-index:4; position: absolute; left: 0px; top: 0px;"></canvas>
 		<canvas id="model-canvas" width="224" height="224" style="z-index:0"></canvas>
+		<canvas id="save-images-canvas" width="768" height="819" style="z-index:-4"></canvas>
 	</div>
-	<script src="mkturk_globalvariables.js" type="text/javascript"></script>
-	<script src="mkturk_auth.js" type="text/javascript"></script>
+	<script src="mkturk_globalvariables.js"></script>
+	<script src="mkturk_auth.js"></script>
 	<script src="mkturk_eventlisteners.js" type="text/javascript"></script>
 	<script src="mkturk_imagebuffer.js" type="text/javascript"></script>
 	<script src="mkturk_trialqueue_scene.js" type="text/javascript"></script>
-	<script src="mkturk_screenfunctions.js" type="text/javascript"></script>
+	<script src="mkturk_screenfunctions.js"></script>
 	<script src="mkturk_automator.js" type="text/javascript"></script>
 	<script src="mkturk_utils.js" type="text/javascript"></script>
+	<!-- <script src="mkturk_firebase.js" type="text/javascript"></script> -->
 	<script src="mkturk_firestore.js" type="text/javascript"></script>
 	<script src="mkturk_firebasestorage.js" type="text/javascript"></script>
 	<script src="mkturk_bigquery.js" type="text/javascript"></script>
 	<script src="mkturk_threejs.js" type="text/javascript"></script>
 	<script src="mkturk_eyetracker.js" type="text/javascript"></script>
 	<script src="mkmodels.js" type="text/javascript"></script>
-	<script src="index.js" type="text/javascript"></script>
+	<!-- <script src="index.js"></script> -->
 </body>
 </html>

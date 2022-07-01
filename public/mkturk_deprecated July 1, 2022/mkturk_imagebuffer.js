@@ -84,13 +84,12 @@ async cache_these_images(imagenames){
 					//console.log('image already cached')
 					continue
 				}
-			} //FOR i imagenames
+			}
 			var image_array = await loadImageArrayfromFirebase(requested_imagenames)
 
 			for (var i = 0; i < image_array.length; i++){
 				this.cache_dict[requested_imagenames[i]] = image_array[i]; 
 				this.num_elements_in_cache++; 
-				console.log('adding cache im' + i)
 			}
 			return
 		}

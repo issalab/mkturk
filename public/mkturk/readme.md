@@ -103,6 +103,8 @@ Pump: 1=adafruit peristaltic 2=submersible centrifugal tcs 3=diaphragm pump tcs 
 
 **SampleOFF:** Duration in milliseconds that a gray screen is presented after the sample image before the response screen. This implements the delay in a DMS task. SampleOFF=0, leads to no delay
 
+SaveImagesResolution: For SaveImages, allows user to set total canvas size for threeJS renders to SaveImagesResolution x SaveImagesResolution in pixels. Default if SaveImagesResolution is not specified is to use full threejs square window for canvas that is rendered to (and subsequently saved out).
+
 Separated: 0=subject was paired with conspecific during task, 1=individual housed was separated from conspecific
 
 Species: marmoset, macaque, or human
@@ -110,6 +112,13 @@ Species: marmoset, macaque, or human
 **TestGridIndex:** Index on grid where test images (choices) appear.
 
 **TestOFF:** Choice screen appears TestOFF milliseconds after test image is extinguished. If TestOFF=0, then test screen does not extinguish (go to blank gray) until same-different choice screen appears. If KeepTestON=1, then test image reappears during the same-different choice screen.
+
+THREEJScameraFOV Sets the default size of the viewing angle of the camera in degrees which is how big the canvas corresponds to in 3js units which ultimately is how much of the screen in inches the scene will occupy (note that we always use a square for the retina, aspectratio=1 in setupCanvas hardcoded). If not specified, then cameraFOV=45 is used. Combined with THREEJScameraZDist, this sets the size of the canvas at the z=0 plane in the viewing frustrum which is ultimately what is projected onto the camera's retina (which will be the physical screen). This 2D projection size determines the size of retina so that when camera FOV or ZDist are changed in the scene file from this default, the retina (ie, 2D projection onto a physical array which in our case is the device screen) is still this default size but now has a different projection (if you move closer in zdist, things will get larger on your fixed size retina). See this pull request for further description and diagram: https://github.com/issalab/mkturk/pull/38
+
+THREEJScameraZDist Sets the default camera Z-position. See definition of THREEJScameraFOV for how the default settings for camera FOV & ZDist affect size on display. If not set, then cameraZDist=10
+
+THREEJSRenderRatio how much to upsample for rendering to 2D canvas. Increases resolution of image. THREEJSRenderRatio = 2 (default) recommended for best balance of performance and resolution. THREEJSRenderRatio = 4 would give very high-res images for "SaveImages" but can be slow on older mobile devices.
+
 
 
 ## ENV
@@ -179,6 +188,8 @@ ImageHeightPixels: The height of the sample image in pixels. The image height is
 
 ImageWidthPixels: The width of the sample image in pixels. The image width is used as the unit for the horizontal dimension.
 
+NDisplayPrime: how many frames of sample movie to render before rendering sample movie. Calls a second parallel rAF that draws to the same canvas but then covers with blank (gray) screen. In some cases, priming helps obtain more reliable hardware display times when using webgl canvas.
+
 NRSVPMin: set to be TASK.NRSVP. Guaranteed one reward if fixate for NRSVPMin images
 
 NRSVPMax: set to TASK.NRSVPMax (if present); otherwise, set to TASK.NRSVP. Bonus rewards are given in an exponential fashion for fixating up to TASK.NRSVPMax images.
@@ -228,6 +239,8 @@ CorrectItem: Index of the correct item on each trial
 
 EndTime: End of trial, time is recorded when either reward delivery or punish timeout promise is fulfilled.
 
+EyetrackerSampleInterval: Keeps track of the average interval between successful eyetracker reads during a given trial. If the sample fails to come in or it comes in but is garbled, this would be reflected by an mkturk trialevent sampleInterval average greater than the eyetracker hardware's sample interval.
+
 FixationGridIndex: Fixation grid location on each trial.
 
 FixationTouchEvent: The type of touch event that was registered for that trial (e.g. touchheld or touchbroke if there was a required FixationDuration>0 period)
@@ -246,6 +259,8 @@ ResponseXYT: records the coordinates and time of touching the choice item. X,Y=h
 
 Sample: Index of sample displayed on each trial. Index into list of imagebags for that session
 
+SampleCommandReturnTime: The roundtrip time that mkturk received a signal back over serial after the arduino digital line for sample command was set to 1. This is an upper bound on how long it took to send the digital sync signal (sample command) out to other devices right before the sample sequence is displayed. Should be very close to SampleStartTime.
+
 SampleFixationTouch: During RSVP, the type of fixation tough even that was registered for that trial's sample screen (e.g., touchheld, touchbroken, TimeOut)
 
 SampleFixationXYT: records the coordinates and time of touching the Sample item (RSVP task only). X,Y=horizontal,vertical position of response touch in pixels T=time of touch measured using Date.now()
@@ -261,6 +276,7 @@ Test: Indices of test choices displayed on each trial where N indices are stored
 TSequenceActualClip: Actual software-reported ON times of first frame of each clip for blank, sample, blank, sample...test/choice. Should only be one frame or less offset from times in TSequenceDesiredClip.
 
 TSequenceDesiredClip: Desired software-reported ON times of first frame of each clip for blank, sample, blank, sample...test/choice
+
 
 ## EVENTS TIMESERIES (saved to json data file or bigquery)
 Arduino (XX): Sample command (sc prefix), pump command (pu prefix) & photodiode events (ph prefix)
