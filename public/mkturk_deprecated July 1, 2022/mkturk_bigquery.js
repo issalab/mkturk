@@ -1,5 +1,4 @@
 function pingBigQueryEyeTable(){
-FLAGS.pingedBQEyeTable=1
 	if (Object.keys(EVENTS['timeseries']['EyeData']).length > 0  && 
 		typeof(bigqueryEyeTimer) != "undefined"){
 		saveEyeDatatoBigQuery()
@@ -8,13 +7,12 @@ FLAGS.pingedBQEyeTable=1
 		bigqueryEyeTimer = setTimeout(function(){
 			clearTimeout(bigqueryEyeTimer)
 			pingBigQueryEyeTable()
-		},10000)
+		}, 10000)
 	} //else check again in 10 seconds
 }//FUNCTION pingBigQueryEyeTable
 
 
 function pingBigQueryDisplayTimesTable(){
-FLAGS.pingedBQDisplayTimesTable=1
 	if (Object.keys(EVENTS['timeseries']['TSequenceActual']).length > 0  && 
 		typeof(bigqueryDisplayTimer) != "undefined"){
 		saveDisplayTimestoBigQuery()
@@ -23,12 +21,11 @@ FLAGS.pingedBQDisplayTimesTable=1
 		bigqueryDisplayTimer = setTimeout(function(){
 			clearTimeout(bigqueryDisplayTimer)
 			pingBigQueryDisplayTimesTable()
-		},10000)
+		}, 10000)
 	} //else check again in 10 seconds
 }//FUNCTION pingBigQueryEyeTable()
 
 function pingBigQueryTouchTable() {
-FLAGS.pingedBQTouchTable=1
 	if (
 		Object.keys(EVENTS['timeseries']['TouchData']).length > 0
 		&& typeof(bigQueryTouchTimer) != 'undefined'
@@ -78,13 +75,10 @@ function saveEyeDatatoBigQuery() {
 		}//IF after trial start minus 2 seconds
 	}//FOR i events
 
-	if (eyedata.length > 0){
-		bqInsertEyeData(eyedata);
-		console.log("BIGQUERY: Upload EyeData");
-	}
-	else{
-		console.log('no eye data to upload to bigquery')
-	}
+	bqInsertEyeData(eyedata);
+
+	console.log("BIGQUERY: Upload EyeData");
+
 	//reset eye event accumulation in mkturk (reduce memory load)
 	EVENTS[eventtype][eventname] = {};
 
@@ -147,7 +141,7 @@ function saveDisplayTimestoBigQuery() {
 		};
 		for (let key in obj) {
 			if (Number.isNaN(obj[key])) {
-				console.error('DisplayTimesData contains NaN:', obj, key);
+				console.error('Eyedata contains NaN:', obj, key);
 				obj[key] = -10000;
 			}
 		}
@@ -160,7 +154,7 @@ function saveDisplayTimestoBigQuery() {
 
 	console.log("BIGQUERY: Upload DisplayTimes");
 
-	//reset display event accumulation in mkturk (reduce memory load)
+	//reset eye event accumulation in mkturk (reduce memory load)
 	EVENTS[eventtype][eventname0] = {};
 	EVENTS[eventtype][eventname1] = {};
 	EVENTS[eventtype][eventname2] = {};

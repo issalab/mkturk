@@ -37,7 +37,7 @@ ENV.AgentRFID = 'XX';
 ENV.CurrentDate = new Date();
 ENV.CanvasRatio = 1;
 ENV.DevicePixelRatio = 1;
-ENV.ThreeJSRenderRatio = 2;
+ENV.THREEJStoInches = 1;
 ENV.FixationRadius = 0;
 ENV.FixationWindowRadius = 0;
 ENV.FixationColor = '';
@@ -83,13 +83,15 @@ ENV.DeviceTouchscreen = '';
 
 ENV.ScreenRatio = -1;
 ENV.ScreenSizePixels = [-1, -1];
+ENV.ScreenPhysicalPixels = [-1, -1];
 ENV.ScreenSizeInches = [-1, -1, -1];
 ENV.ViewportPixels = [-1, -1];
 
 ENV.ViewportPPI = -1;
 ENV.PhysicalPPI = -1;
 ENV.FrameRateDisplay = 60;
-ENV.FrameRateMovie = 30;
+ENV.FrameRateMovie = 60;
+ENV.PrimeScenes = 1;
 
 ENV.Task = '';
 
@@ -130,6 +132,7 @@ FLAGS.need2loadImagesTrialQueue = 1;
 FLAGS.need2loadScenes = 1;
 FLAGS.movieper = { Sample: [], Test: [] };
 FLAGS.movieplaying = 0;
+FLAGS.usecanvas2D = 0;
 FLAGS.need2loadParameters = 1;
 FLAGS.need2saveParameters = 0;
 FLAGS.savedata = 0;
@@ -150,11 +153,14 @@ FLAGS.underlayGridPoints = 0;
 FLAGS.RFIDGeneratorCreated = 0;
 FLAGS.automatortext = '';
 FLAGS.rtdbAgentNumConnections = null;
+FLAGS.pingedBQEyeTable=0;
+FLAGS.pingedBQTouchTable=0;
+FLAGS.pingedBQDisplayTimesTable=0;
 
 var CANVAS = {};
 var CANVAS = {
-  sequenceblank: ['Blank', 'Blank'],
-  tsequenceblank: [0, 50],
+  sequenceblank: ['Blank'],
+  tsequenceblank: [0],
   sequencepre: ['Touchfix'],
   tsequencepre: [0],
   sequencepost: ['Blank', 'Reward', 'Blank'], // blank, reward
@@ -164,7 +170,6 @@ var CANVAS = {
   offsettop: 0,
 };
 
-var OFFSCREENCANVAS = null;
 var VISIBLECANVAS = document.getElementById('canvasvisible');
 var VISIBLECANVASWEBGL = document.getElementById('canvasvisiblewebgl');
 var EYETRACKERCANVAS = document.getElementById('canvaseyetracker');
@@ -173,6 +178,12 @@ var frame = {
   current: 0,
   shown: [],
 };
+
+var frame_prime = {
+  current: 0,
+  shown: [],
+};
+
 
 // States of the current trial, entered into running trialhistory
 var CURRTRIAL = {};
@@ -188,9 +199,8 @@ CURRTRIAL.reset = function () {
   this.samplegridindex = NaN;
   this.sampleindex = [];
   this.sampleindex_nonarray = [];
-  this.sampleimage = [];
+  this.images = {sampleimage: [], testimages: []};
   this.testindices = [];
-  this.testimages = [];
   this.samplefixationxyt = [];
   this.responsexyt = [];
   this.response = [];
@@ -291,7 +301,6 @@ var sounds = {
 };
 var boundingBoxesFixation = { x: [], y: [] }; //where the fixation touch targets are on the canvas
 var boundingBoxesSampleFixation = { x: [], y: [] };
-var boundingBoxesChoice = { x: [], y: [] }; //where the choice touch targets are on the canvas
 var waitforClick; //variable to hold generator
 var waitforEvent; //variable to hold generator
 var touchTimer; //variable to hold timer
@@ -346,11 +355,14 @@ function logEVENTS(eventname, eventval, eventtype) {
   }
 }
 
-function purgeTrackingVariables() {
+function purgeTrackingVariables(src) {
   // Purges heresies committed in the test period
   EVENTS.reset_timeseries();
 
-  ENV.CurrentDate = new Date();
+  if (src !== 'donePractice') {
+    ENV.CurrentDate = new Date();
+  }
+
   var datestr = ENV.CurrentDate.toISOString();
   if (ENV.MTurkWorkerId) {
     ENV.DataFileName = `${DATA_SAVEPATH}${datestr.slice(

@@ -31,7 +31,6 @@ async build(trial_cushion_size){
 	this.samplebag_labels = [];
 	this.samplebag_indices = [];
 	this.samplebag_paths = [];
-	this.samplebag_primed = [];
 	// for (let i = 0; i < IMAGES['Sample'].length; i++) {
 	// 	// FOR i scene bags (labels)
 	// 	for (let j = 0; j < IMAGES['Sample'][i].nimages; j++) {
@@ -55,7 +54,6 @@ async build(trial_cushion_size){
 		for (var j=0; j<= IMAGES["Sample"][i].nimages-1; j++){
 			this.samplebag_labels.push(i)
 			this.samplebag_indices.push(j)
-			this.samplebag_primed.push(0)
 		} //for j scene renders, assign label
 
 		//get background images, if any
@@ -117,7 +115,8 @@ async build(trial_cushion_size){
 
 async generate_trials(n_trials){
 	// Performance critical: sometimes called by this.get_next_trial() (when TQ is empty), which is called during each mkturk trial
-	// Adds trials to queue and downloads their images
+
+	// Adds trials to queue and downloads their images 
 
 	n_trials = Math.min(this.max_queue_size - this.num_in_queue, n_trials);
 	if (this.max_queue_size <= this.num_in_queue){
@@ -170,7 +169,7 @@ async generate_trials(n_trials){
 				}//FOR i sample images
 			}//ELSE interleaved, sample all categories
 		}//Need to make a new bucket
-
+		
 		// Draw one (1) sample image from current samplebucket
 		var sample_index = this.selectSampleImage(this.samplebucket, this.samplingStrategy)
 		var sample_scenebag_label = this.samplebag_labels[sample_index]; 
@@ -190,7 +189,7 @@ async generate_trials(n_trials){
 
 		this.ndrawn_per_bag[sample_scenebag_label] = this.ndrawn_per_bag[sample_scenebag_label] + 1
 				
-		// Select appropriate test images (correct one and distractors) 
+		// Select appropriate test images (correct one and distractors)
 		// var funcreturn = this.selectTestImages(sample_scenebag_label, this.testbag_labels)
 		var funcreturn;
 		if (TASK.VisualSearch > 0) {
@@ -233,116 +232,10 @@ async generate_trials(n_trials){
 		this.testq.filenames.push(test_filenames)			
 
 		this.num_in_queue++;
-	}//FOR i trials
+	}
 	// Download images to support these trials to download queue
 	// console.log("TQ.generate_trials() will request", image_requests.length)
-
-	image_requests = image_requests.flat()
-	await this.IB.cache_these_images(image_requests);
-
-//----- PRIME SCENES
-if (ENV.PrimeScenes <= 0){ return; }
-
-	var tsingleframe = 1000/ENV.FrameRateMovie;
-	var tsequence = [];
-	var sequencegridindex = [];
-	var sequenceclip = [];
-	var sequenceframe = [];
-	var sequencetaskscreen = [];
-	var sample_sequencelabel = [];
-	var sample_sequenceindex = [];
-	var sample_filename = [];
-	var sample_image = [];
-
-	var gridindex = TASK.SampleGridIndex;
-	if (gridindex < 0){ gridindex = 0; }
-
-var nframesprime = 1;
-var frame_cnt = 0;
-for ( var f=0; f<=nframesprime-1; f++){
-	var stim_cnt = 0;
-	for (i=0; i < n_trials; i++){
-		//Get info form TrialQueueScene
-		var sample_index = this.sampleq.index[ i + (this.sampleq.index.length - n_trials) ]
-		if (this.samplebag_primed[ sample_index] >= f+1 ){
-			continue;
-		}//IF
-		else {
-			this.samplebag_primed[ sample_index] = f+1;
-		}//ELSE
-
-		sample_filename.push(this.sampleq.filename[ i + (this.sampleq.index.length - n_trials) ]);
-		sample_sequencelabel.push( [ this.samplebag_labels[ sample_index] ])
-		sample_sequenceindex.push( [ this.samplebag_indices[sample_index] ])
-
-		tsequence.push( (frame_cnt+1) * tsingleframe);
-		sequencegridindex.push( [ gridindex ]);
-		sequenceclip.push(i);
-		sequenceframe.push(f)
-		sequencetaskscreen.push('Sample')
-		
-		if (f == 0){
-			//Get images
-			sample_image[stim_cnt] = [];
-			if (Array.isArray(sample_filename[stim_cnt])){
-				for (var s = 0; s <sample_filename[stim_cnt].length;s++){
-					if (sample_filename[stim_cnt][s] !=""){
-						if (Array.isArray(sample_filename[stim_cnt][s])){
-							var cubeTexture = []
-							for (var j = 0; j < sample_filename[stim_cnt][s].length; j++) {
-								cubeTexture.push(await this.IB.get_by_name(sample_filename[stim_cnt][s][j]));
-							}//FOR j cube images
-							sample_image[stim_cnt].push(cubeTexture);
-						} else{
-							sample_image[stim_cnt].push(await this.IB.get_by_name(sample_filename[stim_cnt][s])); 
-						}
-					}
-				}//FOR s sample image frames in movie
-			}//IF isArray sample filenames
-			else {
-				if (sample_filename != ""){
-					sample_image[stim_cnt][0] = await this.IB.get_by_name(sample_filename[stim_cnt]);
-			    }		
-			}//ELSE single filename			
-		}//IF first frame
-		stim_cnt++
-		frame_cnt++
-	}//FOR i trials
-
-	if (f==0){
-		var sample_image_frame0 = {sampleimage: sample_image};
-	}
-}//FOR f frames to prime
-  
-	frame_prime.shown = [];
-	frame_prime.frames = [];
-	frame_prime.current = 0;
-
-	for (let q in sequencetaskscreen) {
-	  frame_prime.shown[q] = 0;
-	  frame_prime.frames[q] = [q];
-	} // FOR q frames
-
-	if (tsequence.length > 0){
-		await displayTrial_prime(
-			tsequence, //ti
-			sequencegridindex,
-			sequenceclip, //cl
-			sequenceframe, //fr
-			sequencetaskscreen, //sc
-			sample_sequencelabel, //ob
-			sample_sequenceindex, //id
-			sample_image_frame0 //ims
-		  );	  
-	}
-
-// var ims = [CURRTRIAL.sampleimage[CURRTRIAL.sequenceclip[f]][fr[f]]]; //fr[f] frame within clip
-
-// ti -- tsequence: movie_tsequence == CURRTRIAL.tsequencedesired
-// fr -- frame within clip: movie_framenum == CURRTRIAL.sequenceframe
-// sc -- taskscreen: movie_sequence == CURRTRIAL.sequencetaskscreen
-// ob -- TQS.get_next_trial[5] == TQS.samplebag_labels[sample_index] == CURRTRIAL.sample_scenebag_label
-// id -- TQS.get_next_trial[6] == TQS.samplebag_indices[sample_index] == CURRTRIAL.sample_scenebag_index
+	await this.IB.cache_these_images(image_requests); 	
 } //FUNCTION generate_trials
 
 
@@ -391,19 +284,11 @@ async get_next_trial(){
 	// Get image from imagebag
 	if (typeof(sample_filename) != "undefined"){
 		var sample_image = []
-
+		sample_image = []
 		if (Array.isArray(sample_filename)){
 			for (var i = 0; i <sample_filename.length;i++){
 				if (sample_filename[i] !=""){
-					if (Array.isArray(sample_filename[i])){
-						var cubeTexture = []
-						for (var j = 0; j < sample_filename[i].length; j++) {
-							cubeTexture.push(await this.IB.get_by_name(sample_filename[i][j]));
-						}
-						sample_image.push(cubeTexture);
-					} else{
-						sample_image.push(await this.IB.get_by_name(sample_filename[i])); 
-					}
+					sample_image.push(await this.IB.get_by_name(sample_filename[i])); 
 				}
 			}
 		}//IF isArray sample filenames
@@ -475,25 +360,10 @@ selectSampleImage(SampleBucket, SamplingStrategy){
 	if(SamplingStrategy == 'uniform_with_replacement'){
 		sample_image_index = SampleBucket[Math.floor((SampleBucket.length)*Math.random())];
 	}
-	else if (SamplingStrategy == 'uniform_without_replacement') {
-		let randIdx;
-		let numSamples = 0;
-		for (let i = 0; i < IMAGES['Sample'].length; i++) {
-			numSamples += IMAGES['Sample'][i].nimages;
-		}
-		if (
-			TASK.Species == 'model'
-			&& numSamples - SampleBucket.length < TASK.ModelConfig.trainIdx
-		) {
-			let label = SampleBucket.length % IMAGES['Sample'].length;
-			do {
-				randIdx = Math.floor((SampleBucket.length) * Math.random());
-			} while (this.samplebag_labels[SampleBucket[randIdx]] != label);
-		} else {
-			randIdx = Math.floor((SampleBucket.length)*Math.random());
-		}
-		sample_image_index = SampleBucket[randIdx];
-		SampleBucket.splice(randIdx, 1);
+	else if (SamplingStrategy == 'uniform_without_replacement'){
+		var randind = Math.floor((SampleBucket.length)*Math.random())
+		sample_image_index = SampleBucket[randind]
+		SampleBucket.splice(randind,1)
 	}
 	else if (SamplingStrategy == 'sequential'){
 		sample_image_index = SampleBucket[0] //take next image
