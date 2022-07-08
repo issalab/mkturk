@@ -269,9 +269,22 @@ if (ENV.BatteryAPIAvailable) {
   }
   await loadParametersfromFirebase(ENV.ParamFileName);
 
+  if (TASK.Automator != 0) {
+    automator_data = await loadTextfromFirebase(TASK.AutomatorFilePath);
+  }
+
   if (TASK.Agent == 'SaveImages') {
+    if (TASK.Automator != 0 ){
+      var concat_imagebagsample = [];
+      for (i = 0; i < automator_data.length; i++) {
+        concat_imagebagsample.push(...automator_data[i].ImageBagsSample);
+      }//FOR i automator stages
+    }//IF Automator
+    else{
+      var concat_imagebagsample = TASK.ImageBagsSample;
+    }
     FLAGS.DirHandle = await window.showDirectoryPicker();
-    TASK.ImageBagsSample.forEach(async (sceneFilePath) => {
+    concat_imagebagsample.forEach(async (sceneFilePath) => {
       let sceneFileName = sceneFilePath.split('/').slice(-1)[0];
       let sceneFileDir = sceneFilePath
         .split('/')
@@ -506,7 +519,6 @@ if (ENV.BatteryAPIAvailable) {
   // Initialize automator - change TASK to that specified by TASK.CurrentAutomatorStage.
   var num_prebuffer_trials = 300;
   if (TASK.Automator != 0) {
-    automator_data = await loadTextfromFirebase(TASK.AutomatorFilePath);
     automateTask(automator_data, trialhistory);
     await saveParameterstoFirebase();
     await loadParametersfromFirebase(ENV.ParamFileName);
@@ -919,7 +931,6 @@ if (ENV.BatteryAPIAvailable) {
       typeof TASK.NRSVP == 'undefined' || TASK.NRSVP <= 0 ? 1 : ENV.NRSVPMax;
 
     for (let i = 0; i < imgSeqLen; i++) {
-      console.log('index.js ' + i + ' trial ' + CURRTRIAL.num);
       let x = await TQS.get_next_trial();
       CURRTRIAL.images.sampleimage[i] = x[0];
       CURRTRIAL.sampleindex[i] = x[1];
