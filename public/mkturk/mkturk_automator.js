@@ -73,11 +73,11 @@ async function automateTask(automatorData, trialhistory) {
     ( TASK.Agent !='SaveImages' &&
       ENV.StagePctCorrect > ENV.MinPercentCriterion && ENV.StageNTrials >= ENV.MinTrialsCriterion )
     ||
-    ( TASK.Agent =='SaveImages' && TASK.NRSVP>1 &&
+    ( TASK.Agent =='SaveImages' && TASK.NRSVP>1 && typeof(TQS) !='undefined' &&
       CURRTRIAL.num >= Math.ceil(TQS.samplebag_indices.length/TASK.NRSVP)
       )
     ||
-    ( TASK.Agent =='SaveImages' && !(TASK.NRSVP)>1 &&
+    ( TASK.Agent =='SaveImages' && !(TASK.NRSVP>1) && typeof(TQS) !='undefined' &&
       CURRTRIAL.num >= TQS.samplebag_indices.length - 1)
     )
   {
@@ -87,7 +87,7 @@ async function automateTask(automatorData, trialhistory) {
       TASK.Automator = 0;
       FLAGS.need2saveParameters = 1;
 
-      automatorEvents.push('COMPLETED FINAL STAGE, TURNING AUTOMATOR OFF');
+      automatorEvents.push('MKTURK AUTOMATOR COMPLETED FINAL STAGE, TURNING AUTOMATOR OFF');
       FLAGS.automatortext = updateHeadsUpDisplayAutomator(
         ENV.CurrentAutomatorStageName,
         ENV.StagePctCorrect,
@@ -97,6 +97,7 @@ async function automateTask(automatorData, trialhistory) {
         automatorEvents
       );
       updateHeadsUpDisplay();
+      console.log('MKTURK EXITING AUTOMATOR -- automator completed final stage, turning automator off')
       console.log(
         'With ' +
           ENV.StagePctCorrect +
@@ -108,7 +109,6 @@ async function automateTask(automatorData, trialhistory) {
           (automatorData.length - 1) +
           ' (zero indexing) of automator.'
       );
-      console.log('Turning automator OFF.');
       if (ENV.MTurkWorkerId) {
         let mturkUser = {
           wid: ENV.MTurkWorkerId,
@@ -127,14 +127,14 @@ async function automateTask(automatorData, trialhistory) {
 
     // Otherwise, advance to the next stage.
     TASK.CurrentAutomatorStage += 1;
-    const automatorEventStr = `SUBJECT ADVACED TO STAGE ${
+    const automatorEventStr = `SUBJECT ADVANCED TO STAGE ${
       currentStageIdx + 1
     } of ${automatorData.length - 1} with ${
       ENV.StagePctCorrect
     }% performance on n=${ENV.StageNTrials}`;
 
     automatorEvents.push(automatorEventStr);
-    console.log(automatorEventStr);
+    console.log('MKTURK RELOADING -- ' + automatorEventStr);
 
     // Reset tracking variables
     purgeTrackingVariables();
