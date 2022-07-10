@@ -77,7 +77,7 @@ async function automateTask(automatorData, trialhistory) {
       CURRTRIAL.num >= Math.ceil(TQS.samplebag_indices.length/TASK.NRSVP)
       )
     ||
-    ( TASK.Agent =='SaveImages' && !TASK.NRSVP>1 &&
+    ( TASK.Agent =='SaveImages' && !(TASK.NRSVP)>1 &&
       CURRTRIAL.num >= TQS.samplebag_indices.length - 1)
     )
   {
