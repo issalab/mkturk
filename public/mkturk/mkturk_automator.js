@@ -69,10 +69,17 @@ async function automateTask(automatorData, trialhistory) {
 
   // ---------- CHANGE TASK.STUFF TO AUTOMATOR DATA [ NEXT_STAGE ] ----------------------
   // If transition criteria are met,
-  if (
-    ENV.StagePctCorrect > ENV.MinPercentCriterion &&
-    ENV.StageNTrials >= ENV.MinTrialsCriterion
-  ) {
+  if (    
+    ( TASK.Agent !='SaveImages' &&
+      ENV.StagePctCorrect > ENV.MinPercentCriterion && ENV.StageNTrials >= ENV.MinTrialsCriterion )
+    ||
+    ( TASK.Agent =='SaveImages' && TASK.NRSVP>1 &&
+      CURRTRIAL.num >= Math.ceil(TQS.samplebag_indices.length/TASK.NRSVP)
+      )
+    ||
+    ( TASK.Agent =='SaveImages' && !TASK.NRSVP>1 &&
+      CURRTRIAL.num >= TQS.samplebag_indices.length - 1)
+  {
     // If finished final stage of automator,
     if (automatorData.length <= TASK.CurrentAutomatorStage + 1) {
       // Stay in current stage settings, and turn automator off
