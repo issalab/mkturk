@@ -2262,7 +2262,11 @@ if (TASK.Agent != "SaveImages"){
     // Run automator only after everything is saved
     if (TASK.Automator != 0) {
       await automateTask(automator_data, trialhistory);
-    }
+      if (TASK.Automator == 0){
+        console.log('MKTURK EXITING -- automator completed last stage')
+        return;
+      }
+    }//IF Automator
 
     if (FLAGS.need2saveParameters == 1) {
       FLAGS.need2saveParameters = saveParameterstoFirebase();

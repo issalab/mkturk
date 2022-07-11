@@ -82,7 +82,7 @@ async function automateTask(automatorData, trialhistory) {
     )
   {
     // If finished final stage of automator,
-    if (automatorData.length <= TASK.CurrentAutomatorStage + 1) {
+    if (TASK.CurrentAutomatorStage + 1 >= automatorData.length) {
       // Stay in current stage settings, and turn automator off
       TASK.Automator = 0;
       FLAGS.need2saveParameters = 1;
@@ -127,7 +127,7 @@ async function automateTask(automatorData, trialhistory) {
 
     // Otherwise, advance to the next stage.
     TASK.CurrentAutomatorStage += 1;
-    const automatorEventStr = `SUBJECT ADVANCED TO STAGE ${
+    const automatorEventStr = `SUBJECT ADVANCED TO STAGE IDX ${
       currentStageIdx + 1
     } of ${automatorData.length - 1} with ${
       ENV.StagePctCorrect
