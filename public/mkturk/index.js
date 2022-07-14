@@ -2217,6 +2217,13 @@ if (TASK.Agent != "SaveImages"){
     {
       updateEventDataonFirestore(EVENTS);
       FLAGS.need2loadParameters = 1;
+
+      if (CURRTRIAL.num == 1000){
+        console.log('MKTURK RELOADING -- completed 1000 trials')
+      }
+      else{
+        console.log('MKTURK RELOADING -- new day started')      
+      }
     } //if new day, start new file or reached 1000 trials
 }//IF !SaveImages
 
@@ -2232,16 +2239,23 @@ if (TASK.Agent != "SaveImages"){
   if ( TASK.Agent == 'SaveImages' && TASK.Automator == 0)
   {
     if (TASK.NRSVP > 1){
-      if (CURRTRIAL.num >= Math.ceil(TQS.samplebag_indices.length/TASK.NRSVP)) { return }
+      if (CURRTRIAL.num >= Math.ceil(TQS.samplebag_indices.length/TASK.NRSVP)) { 
+        console.log('MKTURK EXITING -- all images shown once for SaveImages')
+        return
+      }
     }//IF NRSVP>1
     else{
-        if (CURRTRIAL.num >= TQS.samplebag_indices.length - 1) { return; }
+      if (CURRTRIAL.num >= TQS.samplebag_indices.length - 1) { 
+        console.log('MKTURK EXITING -- all images shown once for SaveImages')
+        return;
+      }
     }
   }//IF saving all images and ran through them once
 
 
     if ( TASK.Species == 'model' && CURRTRIAL.num >= TQS.samplebag_indices.length - 1)
     {
+      console.log('MKTURK EXITING -- all images shown once for Model')
       return;
     }
 
