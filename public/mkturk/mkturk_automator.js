@@ -22,9 +22,9 @@ async function automateTask(automatorData, trialhistory) {
       Object.assign({}, TASK, automatorData[currentStageIdx])
     ).flatMap(([key, value]) => {
       if (
-        key == 'CurrentAutomatorStageName' ||
-        key == 'MinPercentCriterion' ||
-        key == 'MinTrialsCriterion'
+        key == "CurrentAutomatorStageName" ||
+        key == "MinPercentCriterion" ||
+        key == "MinTrialsCriterion"
       ) {
         return [];
       }
@@ -69,25 +69,28 @@ async function automateTask(automatorData, trialhistory) {
 
   // ---------- CHANGE TASK.STUFF TO AUTOMATOR DATA [ NEXT_STAGE ] ----------------------
   // If transition criteria are met,
-  if (    
-    ( TASK.Agent !='SaveImages' &&
-      ENV.StagePctCorrect > ENV.MinPercentCriterion && ENV.StageNTrials >= ENV.MinTrialsCriterion )
-    ||
-    ( TASK.Agent =='SaveImages' && TASK.NRSVP>1 && typeof(TQS) !='undefined' &&
-      CURRTRIAL.num >= Math.ceil(TQS.samplebag_indices.length/TASK.NRSVP)
-      )
-    ||
-    ( TASK.Agent =='SaveImages' && !(TASK.NRSVP>1) && typeof(TQS) !='undefined' &&
+  if (
+    (TASK.Agent != "SaveImages" &&
+      ENV.StagePctCorrect > ENV.MinPercentCriterion &&
+      ENV.StageNTrials >= ENV.MinTrialsCriterion) ||
+    (TASK.Agent == "SaveImages" &&
+      TASK.NRSVP > 1 &&
+      typeof TQS != "undefined" &&
+      CURRTRIAL.num >= Math.ceil(TQS.samplebag_indices.length / TASK.NRSVP)) ||
+    (TASK.Agent == "SaveImages" &&
+      !(TASK.NRSVP > 1) &&
+      typeof TQS != "undefined" &&
       CURRTRIAL.num >= TQS.samplebag_indices.length - 1)
-    )
-  {
+  ) {
     // If finished final stage of automator,
     if (automatorData.length <= TASK.CurrentAutomatorStage + 1) {
       // Stay in current stage settings, and turn automator off
       TASK.Automator = 0;
       FLAGS.need2saveParameters = 1;
 
-      automatorEvents.push('MKTURK AUTOMATOR COMPLETED FINAL STAGE, TURNING AUTOMATOR OFF');
+      automatorEvents.push(
+        "MKTURK AUTOMATOR COMPLETED FINAL STAGE, TURNING AUTOMATOR OFF"
+      );
       FLAGS.automatortext = updateHeadsUpDisplayAutomator(
         ENV.CurrentAutomatorStageName,
         ENV.StagePctCorrect,
@@ -97,17 +100,19 @@ async function automateTask(automatorData, trialhistory) {
         automatorEvents
       );
       updateHeadsUpDisplay();
-      console.log('MKTURK EXITING AUTOMATOR -- automator completed final stage, turning automator off')
       console.log(
-        'With ' +
+        "MKTURK EXITING AUTOMATOR -- automator completed final stage, turning automator off"
+      );
+      console.log(
+        "With " +
           ENV.StagePctCorrect +
-          '% performance on n=' +
+          "% performance on n=" +
           ENV.StageNTrials +
-          ', subject completed the final stage ' +
+          ", subject completed the final stage " +
           currentStageIdx +
-          ' of ' +
+          " of " +
           (automatorData.length - 1) +
-          ' (zero indexing) of automator.'
+          " (zero indexing) of automator."
       );
       if (ENV.MTurkWorkerId) {
         let mturkUser = {
@@ -116,7 +121,7 @@ async function automateTask(automatorData, trialhistory) {
           hid: ENV.HITId,
         };
         let submitAssignmentResult = await submitAssignment(mturkUser);
-        if (submitAssignmentResult.data.status === 'success') {
+        if (submitAssignmentResult.data.status === "success") {
           window.location.replace(
             `https://mkturk.com/mturksurvey/?WID=${ENV.MTurkWorkerId}&AID=${ENV.AssignmentId}&HID=${ENV.HITId}`
           );
@@ -127,6 +132,7 @@ async function automateTask(automatorData, trialhistory) {
 
     // Otherwise, advance to the next stage.
     TASK.CurrentAutomatorStage += 1;
+    automator_bool += 1;
     const automatorEventStr = `SUBJECT ADVANCED TO STAGE ${
       currentStageIdx + 1
     } of ${automatorData.length - 1} with ${
@@ -134,7 +140,7 @@ async function automateTask(automatorData, trialhistory) {
     }% performance on n=${ENV.StageNTrials}`;
 
     automatorEvents.push(automatorEventStr);
-    console.log('MKTURK RELOADING -- ' + automatorEventStr);
+    console.log("MKTURK RELOADING -- " + automatorEventStr);
 
     // Reset tracking variables
     purgeTrackingVariables();
@@ -145,11 +151,11 @@ async function automateTask(automatorData, trialhistory) {
       Object.entries(
         Object.assign({}, TASK, automatorData[currentStageIdx + 1])
       ).flatMap(([key, value]) => {
-        console.log('automator transition');
+        console.log("automator transition");
         if (
-          key == 'CurrentAutomatorStageName' ||
-          key == 'MinPercentCriterion' ||
-          key == 'MinTrialsCriterion'
+          key == "CurrentAutomatorStageName" ||
+          key == "MinPercentCriterion" ||
+          key == "MinTrialsCriterion"
         ) {
           return [];
         }
@@ -184,11 +190,11 @@ async function automateTask(automatorData, trialhistory) {
 
 function stageHash(task) {
   // Returns a value that uniquely describes the automator and stage of the automator
-  let currentStageHashStr = '';
+  let currentStageHashStr = "";
   if (task.Automator != 0) {
     currentStageHashStr = `${task.AutomatorFilePath}_stage${task.CurrentAutomatorStage}`;
   } else {
-    currentStageHashStr = 'automator_off';
+    currentStageHashStr = "automator_off";
   }
   // console.log('[Automator] CurrentStageHashStr:', currentStageHashStr);
   return currentStageHashStr;
@@ -201,7 +207,7 @@ async function readTrialHistoryFromFirebase(filepaths) {
   trialhistory.correct = [];
   trialhistory.response = [];
 
-  if (typeof filepaths == 'string') {
+  if (typeof filepaths == "string") {
     filepaths = [filepaths];
   }
 
@@ -298,7 +304,7 @@ function computeRunningHistory(
   if (trainingStageHistory.length != correctsHistory.length) {
     // console.log('trainingstage vec. length' + trainingStageHistory.length);
     // console.log('corrects vec. length ' + correctsHistory.length);
-    throw 'The history arrays are of different length. Check what went wrong; cannot compute performance history.';
+    throw "The history arrays are of different length. Check what went wrong; cannot compute performance history.";
   }
 
   // Returns: The at most current-minTrials trial which starts a contiguous sequence to current trial with the same trainingstage/automatorfilepath as the current state,
@@ -314,14 +320,14 @@ function computeRunningHistory(
       } else if (trainingStageHistory.length - i > minTrials) {
         break;
       } else {
-        throw 'Something went wrong';
+        throw "Something went wrong";
       }
     } else if (trainingStageHistory[i] != currentStage) {
       break;
     } else {
       // console.log(trainingStageHistory[i]);
       // console.log(currentStage);
-      throw 'Something went wrong 2';
+      throw "Something went wrong 2";
     }
   } //FOR i trials
 
@@ -332,7 +338,7 @@ function computeRunningHistory(
       ndiscrepancy = ndiscrepancy + 1;
       // console.log(trainingStageHistory[i]);
       // console.log(currentStage);
-      throw 'Something went wrong 3';
+      throw "Something went wrong 3";
     }
     ncountedtrials = ncountedtrials + 1;
   }
