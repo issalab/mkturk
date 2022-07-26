@@ -1159,6 +1159,11 @@ if (ENV.BatteryAPIAvailable) {
       // Start timer for this fixation render trial
       CURRTRIAL.starttime = Date.now() - ENV.CurrentDate.valueOf();
       logEVENTS('StartTime', CURRTRIAL.starttime, 'trialseries');
+      if (port.connected && FLAGS.savedata && CURRTRIAL.num==0) {
+        port.writeSampleCommandTriggertoUSB('1');
+        await sleep(25);
+        port.writeSampleCommandTriggertoUSB('0');
+      }//first trial pulse
 
       //========= AWAIT SHOW FIXATION =========//
       // TODO: move to appropriate location
@@ -1566,8 +1571,15 @@ if (ENV.BatteryAPIAvailable) {
           dframe[f] = CURRTRIAL.tsequenceactual[f] - CURRTRIAL.tsequencedesired[f];
         }//If frame shown
       }//FOR f frames
-      funcreturn = getMeanStandardDeviation(dframe);
-      console.log("Display timing (actual-desired): " + funcreturn[0] + " +- " + funcreturn[1] + ' ms');
+      try{
+        funcreturn = getMeanStandardDeviation(dframe);
+        console.log("Display timing (actual-desired): " + funcreturn[0] + " +- " + funcreturn[1] + ' ms');
+      }
+      catch{
+        console.log("ISSUE computing ∆ of actual-desired display times -->"
+                    + "  actual:" + CURRTRIAL.tsequenceactual 
+                    + "  desired:" + CURRTRIAL.tsequencedesired)
+      }
 
       if (FLAGS.savedata == 0) {
         updateImageLoadingAndDisplayText(' '); // displays frame tactual - tdesired
@@ -2269,10 +2281,8 @@ if (TASK.Agent != "SaveImages"){
     }//IF Automator
 
     if (FLAGS.need2saveParameters == 1) {
-      FLAGS.need2saveParameters = saveParameterstoFirebase();
-      // Save parameters asynchronously
+      FLAGS.need2saveParameters = await saveParameterstoFirebase(); // Save parameters asynchronously
     }
-
     //================= (end) HOUSEKEEPING =================//
 
     updateHeadsUpDisplay();

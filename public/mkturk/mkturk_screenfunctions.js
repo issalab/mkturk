@@ -224,17 +224,22 @@ function displayTrial(ti, gr, cl, fr, sc, ob, id, ims, mkm, trig) {
       if ( (taskscreen0 == 'Sample' || taskscreen0 == 'Test') & TASK.Agent == 'SaveImages'
             && FLAGS.savedata == 1)
       {
-        if ( (FLAGS.movieper[taskscreen0][ob[frame.current][0]][id[frame.current][0]] < 1 &&
-              ( frame.current == 0 ||
-                sc[frame.current] != sc[frame.current - 1] ||
-                ob[frame.current][0] != ob[frame.current - 1][0] ||
-                id[frame.current][0] != id[frame.current - 1][0]  )
-          )//if !movie, save when screen changes
-          || FLAGS.movieper[taskscreen0][ob[frame.current][0]][id[frame.current][0]] >= 1 ) //OR if movie
-        {
-          saveScreenshot(VISIBLECANVAS,CURRTRIAL.num,taskscreen0,frame.current,
-                      ob[frame.current],id[frame.current]);
-        } //IF need to save out this frame
+        //Check if already completed showing all images once
+        if ( TASK.NRSVP<1 || 
+            (TASK.NRSVP>=1 && CURRTRIAL.num*TASK.NRSVP + cl[f] <= TQS.samplebag_indices.length-1) ){
+
+          if ( (FLAGS.movieper[taskscreen0][ob[frame.current][0]][id[frame.current][0]] < 1 &&
+                ( frame.current == 0 ||
+                  sc[frame.current] != sc[frame.current - 1] ||
+                  ob[frame.current][0] != ob[frame.current - 1][0] ||
+                  id[frame.current][0] != id[frame.current - 1][0]  )
+            )//if !movie, save when screen changes
+            || FLAGS.movieper[taskscreen0][ob[frame.current][0]][id[frame.current][0]] >= 1 ) //OR if movie
+          {
+            saveScreenshot(VISIBLECANVAS,CURRTRIAL.num,taskscreen0,frame.current,
+                        ob[frame.current],id[frame.current]);
+          } //IF need to save out this frame
+        }//IF RSVP
       } //IF sample or test screen & save out images
 
       frame.current++;
