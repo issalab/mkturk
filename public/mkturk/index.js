@@ -1160,8 +1160,10 @@ if (ENV.BatteryAPIAvailable) {
       CURRTRIAL.starttime = Date.now() - ENV.CurrentDate.valueOf();
       logEVENTS('StartTime', CURRTRIAL.starttime, 'trialseries');
       if (port.connected && FLAGS.savedata && CURRTRIAL.num==0) {
+        var starttime_str = CURRTRIAL.starttime.toString();
+        var lastmilliseconddigit = Number(starttime_str[starttime_str.length-1]);
         port.writeSampleCommandTriggertoUSB('1');
-        await sleep(25);
+        await sleep(10*(lastmilliseconddigit+1));
         port.writeSampleCommandTriggertoUSB('0');
       }//first trial pulse
 

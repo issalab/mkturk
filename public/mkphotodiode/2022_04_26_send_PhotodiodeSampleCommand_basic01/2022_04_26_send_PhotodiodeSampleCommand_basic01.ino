@@ -6,7 +6,7 @@ WebUSB WebUSBSerial(1, "webusb.github.io/arduino/demos");
 
 // (1) SAMPLE COMMAND
 int sampleCommandPin = A5;
-const int sampleCommandLEDPin=1;
+const int sampleCommandLEDPin=5;
 int sampleCommandVal_new=0;
 int sampleCommandVal_old=0;
 

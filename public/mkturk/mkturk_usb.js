@@ -14,6 +14,7 @@ var eyebuffer = {
   success: 0,
   dt: 0,
   tstart: 0,
+  tlast: 0,
 };
 
 navigator.usb.onconnect = function (device) {
@@ -177,15 +178,20 @@ serial.Port.prototype.onReceive = (data) => {
       logEVENTS('SampleCommandOffReturnTime',onReceiveTime - ENV.CurrentDate.valueOf(),'trialseries');
     } //IF 1
     return;
-  }//IF "sa", samplecommand
+  }//IF "sa", samplecommand 
 
   //EYE
   if ( port.statustext_received.includes('///') ) {
-    if (port.statustext_received.length > 40){
-      console.log('eyetracker fell behind')
-      return;
+    var dt = performance.now() - eyebuffer.tlast
+    if (dt > 12){
+      console.log('eyetracker >12ms dt=' + Math.round(dt) + 'ms, ' + port.statustext_received);
     }
-    
+    eyebuffer.tlast = performance.now();
+
+    if (port.statustext_received.length > 20){
+      port.statustext_received = port.statustext_received.slice(0,port.statustext_received.indexOf('}') + 1)
+    }
+
     for (var q = 0; q <= port.statustext_received.length - 1; q++) {
       if (port.statustext_received[q] == '/') {
         var lastslash = q;
@@ -244,18 +250,17 @@ serial.Port.prototype.onReceive = (data) => {
 
     eyebuffer.buffer = port.statustext_received; //accumulate ascii vals
     var n_character_close = 0;
-    if (
-      port.statustext_received.indexOf('}') >= 0 &&
-      eyebuffer.buffer.length >= eyebuffer.maxbufferlength_HARDCODED
+    if ( port.statustext_received.indexOf('}') >= 0 &&
+          eyebuffer.buffer.length >= eyebuffer.maxbufferlength_HARDCODED
     ) {
-      n_character_close = 1;
-      eyebuffer.buffer = eyebuffer.buffer.slice(0, eyebuffer.buffer.length - 1);
+        n_character_close = 1;
+        eyebuffer.buffer = eyebuffer.buffer.slice(0, eyebuffer.buffer.length - 1);
     } else if (
       port.statustext_received == '}/' &&
       eyebuffer.buffer.length == eyebuffer.maxbufferlength_HARDCODED - 1
     ) {
-      n_character_close = 2;
-      eyebuffer.buffer = eyebuffer.buffer.slice(0, eyebuffer.buffer.length - 2);
+        n_character_close = 2;
+        eyebuffer.buffer = eyebuffer.buffer.slice(0, eyebuffer.buffer.length - 2);
     }
 
     //=============== PARSED EYE (X,Y,D,A) ===============//
@@ -368,19 +373,11 @@ serial.Port.prototype.onReceive = (data) => {
       eyedataratestr =
         '<font color=green>' +
         'EYE: Success=' +
-        Math.round(
-          (1000 * eyebuffer.success) / (eyebuffer.fail + eyebuffer.success)
-        ) /
-          10 +
-        '%' +
+        Math.round( (1000 * eyebuffer.success) / (eyebuffer.fail + eyebuffer.success)) / 10 + '%' +
         ' (dt_u = ' +
-        Math.round(
-          (10 * (performance.now() - eyebuffer.tstart)) /
-            (eyebuffer.success + eyebuffer.fail)
-        ) /
-          10 +
-        ' ms)' +
-        '</font>';
+        Math.round( (10 * (performance.now() - eyebuffer.tstart)) /
+                    (eyebuffer.success + eyebuffer.fail) )/10 +
+        ' ms)' + '</font>';
       if (FLAGS.savedata == 0) {
         updateImageLoadingAndDisplayText('');
       }

@@ -237,7 +237,7 @@ YGridCenter: The location of all grid points in pixels. Follows from user-specif
 ## EVENTS TRIALSERIES (saved to json data file)
 CorrectItem: Index of the correct item on each trial
 
-EndTime: End of trial, time is recorded when either reward delivery or punish timeout promise is fulfilled.
+EndTime: End of trial, time is recorded when either reward delivery or punish timeout promise is fulfilled. On each task trial, SampleCommand line is set to 0 upon completion of reward/punish (was set to 1 at beginning of trial as recorded by SampleStartTime).
 
 EyetrackerSampleInterval: Keeps track of the average interval between successful eyetracker reads during a given trial. If the sample fails to come in or it comes in but is garbled, this would be reflected by an mkturk trialevent sampleInterval average greater than the eyetracker hardware's sample interval.
 
@@ -261,15 +261,17 @@ Sample: Index of sample displayed on each trial. Index into list of imagebags fo
 
 SampleCommandReturnTime: The roundtrip time that mkturk received a signal back over serial after the arduino digital line for sample command was set to 1. This is an upper bound on how long it took to send the digital sync signal (sample command) out to other devices right before the sample sequence is displayed. Should be very close to SampleStartTime.
 
+SampleCommandOffReturnTime: The roundtrip time that mkturk received a signal back over serial after the arduino digital line for sample command was set to 0. This is an upper bound on how long it took to send the digital sync signal (sample command) out to other devices right after reward/punish was completed. Should be very close to EndTime.
+
 SampleFixationTouch: During RSVP, the type of fixation tough even that was registered for that trial's sample screen (e.g., touchheld, touchbroken, TimeOut)
 
 SampleFixationXYT: records the coordinates and time of touching the Sample item (RSVP task only). X,Y=horizontal,vertical position of response touch in pixels T=time of touch measured using Date.now()
 
 SampleGridIndex: Sample grid location on each trial.
 
-SampleStartTime: Time recorded when the first Sample frame was shown for that trial.
+SampleStartTime: Time recorded when the first Sample frame was shown for that trial. On each task trial, SampleCommand line is set to 1 upon initiating the Sample sequence (set to 0 at end of trial as recorded by EndTime).
 
-StartTime: Time recorded when the most recent fixation dot was shown for that trial.
+StartTime: Time recorded when the most recent fixation dot was shown for that trial. On the first task trial of a file, a brief SampleCommand pulse is issued to key the remaining trials. The duration is based on the last digit in StartTime. last digit 0:9 ==> 10-100 milliseconds, or 10*(lastdigit+1)
 
 Test: Indices of test choices displayed on each trial where N indices are stored for an N-AFC task. Index into list of test imagebags for that session
 

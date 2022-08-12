@@ -69,7 +69,6 @@ void loop() {
 
 //RECEIVE,TRANSMIT: EYE TRACKER
 void recvEyeTracker() {
-  byte ndx = 0;
   char val = 0;
   String str="";
   while (mySerialEYE.available() > 0) {
@@ -78,13 +77,18 @@ void recvEyeTracker() {
     turnOnOffPump();
 
     val = mySerialEYE.read();
-if (pauseEyeTracker == true){
-    return;
-}
+    if (pauseEyeTracker == true){
+      return;
+    }
 
-    str.concat(val);
+    if (str.length() <= 18){
+      str.concat(val);  
+    }
+
     if (val == eyeEndMarker){
+      str.concat(val);  
       Serial.print(str);
+      String str="";
       Serial.flush();
     }//IF end, then flush
   }//while eye chars
