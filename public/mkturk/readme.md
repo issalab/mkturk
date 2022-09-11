@@ -9,7 +9,7 @@
 
 **BackgroundColor2D:** specify the background color in hex (eg, #FFFFFF for white or #000000 for black). Not required in param file. If not provided, defaults to gray screen background (#7F7F7F)
 
-**CalibrateEye:** If >0, will calibrate for TASK.CalibrateEye number of trials for train & same number for test. Afte test, saves calibration in firestore collection "eyecalibrations." Requires ENV.Eye.TrackEye>0.
+**CalibrateEye:** If >0, will calibrate for TASK.CalibrateEye number of trials for train. After training, saves calibration in firestore collection "eyecalibrations" and then exits. Requires ENV.Eye.TrackEye>0.
 
 *CheckRFID: Time in milliseconds over which at least one matching RFID read is required so that agent doesn't get kicked off of task. If there is a read within the last CheckRFID ms, task continues, otherwise agent is locked out at start of next trial. CheckRFID <= 0 turns off RFID checking.
 
@@ -29,7 +29,7 @@
 
 **FixationDuration:** How long subject has to hold fixation touch in milliseconds for a successful fixation to register.
 
-**FixationGridIndex:** Index on the grid where the fixation image will appear. If FixationGridIncex<0, then fixation image is presented at a randomly selected grid point and the fixation position is redrawn every FixationTimeOut milliseconds. FixationMove > 0 can be used to train subjects to touch different screen locations or to calibrate an eyetrackers.
+**FixationGridIndex:** Index on the grid where the fixation image will appear. If FixationGridIncex<0, then fixation image is presented at a randomly selected grid point and the fixation position is redrawn every FixationTimeOut milliseconds. FixationMove > 0 can be used to train subjects to touch different screen locations or to calibrate an eyetracker.
 
 **FixationSizeInches:** Size of fixation dot or image (ie FixationUsesSample=1) in physical inches on the screen
 
@@ -174,9 +174,11 @@ Eye.NCalibPointsTrain: Number of points for fitting the regression
 
 Eye.NCalibPointsTest: Number of points for testing the regression (usually set to the same number of points used for training)
 
-Eye.CalibTrainMSE: The train MSE for NCalibPointsTrain training points
+Eye.CalibTrainMSE: The train MSE for NCalibPointsTrain training points.
 
-Eye.CalibTestMSE: The test MSE for NCalibPointsTest testing points
+Eye.CalibTestMSE: The test MSE. Computed when TASK.CalibrateEye <= 0 (i.e., when not calibrating; tests an existing calibration)
+
+Eye.CalibTestMSETarg: The test MSE per target for all possible grid indices. Stores MSE for x, MSE for y, and # trials per grid index in {x, y, n} objects each of which is an arrary of n grid indices.
 
 Eye.TrackEye: 0 (not tracking eye) or 1 (tracking eye)
 

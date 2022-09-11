@@ -119,6 +119,7 @@ ENV.Eye.NCalibPointsTrain = 0;
 ENV.Eye.NCalibPointsTest = 0;
 ENV.Eye.CalibTrainMSE = [];
 ENV.Eye.CalibTestMSE = [];
+ENV.Eye.CalibTestMSETarg = {x: [], y: [], n: []};
 
 ENV.PhotodiodeSquareSizeInches = 1;
 ENV.PhotodiodeSquareX = 0;

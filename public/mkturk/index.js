@@ -588,6 +588,7 @@ if (ENV.BatteryAPIAvailable) {
       } //IF TASK.DragtoRespond
 
       //load previous calibration if available
+      ENV.Eye.TrackEye = 1;
       if (ENV.Eye.TrackEye > 0) {
         // IF trackeye
         //Calibration
@@ -2095,7 +2096,7 @@ if (ENV.BatteryAPIAvailable) {
         if (ENV.Eye.NCalibPointsTrain == TASK.CalibrateEye) {
           //IF enough points
           // Run calibration fitting
-          let calibreturn = runCallibration();
+          let calibreturn = runcalibration();
           ENV.Eye.CalibXTransform = calibreturn.xtform;
           ENV.Eye.CalibYTransform = calibreturn.ytform;
           ENV.Eye.NCalibPoints = calibreturn.n;
@@ -2130,25 +2131,13 @@ if (ENV.BatteryAPIAvailable) {
         if (CURRTRIAL.fixationtouchevent == 'theld') {
           // IF held fixation
           ENV.Eye.NCalibPointsTest++;
+          var mse = evaluateCalibration(); //GOF test
+          ENV.Eye.CalibTestMSE = mse[0];
+          ENV.Eye.CalibTestMSETarg.x = mse[1][0];
+          ENV.Eye.CalibTestMSETarg.y = mse[1][1];
+          ENV.Eye.CalibTestMSETarg.n = mse[1][2];
         }
-
-        if (ENV.Eye.NCalibPointsTest == TASK.CalibrateEye) {
-          // IF enough points
-          //cross-validate on same number of trials used for training
-          ENV.Eye.CalibTestMSE = evaluateCalibration(); //GOF test
-
-          // Store calibration
-          saveEyeCalibrationtoFirestore(
-            ENV.Eye.CalibXTransform,
-            ENV.Eye.CalibYTransform,
-            ENV.Eye.CalibType,
-            ENV.Eye.NCalibPointsTrain,
-            ENV.Eye.CalibTrainMSE,
-            ENV.Eye.NCalibPointsTest,
-            ENV.Eye.CalibTestMSE
-          );
-        }
-      }//ELSEIF calibrate test data
+      }//ELSEIF test calibration
 
       if (typeof EVENTS['timeseries']['EyeData'][0] != 'undefined') {
         let firstTimestamp = new Date(EVENTS['timeseries']['EyeData'][0][1]);
@@ -2250,6 +2239,8 @@ if (TASK.Agent != "SaveImages"){
       }
     });
 
+
+//~~~~EXITS EXITS EXITS EXITS EXITS EXITS EXITS EXITS (start)
   if ( TASK.Agent == 'SaveImages' && TASK.Automator == 0)
   {
     if (TASK.NRSVP > 1){
@@ -2273,6 +2264,11 @@ if (TASK.Agent != "SaveImages"){
       return;
     }
 
+    if (TASK.CalibrateEye > 0 && ENV.Eye.calibration == 0){
+      console.log('MKTURK EXITING -- Done calibrating eye')
+      return
+    }
+
     // Run automator only after everything is saved
     if (TASK.Automator != 0) {
       await automateTask(automator_data, trialhistory);
@@ -2281,6 +2277,7 @@ if (TASK.Agent != "SaveImages"){
         return;
       }
     }//IF Automator
+//~~~~~EXITS EXITS EXITS EXITS EXITS EXITS EXITS EXITS (end)
 
     if (FLAGS.need2saveParameters == 1) {
       FLAGS.need2saveParameters = await saveParameterstoFirebase(); // Save parameters asynchronously
