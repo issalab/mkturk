@@ -12,6 +12,7 @@ export class Utils {
     let fileList = await storageRef.child(path).listAll();
     /* only keep files within the last 2 years*/
     let year = new Date().getFullYear();
+    let month = new Date().getMonth();
     let files: any = [];
 
     for (let item of fileList.prefixes) {
@@ -29,13 +30,17 @@ export class Utils {
             name: fileList.items[i].name
           });
         }
-      } else if (parseInt(fileList.items[i].name.slice(0, 4)) >= year - 1) {
-        files.push({
-          fullpath: fileList.items[i].fullPath,
-          name: fileList.items[i].name
-        });
-      }
-    }
+      } else{
+          let year_file = parseInt(fileList.items[i].name.slice(0, 4));
+          let month_file = parseInt(fileList.items[i].name.slice(6,7));
+          if ( (year_file*12 + month_file) >= (year*12 + month - 6) ) {
+            files.push({
+              fullpath: fileList.items[i].fullPath,
+              name: fileList.items[i].name
+            });
+          }//ELSE IF within last 6 months
+      }//ELSE
+    }//FOR i fileList.items
 
     return files;
   }

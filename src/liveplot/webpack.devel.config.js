@@ -16,12 +16,12 @@ module.exports = {
       cleanStaleWebpackAssets: false,
     }),
     new HtmlWebpackPlugin({
-      title: 'Liveplot2',
+      title: 'Liveplot',
       template: './src/index.html',
     }),
   ],
   output: {
-    path: path.resolve(__dirname, '../../public/liveplot3'),
+    path: path.resolve(__dirname, '../../public/liveplot'),
     filename: '[name].bundle.js',
   },
   module: {
