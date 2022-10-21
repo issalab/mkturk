@@ -588,7 +588,6 @@ if (ENV.BatteryAPIAvailable) {
       } //IF TASK.DragtoRespond
 
       //load previous calibration if available
-      ENV.Eye.TrackEye = 1;
       if (ENV.Eye.TrackEye > 0) {
         // IF trackeye
         //Calibration

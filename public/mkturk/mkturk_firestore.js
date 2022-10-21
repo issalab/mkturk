@@ -77,8 +77,19 @@ async function updateEventDataonFirestore(EVENTS) {
       (elem) => elem || -1
     );
   }
-  batch.update(taskRef, EVENTS.trialseries);
-  batch.update(taskRef, { Battery: EVENTS['timeseries']['Battery'] });
+
+  try{
+    batch.update(taskRef, EVENTS.trialseries);  
+  }
+  catch{
+    console.log('firestore batch.update EVENTS.TRIALSERIES line 85 failed ' + EVENTS.trialseries) 
+  }
+  try{
+    batch.update(taskRef, { Battery: EVENTS['timeseries']['Battery'] });   
+  }
+  catch{
+    console.log('firestrore batch.update BATTERY line 88 failed ' + EVENTS.timeseries.Battery)
+  }
 
   // Commit the batch
   var currtrial = CURRTRIAL.num;

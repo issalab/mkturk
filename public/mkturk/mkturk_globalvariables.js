@@ -396,6 +396,7 @@ function purgeTrackingVariables(src) {
 
   FLAGS.sampleblockcount = 0;
   FLAGS.consecutivehits = 0;
+  FLAGS.firestorelastsavedtrial=0;
 
   return;
 }

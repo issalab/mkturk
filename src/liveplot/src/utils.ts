@@ -20,7 +20,7 @@ export class Utils {
         await this.getFileList(path + item.name + '/', ext)
       );
       files = [...files, ...subFileList];
-    }
+    }//FOR items
 
     for (let i = 0; i < fileList.items.length; i++) {
       if (typeof(ext) == 'string') {
@@ -32,7 +32,7 @@ export class Utils {
         }
       } else{
           let year_file = parseInt(fileList.items[i].name.slice(0, 4));
-          let month_file = parseInt(fileList.items[i].name.slice(6,7));
+          let month_file = parseInt(fileList.items[i].name.slice(5,7));
           if ( (year_file*12 + month_file) >= (year*12 + month - 6) ) {
             files.push({
               fullpath: fileList.items[i].fullPath,
