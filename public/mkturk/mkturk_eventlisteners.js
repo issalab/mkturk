@@ -125,15 +125,8 @@ function hold_promise(touchduration, boundingBoxes, punishOutsideTouch) {
             FLAGS.rtdbDataRef.set(touchDataObj);
           }
 
-          if (
-            !ENV.Eye.TrackEye &&
-            (TASK.BQSaveTouch === undefined || TASK.BQSaveTouch > 0)
-          ) {
-            logEVENTS(
-              'TouchData',
-              [touchDataObj.x, touchDataObj.y, touchDataObj.meta],
-              'timeseries'
-            );
+          if (!ENV.Eye.TrackEye && (TASK.BQSaveTouch === undefined || TASK.BQSaveTouch > 0) ) {
+            logEVENTS('TouchData', [touchDataObj.x, touchDataObj.y, touchDataObj.meta],'timeseries');
           }
         }
 

@@ -285,9 +285,8 @@ async function runPump(str) {
     //user pressed button again to stop pump
     FLAGS.runPump = 0;
     port.statustext_connect = '!!!! USER STOPPED PUMP !!!!';
-    document.querySelector('button[id=pumpflush]').innerHTML = 'Flush 1min';
-    document.querySelector('button[id=pumptrigger]').innerHTML =
-      'Calibrate 1mL milk';
+    document.querySelector('button[id=pumpflush]').innerHTML = '1min';
+    document.querySelector('button[id=pumptrigger]').innerHTML = '1mL';
     updateHeadsUpDisplayDevices();
     return;
   }
@@ -297,7 +296,6 @@ async function runPump(str) {
     if (ble.connected == false && port.connected == false) {
       break; //no pump connected
     } else if (FLAGS.runPump == 0) {
-      FLAGS.runPump = 0;
       port.statustext_connect = '!!!! USER STOPPED PUMP !!!!';
       document.querySelector('button[id=pumpflush]').innerHTML = 'Flush 1min';
       document.querySelector('button[id=pumptrigger]').innerHTML =
@@ -317,13 +315,8 @@ async function runPump(str) {
 
       var endweight = blescale.weights[blescale.weights.length - 1];
       port.statustext_connect =
-        '***** Calibrating Pump ' +
-        i +
-        '/' +
-        npulse +
-        ' pulses, wt=' +
-        Math.round([endweight - startweight] * 100) / 100 +
-        ' grams';
+        '***** Calibrating Pump ' + i + '/' + npulse + ' pulses, wt='
+        + Math.round([endweight - startweight] * 100) / 100 + ' grams';
       updateHeadsUpDisplayDevices();
     } //if usb pump
 
@@ -333,27 +326,17 @@ async function runPump(str) {
 
   if (port.connected == true) {
     port.statustext_connect =
-      'DONE RUNNING PUMP (' +
-      npulse +
-      ' pulses @ ' +
-      Math.round(dur) +
-      ' ms/pulse)';
+      'DONE RUNNING PUMP (' + npulse + ' pulses @ ' + Math.round(dur) + ' ms/pulse)';
     if (blescale.connected == true) {
       var endweight = blescale.weights[blescale.weights.length - 1];
       port.statustext_connect = '!!!! DONE PUMP CALIBRATION !!!!';
-      port.statustext_sent =
-        '!!!! Weight after ' +
-        i +
-        ' pulses @ ' +
-        dur +
-        'ms = ' +
-        Math.round([endweight - startweight] * 100) / 100 +
-        'g vs (1, 1.24) for 100 pulse (milk,water) calibration';
+      port.statustext_sent = '!!!! Weight after ' + i + ' pulses @ ' + dur + 'ms = '
+                              + Math.round([endweight - startweight] * 100) / 100 +
+                              'g vs (1, 1.24) for 100 pulse (milk,water) calibration';
     } //if blescale
     console.log(port.statustext_sent);
-    document.querySelector('button[id=pumpflush]').innerHTML = 'Flush 1min';
-    document.querySelector('button[id=pumptrigger]').innerHTML =
-      'Calibrate 1mL milk';
+    document.querySelector('button[id=pumpflush]').innerHTML = '1min';
+    document.querySelector('button[id=pumptrigger]').innerHTML = '1mL';
     FLAGS.runPump = 0;
     updateHeadsUpDisplayDevices();
   } //if usb pump

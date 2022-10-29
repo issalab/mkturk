@@ -2215,12 +2215,12 @@ if (TASK.Agent != "SaveImages"){
 
 if (TASK.Agent != "SaveImages"){
     await checkParameterFileStatusFirebase();  
-    if ( new Date().getDate() != ENV.CurrentDate.getDate() || CURRTRIAL.num == 1000)
+    if ( new Date().getDate() != ENV.CurrentDate.getDate() || CURRTRIAL.num == 500)
     {
       updateEventDataonFirestore(EVENTS);
       FLAGS.need2loadParameters = 1;
 
-      if (CURRTRIAL.num == 1000){
+      if (CURRTRIAL.num == 500){
         console.log('MKTURK RELOADING -- completed 1000 trials')
       }
       else{

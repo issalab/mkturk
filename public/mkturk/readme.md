@@ -299,3 +299,65 @@ TSequenceActual (bigquery): part of displayData --> [agent, timestamp, trialnum,
 TSequenceDesired (bigquery): part of displayData --> [agent, timestamp, trialnum, framenum, tdesired, tactual]
 
 Weight (json): [trial, timestamp, weight]
+
+
+## ARDUINO V0.3 -- mkturk
+Digital Pins
+0 - RX
+1 - TX
+2 - eye led
+3 - unused led
+4 - pump (pin 2 in v0.2)
+5 - sample command led
+6 - rfid led
+7 - pump led
+8,9 - eye serial
+10,11 - rfid serial
+12 - unused
+~13 - pump pwm
+
+Analog Pins
+A0 - unused
+A1 - unused
+A2 - sample command
+A3 - unused
+A4 - unused
+A5 - unused
+
+Lines
+D8,D9 (D2 led) - eye - softwareserial2
+D10,D11 (D6 led) - rfid - softwareserial1
+A2,A3 (D5 led) - sample command - IN1
+A0,A1 (D3 led) - unused - IN2
+A4,A5 - unused - IN3
+
+
+## ARDUINO V0.3 -- mkphotodiode
+Digital Pins
+0 - RX
+1 - TX
+2 - unused led
+3 - unused led
+4 - unused
+5 - sample command led
+6 - unused led
+7 - unused led
+8,9 - unused
+10,11 - unused
+12 - unused
+~13 - unused
+
+Analog Pins
+A0 - unused
+A1 - unused
+A2 - unused
+A3 - unused
+A4 - Photodiode Receive
+A5 - Sample Command Receive
+
+Lines
+D8,D9 (D2 led) - unused - softwareserial2
+D10,D11 (D6 led) - unused - softwareserial1
+A2,A3 (D5 led) - unused - IN1
+A0,A1 (D3 led) - unused - IN2
+A4,A5 - photodiode, sample command - IN3
