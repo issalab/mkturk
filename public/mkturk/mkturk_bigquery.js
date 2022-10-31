@@ -55,7 +55,7 @@ function saveEyeDatatoBigQuery() {
 			let obj = {
 				'agent': ENV.Subject,
 					'timestamp': EVENTS[eventtype][eventname][i][1],
-		  		'trial_num': EVENTS[eventtype][eventname][i][0],
+		  			'trial_num': EVENTS[eventtype][eventname][i][0],
 					'num_eyes': EVENTS[eventtype][eventname][i][2],
 					'left_x': EVENTS[eventtype][eventname][i][3],
 					'left_y': EVENTS[eventtype][eventname][i][4],

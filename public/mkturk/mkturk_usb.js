@@ -287,21 +287,11 @@ serial.Port.prototype.onReceive = (data) => {
       }
 
       // STORE calibrated eye signal
-      logEVENTS(
-        'EyeData',
-        [
-          eyebuffer.numeyes_HARDCODED,
-          xy[0],
-          xy[1],
-          w,
-          a,
-          null,
-          null,
-          null,
-          null,
-        ],
-        'timeseries'
-      );
+      logEVENTS('EyeData',[
+        eyebuffer.numeyes_HARDCODED,
+        xy[0],xy[1],w,a,
+        null,null,null,null,
+      ],'timeseries');
 
       if (FLAGS.touchGeneratorCreated == 1 && ENV.Eye.TrackEye > 0) {
         //Send calibrated signal, convert from eye coordinates to tablet coordinates

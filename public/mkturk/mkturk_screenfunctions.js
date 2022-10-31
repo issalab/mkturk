@@ -1724,7 +1724,7 @@ function setupCanvasListeners(canvasobj) {
 // Sync: Adjust canvas for the device pixel ratio & browser backing store size
 // from http://www.html5rocks.com/en/tutorials/canvas/hidpi/#disqus_thread
 function scaleCanvasforHiDPI(canvasobj) {
-  if (ENV.DevicePixelRatio !== backingStoreRatio) {
+  if (ENV.DevicePixelRatio !== ENV.BackingStoreRatio) {
     if (
       TASK.Agent == 'SaveImages' &&
       TASK.SaveImagesResolution !== undefined &&

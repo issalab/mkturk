@@ -18,7 +18,7 @@ function hold_promise(touchduration, boundingBoxes, punishOutsideTouch) {
 
   if (FLAGS.rtdbAgentNumConnections > 0) {
     let metaStr = 2;
-    FLAGS.rtdbDataRef.set({
+    rtdb.ref('data/' + ENV.Subject).set({
       x: -1,
       y: -1,
       boundingBoxes: boundingBoxesRtdb,
@@ -122,7 +122,7 @@ function hold_promise(touchduration, boundingBoxes, punishOutsideTouch) {
 
         if (!isNaN(touchDataObj.x) && !isNaN(touchDataObj.y)) {
           if (FLAGS.rtdbAgentNumConnections > 0) {
-            FLAGS.rtdbDataRef.set(touchDataObj);
+            rtdb.ref('data/' + ENV.Subject).set(touchDataObj);
           }
 
           if (!ENV.Eye.TrackEye && (TASK.BQSaveTouch === undefined || TASK.BQSaveTouch > 0) ) {
@@ -335,15 +335,11 @@ function touchend_listener(event) {
   }
 } //touchend_listener
 
-function doneEditingParams_listener(event) {
-  editParamsWaitforClick.next(1);
-  return;
-}
 function headsuptext_listener(event) {
   FLAGS.need2saveParameters = 1;
   return;
 }
-function doneTestingTask_listener(event) {
+function donePracticingTask_listener(event) {
   event.preventDefault();
   console.log('START SAVING DATA');
   FLAGS.savedata = 1;
@@ -352,7 +348,7 @@ function doneTestingTask_listener(event) {
   FLAGS.purge = 0;
 
   document.querySelector('p[id=imageloadingtext]').style.display = 'none'; //if do style.visibility=hidden, element will still occupy space
-  document.querySelector('button[id=doneTestingTask]').style.display = 'none';
+  document.querySelector('button[id=donePracticingTask]').style.display = 'none';
   document.querySelector('button[id=stressTest]').style.display = 'none';
   document.querySelector('button[id=gridPoints]').style.display = 'none';
   EYETRACKERCANVAS.style.display = 'none';
@@ -361,7 +357,7 @@ function doneTestingTask_listener(event) {
 
 function stressTest_listener(event) {
   event.preventDefault();
-  console.log('User is done testing. Performing STRESS TEST');
+  console.log('User is done practicing. Performing STRESS TEST');
   FLAGS.savedata = 1;
   FLAGS.createnewfirestore = 1;
   FLAGS.purge = 1;
@@ -375,7 +371,7 @@ function stressTest_listener(event) {
   }
 
   document.querySelector('p[id=imageloadingtext]').style.display = 'none'; //if do style.visibility=hidden, element will still occupy space
-  document.querySelector('button[id=doneTestingTask]').style.display = 'none';
+  document.querySelector('button[id=donePracticingTask]').style.display = 'none';
   document.querySelector('button[id=gridPoints').style.display = 'none';
   return;
 }
@@ -433,32 +429,6 @@ function subjectIDPromise() {
 
   waitforClick = waitforclickGenerator(); // start async function
   waitforClick.next(); //move out of default state
-  return p;
-}
-
-//================== EDIT PARAMS PROMISE ==================//
-// Promise: Edit Parameters Text
-function editParamsPromise() {
-  var resolveFunc;
-  var errFunc;
-  p = new Promise(function (resolve, reject) {
-    resolveFunc = resolve;
-    errFunc = reject;
-    if (ENV.MTurkWorkerId) {
-      resolveFunc(ENV.MTurkWorkerId);
-    }
-  }).then(function (resolveval) {
-    console.log('User is done editing parameters.');
-  });
-  function* waitforclickGenerator() {
-    var imclicked = [-1];
-    while (true) {
-      imclicked = yield imclicked;
-      resolveFunc(imclicked);
-    }
-  }
-  editParamsWaitforClick = waitforclickGenerator(); // start async function
-  editParamsWaitforClick.next(); //move out of default state
   return p;
 }
 

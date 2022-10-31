@@ -7,7 +7,13 @@
 
 **AutomatorFilePath:** File path to params for the automator curriculum.
 
-**BackgroundColor2D:** specify the background color in hex (eg, #FFFFFF for white or #000000 for black). Not required in param file. If not provided, defaults to gray screen background (#7F7F7F)
+**BackgroundColor2D (optional):** specify the background color in hex (eg, #FFFFFF for white or #000000 for black). Not required in param file. If not provided, defaults to gray screen background (#7F7F7F)
+
+BQSaveDisplayTimes (optional): default is to save displaytimes to BigQuery. If <=0, then displaytimes not saved.
+
+BQSaveEye (optional): default is to save eye trace to BiqQuery. If <=0, then eye not saved
+
+BQSaveTouch (optional): default is to save touch trace to BigQuery. If <=0, then touch not saved
 
 **CalibrateEye:** If >0, will calibrate for TASK.CalibrateEye number of trials for train. After training, saves calibration in firestore collection "eyecalibrations" and then exits. Requires ENV.Eye.TrackEye>0.
 
@@ -99,7 +105,7 @@ Pump: 1=adafruit peristaltic 2=submersible centrifugal tcs 3=diaphragm pump tcs 
 
 **SamplingStrategy:** Determines how sample images are drawn: uniform_with_replacement, uniform_without_replacement, sequential
 
-**SamplePRE:** Duration in milliseconds that a gray screen is presented before the first sample image. If SamplePRE is not defined or <0, then max(100,SampleOFF) is used for the blank duration preceding the first sample
+**SamplePRE (optional):** Duration in milliseconds that a gray screen is presented before the first sample image. If SamplePRE is not defined or <0, then max(100,SampleOFF) is used for the blank duration preceding the first sample
 
 **SampleOFF:** Duration in milliseconds that a gray screen is presented after the sample image before the response screen. This implements the delay in a DMS task. SampleOFF=0, leads to no delay
 
@@ -107,22 +113,24 @@ SaveImagesResolution: For SaveImages, allows user to set total canvas size for t
 
 Separated: 0=subject was paired with conspecific during task, 1=individual housed was separated from conspecific
 
-Species: marmoset, macaque, or human
+Species: marmoset, macaque, human, or model. If TASK.species = model, will run deepnet using tensorflow.js
 
 **TestGridIndex:** Index on grid where test images (choices) appear.
 
 **TestOFF:** Choice screen appears TestOFF milliseconds after test image is extinguished. If TestOFF=0, then test screen does not extinguish (go to blank gray) until same-different choice screen appears. If KeepTestON=1, then test image reappears during the same-different choice screen.
 
-THREEJScameraFOV Sets the default size of the viewing angle of the camera in degrees which is how big the canvas corresponds to in 3js units which ultimately is how much of the screen in inches the scene will occupy (note that we always use a square for the retina, aspectratio=1 in setupCanvas hardcoded). If not specified, then cameraFOV=45 is used. Combined with THREEJScameraZDist, this sets the size of the canvas at the z=0 plane in the viewing frustrum which is ultimately what is projected onto the camera's retina (which will be the physical screen). This 2D projection size determines the size of retina so that when camera FOV or ZDist are changed in the scene file from this default, the retina (ie, 2D projection onto a physical array which in our case is the device screen) is still this default size but now has a different projection (if you move closer in zdist, things will get larger on your fixed size retina). See this pull request for further description and diagram: https://github.com/issalab/mkturk/pull/38
+THREEJScameraFOV (optional): Sets the default size of the viewing angle of the camera in degrees which is how big the canvas corresponds to in 3js units which ultimately is how much of the screen in inches the scene will occupy (note that we always use a square for the retina, aspectratio=1 in setupCanvas hardcoded). If not specified, then cameraFOV=45 is used. Combined with THREEJScameraZDist, this sets the size of the canvas at the z=0 plane in the viewing frustrum which is ultimately what is projected onto the camera's retina (which will be the physical screen). This 2D projection size determines the size of retina so that when camera FOV or ZDist are changed in the scene file from this default, the retina (ie, 2D projection onto a physical array which in our case is the device screen) is still this default size but now has a different projection (if you move closer in zdist, things will get larger on your fixed size retina). See this pull request for further description and diagram: https://github.com/issalab/mkturk/pull/38
 
-THREEJScameraZDist Sets the default camera Z-position. See definition of THREEJScameraFOV for how the default settings for camera FOV & ZDist affect size on display. If not set, then cameraZDist=10
+THREEJScameraZDist (optional): Sets the default camera Z-position. See definition of THREEJScameraFOV for how the default settings for camera FOV & ZDist affect size on display. If not set, then cameraZDist=10
 
-THREEJSRenderRatio how much to upsample for rendering to 2D canvas. Increases resolution of image. THREEJSRenderRatio = 2 (default) recommended for best balance of performance and resolution. THREEJSRenderRatio = 4 would give very high-res images for "SaveImages" but can be slow on older mobile devices.
+THREEJSRenderRatio (optional): how much to upsample for rendering to 2D canvas. Increases resolution of image. THREEJSRenderRatio = 2 (default) recommended for best balance of performance and resolution. THREEJSRenderRatio = 4 would give very high-res images for "SaveImages" but can be slow on older mobile devices.
 
 
 
 ## ENV
 AgentRFID: If CheckRFID>0, then fetches AgentRFID from database to check against incoming RFID reads to determine if correct agent is performing task. If tag doesn't match AgentRFID, task locks out and waits for a valid tag read
+
+BackingStoreRatio: scaling browser uses for background backingstore canvas to visible canvas. Differs across browsers
 
 BatteryLDT: Stores any status update from the battery API, L=battery level in %  D=estimated time until battery discharges  T=Date.now()-StartDate timestamp of latest battery status update
 
@@ -190,11 +198,15 @@ ImageHeightPixels: The height of the sample image in pixels. The image height is
 
 ImageWidthPixels: The width of the sample image in pixels. The image width is used as the unit for the horizontal dimension.
 
+MaxTrialsPerFile: task exits after this many files are completed. Currently set to 500
+
 NDisplayPrime: how many frames of sample movie to render before rendering sample movie. Calls a second parallel rAF that draws to the same canvas but then covers with blank (gray) screen. In some cases, priming helps obtain more reliable hardware display times when using webgl canvas.
 
 NRSVPMin: set to be TASK.NRSVP. Guaranteed one reward if fixate for NRSVPMin images
 
 NRSVPMax: set to TASK.NRSVPMax (if present); otherwise, set to TASK.NRSVP. Bonus rewards are given in an exponential fashion for fixating up to TASK.NRSVPMax images.
+
+NumPrebufferTrials: number of trials for which to preload TQS trials and movies. Currently set to 300.
 
 Ordered_Samplebag_Filenames: Names of the sample image bags. Each bag is treated as a separate label class
 

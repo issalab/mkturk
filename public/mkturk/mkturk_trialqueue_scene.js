@@ -314,14 +314,7 @@ for ( var f=0; f<=nframesprime-1; f++){
 	}
 }//FOR f frames to prime
   
-	frame_prime.shown = [];
-	frame_prime.frames = [];
-	frame_prime.current = 0;
-
-	for (let q in sequencetaskscreen) {
-	  frame_prime.shown[q] = 0;
-	  frame_prime.frames[q] = [q];
-	} // FOR q frames
+	frame_prime.reset(sequencetaskscreen)
 
 	if (tsequence.length > 0){
 		await displayTrial_prime(

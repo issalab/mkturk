@@ -19,6 +19,13 @@ var IMAGES = {
     Ordered_Testbag_Filenames: {},
   },
 };
+IMAGEMETA = {};
+
+var audiotcontext
+var gainNode
+var automator_data = {};
+var trialhistory = {};
+var mkm; // XXconverted to globalvar, not sure about this (Oct 29, 2022, EI)
 
 var OBJECTS = {};
 var CAMERAS = {};
@@ -36,6 +43,7 @@ ENV.Subject = '';
 ENV.AgentRFID = 'XX';
 ENV.CurrentDate = new Date();
 ENV.CanvasRatio = 1;
+ENV.BackingStoreRatio = 1;
 ENV.DevicePixelRatio = 1;
 ENV.THREEJStoInches = 1;
 ENV.FixationRadius = 0;
@@ -92,6 +100,8 @@ ENV.PhysicalPPI = -1;
 ENV.FrameRateDisplay = 60;
 ENV.FrameRateMovie = 60;
 ENV.PrimeScenes = 1;
+ENV.NumPrebufferTrials = 300;
+ENV.MaxTrialsPerFile = 500;
 
 ENV.Task = '';
 
@@ -178,12 +188,32 @@ var EYETRACKERCANVAS = document.getElementById('canvaseyetracker');
 var frame = {
   current: 0,
   shown: [],
+  frames: [],
 };
+frame.reset = function(framesequence) {
+  this.shown = [];
+  this.frames = [];
+  this.current = 0;
+  for (let i in framesequence) {
+    this.shown[i] = 0;
+    this.frames[i] = [i];
+  }//FOR i frames
+}//frame_prime.reset(framesequence)
 
 var frame_prime = {
   current: 0,
   shown: [],
+  frames: [],
 };
+frame_prime.reset = function(framesequence) {
+  this.shown = [];
+  this.frames = [];
+  this.current = 0;
+  for (let i in framesequence) {
+    this.shown[i] = 0;
+    this.frames[i] = [i];
+  }//FOR i frames
+}//frame_prime.reset(framesequence)
 
 
 // States of the current trial, entered into running trialhistory
@@ -208,6 +238,8 @@ CURRTRIAL.reset = function () {
   this.correctitem = NaN;
   this.correct = [];
   this.nreward = NaN;
+  this.nclipshown = NaN;
+  this.samplereward = NaN;
   this.fixationtouchevent = '';
   this.samplefixationtouchevent = '';
   this.responsetouchevent = '';
@@ -263,7 +295,7 @@ EVENTS.reset_timeseries = function () {
   this.timeseries.EyeData = {};
   this.timeseries.Arduino = {};
   this.timeseries.TouchData = {};
-
+  
   // Initialize battery value
   if (ENV.BatteryAPIAvailable) {
     //Monitor Battery - from: http://www.w3.org/TR/battery-status/
