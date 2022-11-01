@@ -168,6 +168,8 @@ FLAGS.pingedBQEyeTable=0;
 FLAGS.pingedBQTouchTable=0;
 FLAGS.pingedBQDisplayTimesTable=0;
 
+FLAGS.filecodeSent = 0;
+
 var CANVAS = {};
 var CANVAS = {
   sequenceblank: ['Blank'],
@@ -295,7 +297,7 @@ EVENTS.reset_timeseries = function () {
   this.timeseries.EyeData = {};
   this.timeseries.Arduino = {};
   this.timeseries.TouchData = {};
-  
+
   // Initialize battery value
   if (ENV.BatteryAPIAvailable) {
     //Monitor Battery - from: http://www.w3.org/TR/battery-status/
@@ -429,6 +431,7 @@ function purgeTrackingVariables(src) {
   FLAGS.sampleblockcount = 0;
   FLAGS.consecutivehits = 0;
   FLAGS.firestorelastsavedtrial=0;
+  FLAGS.filecodeSent = 0;
 
   return;
 }

@@ -785,13 +785,41 @@ async function index_checkrfid(){
     return 1
 }//FUNCTION index_checkrfid()
 
-async function index_send_filecode(starttime){
-  var starttime_str = starttime.toString();
-  var lastmilliseconddigit = Number(starttime_str[starttime_str.length-1]);
+async function index_send_filecode(){
+  //Get file's time
+  var ind_start = ENV.DataFileName.lastIndexOf('T');
+  var ind_end = ENV.DataFileName.indexOf('_');
+  var filetime = ENV.DataFileName.substring(ind_start + 1, ind_end);
+  var seconds_digits = [ Number(filetime[filetime.length-2]), Number(filetime[filetime.length-1]) ];
+
+  //1st digit
   port.writeSampleCommandTriggertoUSB('1');
-  await sleep(10*(lastmilliseconddigit+1));
+  await sleep(10*(seconds_digits[0]+1));
   port.writeSampleCommandTriggertoUSB('0');
+
+  await sleep(25);//milliseconds
+
+  //2nd digit
+  port.writeSampleCommandTriggertoUSB('1');
+  await sleep(10*(seconds_digits[1]+1));
+  port.writeSampleCommandTriggertoUSB('0');
+  FLAGS.filecodeSent = 1;
+  return 1
 }//FUNCTION index_send_filecode()
+
+async function index_send_trialcode(){
+  var str = String(CURRTRIAL.num).padStart(4,'0') //max trial# 9999
+
+  for (var i=0; i<=str.length-1; i++){
+    port.writeTrialCodetoUSB('1');
+    await sleep(10*(Number(str[i])+1));
+    port.writeTrialCodetoUSB('0');
+    if (i<str.length-1){
+      await sleep(25);//milliseconds
+    }//postpend gap between digits
+  }//FOR i digits
+  return 1
+}//FUNCTION index_send_trialcode()
 
 function index_log_displaytimes(){
   //Store timing of clip presentations

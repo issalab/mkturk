@@ -194,12 +194,8 @@ index_init();
       CURRTRIAL.starttime = Date.now() - ENV.CurrentDate.valueOf();
       logEVENTS('StartTime', CURRTRIAL.starttime, 'trialseries');
       if (port.connected && FLAGS.savedata) {
-        if (CURRTRIAL.num==0){
-          await index_send_filecode(CURRTRIAL.starttime)
-        }//IF first trial, send filecode pulse on sample command line
-
-        //PLACEHOLDER: send a trial code
-      }//IF
+        await index_send_trialcode();
+      }//IF USB, send trial# on trial line
 
       //========= AWAIT SHOW FIXATION =========//
       if (TASK.Species == 'marmoset' || TASK.Species == 'model') {

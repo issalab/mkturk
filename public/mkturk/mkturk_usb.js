@@ -421,7 +421,18 @@ serial.Port.prototype.writeSampleCommandTriggertoUSB = async function (data) {
 
   port.statustext_sent = 'TRANSFERRED SampleCommandSignal --> USB:' + msgstr;
   updateHeadsUpDisplayDevices();
-}; //port.writepumpdurationUSB
+}; //port.writeSampleCommandTriggertoUSB
+
+//PORT - transferOut - write each digit of trial num
+serial.Port.prototype.writeTrialCodetoUSB = async function (data) {
+  let msgstr = '@' + data.toString() + '#'; // start(@), end(%) characters
+  let textEncoder = new TextEncoder();
+
+  await this.device_.transferOut(4, textEncoder.encode(msgstr)); //SANITY CHECK what the 4 is
+
+  port.statustext_sent = 'TRANSFERRED Trial# --> USB:' + msgstr;
+  updateHeadsUpDisplayDevices();
+};//port.writeTrialcodetoUSB
 
 //PORT - disconnect
 serial.Port.prototype.disconnect = async function () {

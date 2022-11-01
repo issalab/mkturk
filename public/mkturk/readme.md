@@ -318,7 +318,7 @@ Digital Pins
 0 - RX
 1 - TX
 2 - eye led
-3 - unused led
+3 - trial code led
 4 - pump (pin 2 in v0.2)
 5 - sample command led
 6 - rfid led
@@ -332,14 +332,14 @@ Analog Pins
 A0 - unused
 A1 - unused
 A2 - sample command
-A3 - unused
+A3 - trial code
 A4 - unused
 A5 - unused
 
 Lines
 D8,D9 (D2 led) - eye - softwareserial2
 D10,D11 (D6 led) - rfid - softwareserial1
-A2,A3 (D5 led) - sample command - IN1
+A2,A3 (D5 led) - sample command & trial code - IN1
 A0,A1 (D3 led) - unused - IN2
 A4,A5 - unused - IN3
 

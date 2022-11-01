@@ -339,13 +339,19 @@ function headsuptext_listener(event) {
   FLAGS.need2saveParameters = 1;
   return;
 }
-function donePracticingTask_listener(event) {
+async function donePracticingTask_listener(event) {
   event.preventDefault();
   console.log('START SAVING DATA');
   FLAGS.savedata = 1;
   FLAGS.purge = 1;
   purgeTrackingVariables('donePractice');
   FLAGS.purge = 0;
+
+  if (port.connected && FLAGS.savedata) {
+    if (FLAGS.filecodeSent <= 0){
+      await index_send_filecode(CURRTRIAL.starttime)
+    }//IF first trial, send filecode pulse on sample command line
+  }//IF
 
   document.querySelector('p[id=imageloadingtext]').style.display = 'none'; //if do style.visibility=hidden, element will still occupy space
   document.querySelector('button[id=donePracticingTask]').style.display = 'none';
