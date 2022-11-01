@@ -164,9 +164,6 @@ FLAGS.underlayGridPoints = 0;
 FLAGS.RFIDGeneratorCreated = 0;
 FLAGS.automatortext = '';
 FLAGS.rtdbAgentNumConnections = null;
-FLAGS.pingedBQEyeTable=0;
-FLAGS.pingedBQTouchTable=0;
-FLAGS.pingedBQDisplayTimesTable=0;
 
 FLAGS.filecodeSent = 0;
 

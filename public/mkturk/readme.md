@@ -301,11 +301,16 @@ Battery (json): [trial, timestamp, level, discharge_time]
 
 BLEBattery (not saved)
 
-EyeData (bigquery): [ timestamp, numeyes, x, y, width, aspectratio, null,null,null,null]
+EffectorData (json): {t,x,y}[trial#][sample#] (touch OR eye data are funneled to this variable for storage into main data file in addition to saving of Touch/Eye to bigquery)
 
-FrameNum (bigquery): part of displayData --> [agent, timestamp, trialnum, framenum, tdesired, tactual]
+EyeData (bigquery): [ agent, trialnum, timestamp, numeyes, x, y, width, aspectratio, null,null,null,null]
+
+FrameNum (bigquery): part of displayData --> [ agent, timestamp, trialnum, framenum, tdesired, tactual]
 
 RFIDTag (json): [trial, timestamp, tag]
+
+TouchData (bigquery): [ agent, trialnum, timestamp, x, y, meta]
+
 TSequenceActual (bigquery): part of displayData --> [agent, timestamp, trialnum, framenum, tdesired, tactual]
 
 TSequenceDesired (bigquery): part of displayData --> [agent, timestamp, trialnum, framenum, tdesired, tactual]

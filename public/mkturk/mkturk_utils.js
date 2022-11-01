@@ -1046,23 +1046,17 @@ function index_housekeeping_cloudstorage(){
 
       //BIGQUERY Eye/Touch
       if (ENV.Eye.TrackEye > 0) {
-        if ( (TASK.BQSaveEye === undefined || TASK.BQSaveEye > 0) && FLAGS.pingedBQEyeTable==0 ) {
-          // uploads eyedata to BigQuery every 10 seconds
-          pingBigQueryEyeTable();
-          console.log('BIGQUERY: ' + 'Kick off save EYE (trial ' + CURRTRIAL.num +')')
+        if ( (TASK.BQSaveEye === undefined || TASK.BQSaveEye > 0) ) {
+          saveEyeDatatoBigQuery()
         }//IF BQsaveEye
       }//IF trackeye
-      else if ( (TASK.BQSaveTouch === undefined || TASK.BQSaveTouch > 0) && FLAGS.pingedBQTouchTable==0 ) {
-        // uploads touch data to BigQuery every 10 seconds
-        pingBigQueryTouchTable();
-        console.log('BIGQUERY: ' + 'Kick off save TOUCH (trial ' + CURRTRIAL.num +')')
+      else if ( (TASK.BQSaveTouch === undefined || TASK.BQSaveTouch > 0) ) {
+        bigQuerySaveTouchData();
       } //IF BQsaveTouch
 
       //BIGQUERY DisplayTimes
-      if ( (TASK.BQSaveDisplayTimes === undefined || TASK.BQSaveDisplayTimes > 0) && FLAGS.pingedBQDisplayTimesTable==0 ) {
-        //uploads display times data to bigquery every 10 seconds
-        pingBigQueryDisplayTimesTable();
-        console.log('BIGQUERY: ' + 'Kick off save DISPLAY TIMES (trial ' + CURRTRIAL.num +')')
+      if ( (TASK.BQSaveDisplayTimes === undefined || TASK.BQSaveDisplayTimes > 0) ) {
+        saveDisplayTimestoBigQuery()
       }//IF BQsaveDisplayTimes
     }//IF !SaveImages, then save to databases      
   }//IF savedata

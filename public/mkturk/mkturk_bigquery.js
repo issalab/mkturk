@@ -1,47 +1,3 @@
-function pingBigQueryEyeTable(){
-FLAGS.pingedBQEyeTable=1
-	if (Object.keys(EVENTS['timeseries']['EyeData']).length > 0  && 
-		typeof(bigqueryEyeTimer) != "undefined"){
-		saveEyeDatatoBigQuery()
-	} //if timer expired & new data added
-	else {
-		bigqueryEyeTimer = setTimeout(function(){
-			clearTimeout(bigqueryEyeTimer)
-			pingBigQueryEyeTable()
-		},10000)
-	} //else check again in 10 seconds
-}//FUNCTION pingBigQueryEyeTable
-
-
-function pingBigQueryDisplayTimesTable(){
-FLAGS.pingedBQDisplayTimesTable=1
-	if (Object.keys(EVENTS['timeseries']['TSequenceActual']).length > 0  && 
-		typeof(bigqueryDisplayTimer) != "undefined"){
-		saveDisplayTimestoBigQuery()
-	} //if timer expired & new data added
-	else {
-		bigqueryDisplayTimer = setTimeout(function(){
-			clearTimeout(bigqueryDisplayTimer)
-			pingBigQueryDisplayTimesTable()
-		},10000)
-	} //else check again in 10 seconds
-}//FUNCTION pingBigQueryEyeTable()
-
-function pingBigQueryTouchTable() {
-FLAGS.pingedBQTouchTable=1
-	if (
-		Object.keys(EVENTS['timeseries']['TouchData']).length > 0
-		&& typeof(bigQueryTouchTimer) != 'undefined'
-	) {
-		bigQuerySaveTouchData();
-	} else {
-		bigQueryTouchTimer = setTimeout(() => {
-			clearTimeout(bigQueryTouchTimer);
-			pingBigQueryTouchTable()
-		}, 10000);
-	}
-}
-
 function saveEyeDatatoBigQuery() {
 	eventtype = 'timeseries';
 	eventname = 'EyeData';
@@ -87,9 +43,6 @@ function saveEyeDatatoBigQuery() {
 	}
 	//reset eye event accumulation in mkturk (reduce memory load)
 	EVENTS[eventtype][eventname] = {};
-
-	delete bigqueryEyeTimer; //to start a new timer
-	pingBigQueryEyeTable();
 }//FUNCTION saveEyeDatatoBigQuery
 
 function bigQuerySaveTouchData() {
@@ -119,13 +72,10 @@ function bigQuerySaveTouchData() {
 
 	bqInsertTouchData(touchDataArr);
 	
-	console.log('BIGQUERY::Upload TouchData');
+	console.log('BIGQUERY: Upload TouchData');
 
 	// RESET TOUCH DATA ACCUMULATION IN MKTURK
 	EVENTS['timeseries']['TouchData'] = {};
-
-	delete bigQueryTouchTimer;
-	pingBigQueryTouchTable();
 }
 
 function saveDisplayTimestoBigQuery() {
@@ -164,7 +114,4 @@ function saveDisplayTimestoBigQuery() {
 	EVENTS[eventtype][eventname0] = {};
 	EVENTS[eventtype][eventname1] = {};
 	EVENTS[eventtype][eventname2] = {};
-
-	delete bigqueryDisplayTimer; //to start a new timer
-	pingBigQueryDisplayTimesTable();
 }//FUNCTION saveDisplayTimestoBigQuery()
