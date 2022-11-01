@@ -53,7 +53,7 @@ function saveEyeDatatoBigQuery() {
 		var timestamp = new Date(EVENTS[eventtype][eventname][i][1]) - ENV.CurrentDate
 		if (timestamp >= EVENTS['trialseries']['StartTime'][trialnum]-2000){
 			let obj = {
-				'agent': ENV.Subject,
+					'agent': ENV.Subject,
 					'timestamp': EVENTS[eventtype][eventname][i][1],
 		  			'trial_num': EVENTS[eventtype][eventname][i][0],
 					'num_eyes': EVENTS[eventtype][eventname][i][2],

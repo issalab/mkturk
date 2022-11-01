@@ -297,6 +297,17 @@ EVENTS.reset_timeseries = function () {
   this.timeseries.EyeData = {};
   this.timeseries.Arduino = {};
   this.timeseries.TouchData = {};
+  this.timeseries.EffectorData= {t: [],x: [],y: [], w: [], a: [], q: [] };
+
+  //Initialize EffectordataLocal
+  for (var i=0; i<ENV.MaxTrialsPerFile; i++){
+    this.timeseries.EffectorData.t[i] = new Int16Array(0)
+    this.timeseries.EffectorData.x[i] = new Int16Array(0)
+    this.timeseries.EffectorData.y[i] = new Int16Array(0)
+    this.timeseries.EffectorData.w[i] = new Int16Array(0)
+    this.timeseries.EffectorData.a[i] = new Int16Array(0)
+    this.timeseries.EffectorData.q[i] = new Int16Array(0)
+  }//FOR i max trials per file
 
   // Initialize battery value
   if (ENV.BatteryAPIAvailable) {
@@ -385,8 +396,7 @@ function logEVENTS(eventname, eventval, eventtype) {
     //running index
     var indevent = Object.keys(EVENTS[eventtype][eventname]).length;
     var trialtime = [EVENTS.trialnum, new Date(Date.now()).toJSON()];
-    EVENTS[eventtype][eventname][indevent.toString()] =
-      trialtime.concat(eventval);
+    EVENTS[eventtype][eventname][indevent.toString()] = trialtime.concat(eventval);
   }
 }
 

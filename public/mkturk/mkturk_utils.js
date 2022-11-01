@@ -456,7 +456,7 @@ async function index_reloadparameters(){
       ENV.Eye.CalibTrainMSE = [];
       ENV.Eye.CalibTestMSE = [];
     } //IF TASK.CalibrateEye
-  } //IF ENV.TrackEye
+  } //IF ENV.Eye.TrackEye
 
   //============= SET UP CANVAS =============//
   // Update canvas based on latest TASK state:
@@ -987,6 +987,47 @@ function index_housekeeping_eye(){
   }//IF practice screen, clear eye tracker canvas at end of trial
 }//FUNCTION index_housekeeping_eye
 
+function index_housekeeping_effector_data(){
+  //funnels touch or eye timeseries data to json data file
+    eventtype = 'timeseries';
+    if (ENV.Eye.TrackEye){ eventname = 'EyeData';}
+    else if (!ENV.Eye.TrackEye){ eventname = 'TouchData';}
+    let t = [];
+    let x = [];
+    let y = [];
+    let w = [];
+    let a = [];
+    let q = [];
+
+    let nsamples = Object.keys(EVENTS[eventtype][eventname]).length;
+    for (let i=0; i<=nsamples-1; i++ ){
+      var trialnum = EVENTS[eventtype][eventname][i][0]
+      var timestamp = new Date(EVENTS[eventtype][eventname][i][1]) - ENV.CurrentDate
+      if (trialnum == CURRTRIAL.num && timestamp >= EVENTS['trialseries']['StartTime'][trialnum]-1000){
+        t.push(timestamp - EVENTS['trialseries']['StartTime'][trialnum])
+
+        if (eventname == 'EyeData'){
+          x.push(EVENTS[eventtype][eventname][i][3])
+          y.push(EVENTS[eventtype][eventname][i][4])
+          // w.push(EVENTS[eventtype][eventname][i][5])
+          // a.push(EVENTS[eventtype][eventname][i][6])
+        }//IF Eye
+        else if (eventname == 'TouchData'){
+          x.push(EVENTS[eventtype][eventname][i][2])
+          y.push(EVENTS[eventtype][eventname][i][3])
+          // q.push(EVENTS[eventtype][eventname][i][4])
+        }//IF Touch
+      }//IF within 1000ms of currtrial
+    }//FOR i times sampled
+console.log('N=' + t.length + '  t_effector ' + [...t] )
+    EVENTS['timeseries']['EffectorData'].t[CURRTRIAL.num] = new Int16Array(t)
+    EVENTS['timeseries']['EffectorData'].x[CURRTRIAL.num] = new Int16Array(x)
+    EVENTS['timeseries']['EffectorData'].y[CURRTRIAL.num] = new Int16Array(y)
+    // EVENTS['timeseries']['EffectorData'].w[CURRTRIAL.num] = new Int16Array(w)
+    // EVENTS['timeseries']['EffectorData'].a[CURRTRIAL.num] = new Int16Array(a)
+    // EVENTS['timeseries']['EffectorData'].q[CURRTRIAL.num] = new Int16Array(q)
+}//FUNCTION index_housekeeping_effector_xyt
+
 function index_housekeeping_cloudstorage(){
   if (FLAGS.savedata == 1) {
     //Update trial EVENTS & trial tracking variables only if saving data
@@ -1298,7 +1339,7 @@ function choiceTimeOut(timeout) {
   return new Promise(function (resolve, reject) {
     var timer_return = { type: 'TimeOut', cxyt: [-1, -1, -1, -1] };
     setTimeout(function () {
-      clearTimeout(touchTimer);
+      // clearTimeout(touchTimer);
       resolve(timer_return);
     }, timeout); //setTimeout
   });

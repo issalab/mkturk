@@ -496,7 +496,8 @@ async function saveBehaviorDatatoFirebase(TASK, ENV, CANVAS, EVENTS) {
       },
       CLASSIFIERSTATS: EVENTS['trainseries'],
     };
-  } else if (TASK.Agent == 'SaveImages') {
+  }//IF Object training
+  else if (TASK.Agent == 'SaveImages') {
     dataObj = {
       TASK: TASK,
       ENV: ENV,
@@ -525,7 +526,8 @@ async function saveBehaviorDatatoFirebase(TASK, ENV, CANVAS, EVENTS) {
     });
     await wrStream.write(blob);
     await wrStream.close();
-  } else {
+  }//ELSE IF saveImages
+  else {
     dataObj = {
       TASK: TASK,
       ENV: ENV,
@@ -537,10 +539,11 @@ async function saveBehaviorDatatoFirebase(TASK, ENV, CANVAS, EVENTS) {
         Battery: EVENTS['timeseries']['Battery'],
         RFIDTag: EVENTS['timeseries']['RFIDTag'],
         Weight: EVENTS['timeseries']['Weight'],
+        EffectorXY: EVENTS['timeseries']['EffectorData'],
         // 'Arduino': EVENTS['timeseries']['Arduino'],
       },
-    };
-  }
+    };//dataObj
+  }//ELSE agent doing task (!model, !saveimages)
 
   // let datastr = JSON.stringify(dataObj); //no pretty print for now, saves space and data file is unwieldy to look at for larger numbers of trials
   let blob = new Blob([JSON.stringify(dataObj)], { type: 'application/json' });
@@ -549,15 +552,10 @@ async function saveBehaviorDatatoFirebase(TASK, ENV, CANVAS, EVENTS) {
   let metadata = { contentType: 'application/json' };
 
   // Upload the file and metadata
-  let response = await storage
-    .ref()
-    .child(ENV.DataFileName)
-    .put(blob, metadata);
+  let response = await storage.ref().child(ENV.DataFileName).put(blob, metadata);
   CURRTRIAL.lastFirebaseSave = new Date(response.metadata.updated);
-  console.log(
-    'FIREBASE: Save Data, ' + Math.round(response.totalBytes / 1000) + 'kb'
-  );
-} //UploadToFirebase
+  console.log('FIREBASE: Save Data, ' + Math.round(response.totalBytes / 1000) + 'kb');
+}//FUNCTION saveBehaviorDatatoFirebase
 
 //------------- LOAD AUDIO --------------//
 function loadSoundfromFirebase(src, idx) {

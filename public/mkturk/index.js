@@ -791,6 +791,7 @@ index_init();
     let ITIstart = performance.now();
     CURRTRIAL.lastTrialCompleted = new Date();//for display purposes only
     index_housekeeping_eye();
+    index_housekeeping_effector_data();
     index_housekeeping_cloudstorage();
     if ( TASK.Agent != "SaveImages" ){ await checkParameterFileStatusFirebase();}  
     index_housekeeping_exits();
