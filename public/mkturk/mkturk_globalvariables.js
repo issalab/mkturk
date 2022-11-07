@@ -131,6 +131,8 @@ ENV.Eye.CalibTrainMSE = [];
 ENV.Eye.CalibTestMSE = [];
 ENV.Eye.CalibTestMSETarg = {x: [], y: [], n: []};
 
+ENV.EffectorSaveJSONDataRelativetoFixationDotDisplayMS = -500;
+
 ENV.PhotodiodeSquareSizeInches = 1;
 ENV.PhotodiodeSquareX = 0;
 ENV.PhotodiodeSquareY = 0;

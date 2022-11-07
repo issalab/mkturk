@@ -1,12 +1,12 @@
 function computeBasicStats(data){
     let ncorrect = 0;
-  for (let i=0; i<=data.Response.length-1; i++){
-    if (data.Response[i] == data.CorrectItem[i]){ ncorrect++}
+  for (let i=0; i<=data.TRIALEVENTS.Response.length-1; i++){
+    if (data.TRIALEVENTS.Response[i] == data.TRIALEVENTS.CorrectItem[i]){ ncorrect++}
   }
 
-  mkeye.stats.agent = data.Agent
-  mkeye.stats.pctCorrect = Math.round(100*ncorrect/data.Response.length);
-  mkeye.stats.trials = data.Response.length;
+  mkeye.stats.agent = data.TASK.Agent
+  mkeye.stats.pctCorrect = Math.round(100*ncorrect/data.TRIALEVENTS.Response.length);
+  mkeye.stats.trials = data.TRIALEVENTS.Response.length;
 }//basicStats
 
 function smooth(data, n) {

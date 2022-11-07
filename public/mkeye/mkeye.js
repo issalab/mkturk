@@ -8,18 +8,26 @@ var mkeye = {}
 mkeye.file ={
   path: DATA_PATH,
   list: [],
-  name: '',
+  // name: 'mkturkfiles/datafiles/Eliaso/2022-11-02T20:58:51_Eliaso.json',
+  // name: 'mkturkfiles/datafiles/Eliaso/2022-11-03T11:34:33_Eliaso.json', //15.8MB
+  // name: 'mkturkfiles/datafiles/Eliaso/2022-11-04T14:41:07_Eliaso.json',
+  // name: 'mkturkfiles/datafiles/Eliaso/2022-11-07T00:29:48_Eliaso.json',
+  // name: 'mkturkfiles/datafiles/Eliaso/2022-11-07T04:29:41_Eliaso.json',
+  name: 'mkturkfiles/datafiles/Eliaso/2022-11-07T05:16:52_Eliaso.json',
   ver: null,
   date: null,
   dataChanged: false,
-  fileChanged: false,
+  fileChanged: true,
 };
-
+mkeye.data = []
 mkeye.stats = {
   agent: null,
   pctCorrect: 0,
   trials: 0,
 };
+mkeye.colors = { 'grid': [] }
+mkeye.scatters = [];
+
 let fileListSelector = document.querySelector('#file-list');
 //============== (END) INITIALIZE VARIABLES
 
@@ -29,7 +37,8 @@ let fileListSelector = document.querySelector('#file-list');
 // (listen for file || data changes) --> processData
 // processData --> (flattenData, getStorageFileMetadata) --> (initializeCharts+updatePlots || updatePlots)
 fileSelectionChangedListener(fileListSelector);//adds listener to dom element
-populateFileList(fileListSelector);
+// populateFileList(fileListSelector);
+getStorageFile(mkeye.file.name)
 
 let provider = new firebase.auth.GoogleAuthProvider();
 provider.addScope('https://www.googleapis.com/auth/contacts.readonly');
@@ -47,24 +56,3 @@ firebase.auth().getRedirectResult().then(function(result) {
 	  firebase.auth().signInWithRedirect(provider)
   }
 });//FIREBASE.auth
-
-
-const labels = ['January', 'February', 'March', 'April', 'May','June',];
-
-const data = {
-  labels: labels,
-  datasets: [{
-    label: 'My First dataset',
-    backgroundColor: 'rgb(255, 99, 132)',
-    borderColor: 'rgb(255, 99, 132)',
-    data: [0, 10, 5, 2, 20, 30, 45],
-  }]
-};
-
-const config = {
-  type: 'line',
-  data: data,
-  options: {}
-};
-
-const myChart = new Chart( document.getElementById('myChart'), config );

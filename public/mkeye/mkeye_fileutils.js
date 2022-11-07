@@ -27,7 +27,6 @@ try {
     mkeye.file.name = mkeye.file.list[0].fullpath;
     mkeye.file.fileChanged = true;
     let rawStorageFile = await getStorageFile(mkeye.file.name);
-    // console.log('rawFile', rawStorageFile);
 
     processData(rawStorageFile);
   } catch (error) {
@@ -81,7 +80,7 @@ async function getStorageFile(path) {
   }).catch(e => {
     console.error('Error Getting URL:', e);
   });
-  // console.log('file:', file);
+processData(file)
   return file;
 }//FUNCTION getStorageFile(path)
 
@@ -92,10 +91,31 @@ async function getStorageFileMetadata(path) {
 }//FUNCTION getStorageFileMetadata
 
 async function processData(data) {
-  console.time('flattenData');
-  mkeye.file.data = flattenData(data);
-  console.timeEnd('flattenData');
-  // loadDataToEditor(mkeye.file.data);
+  // mkeye.data = flattenData(data);
+  mkeye.data = data;
+
+  //Store EffectorXY data more efficiently
+  if (typeof(mkeye.data.TIMEEVENTS.EffectorXY) != 'undefined'){
+    mkeye.data.TIMEEVENTS.EffectorXY = convertToInt16Array(mkeye.data.TIMEEVENTS.EffectorXY);
+  }//IF EffectorXY
+
+  //Create a TestGridIndex
+  mkeye.data.TRIALEVENTS.TestGridIndex = [];
+  if (mkeye.data.TASK.RewardStage > 0 ){
+    if (mkeye.data.TASK.NRSVP<=0){
+      let correctchoice = mkeye.data.TRIALEVENTS.CorrectItem
+      let testgridindices = mkeye.data.TASK.TestGridIndex
+      for (let i=0; i<=correctchoice.length-1; i++){
+        mkeye.data.TRIALEVENTS.TestGridIndex[i] = testgridindices[correctchoice[i]]
+      }//FOR i trials
+    }//IF choice task
+    else if (mkeye.data.TASK.NRSVP>0){
+      mkeye.data.TRIALEVENTS.SampleFixationXYT = mkeye.data.TRIALEVENTS.ResponseXYT
+      mkeye.data.TRIALEVENTS.ResponseXYT = [];
+    }//ELSE IF RSVP
+  }//IF not fixation only task
+
+  // loadDataToEditor(mkeye.data);
   // console.log(this.file.data);
 
   let metadata = await getStorageFileMetadata(mkeye.file.name);
@@ -108,10 +128,10 @@ async function processData(data) {
     initializeChartData();
     checkFileStatus();
     mkeye.file.fileChanged = false;
-    mkeye.file.dataChanged = false;
-  } else if (mkeye.file.dataChanged) {
+    mkeye.dataChanged = false;
+  } else if (mkeye.dataChanged) {
     updateCharts();
-    mkeye.file.dataChanged = false;
+    mkeye.dataChanged = false;
     checkFileStatus();
   }
 }//FUNCTION processData(data)
@@ -131,3 +151,49 @@ function flattenData(data) {
 
   return tmp;
 }//FUNCTION flattendata
+
+function convertToInt16Array(data){
+  for (let outerKey in data){
+    for (let innerKey in data[outerKey]){
+      //Object.values: converts object entries to array
+      //Int16Array: converts array to int16
+      data[outerKey][innerKey] = new Int16Array( Object.values( data[outerKey][innerKey] ) )
+    }//FOR innerKey
+  }//FOR outerKey
+  return data
+}//FUNCTION convertToInt16Array(data)
+
+function fileSelectionChangedListener(elem) {
+  elem.addEventListener('input', (evt) => {
+    evt.stopPropagation();
+    evt.preventDefault();
+    mkeye.file.name = mkeye.file.list[parseInt(elem.value)].fullpath;
+    mkeye.file.fileChanged = true;
+  });
+}//FUNCTION fileSelectionChangedListener(elem)
+
+async function checkFileStatus() {
+  try {
+    let metadata = await getStorageFileMetadata(mkeye.file.name);
+
+    if (mkeye.file.ver != metadata.generation) {
+      mkeye.file.ver = metadata.generation;
+      mkeye.file.dateSaved = new Date(metadata.updated);
+      console.log(mkeye.file.dateSaved);
+      mkeye.dataChanged = true;
+      console.log('File was updated ver=' + mkeye.file.ver);
+    } else {
+      mkeye.dataChanged = false;
+    }
+
+    if (mkeye.file.fileChanged == true || mkeye.dataChanged == true) {
+      let rawStorageFile = await getStorageFile(mkeye.file.name);
+      processData(rawStorageFile);
+    } else {
+      setTimeout(() => { checkFileStatus(); }, 1000);
+    }
+  } catch (error) {
+    console.error('checkFileStatus Error:', error);
+  }
+  return false; // why needed
+}//FUNCTION checkFileStatus()

@@ -170,6 +170,8 @@ DeviceTouchscreen: 0 (not available) or 1 (available), indicates if touchscreen 
 
 DeviceType:desktop or mobile
 
+EffectorSaveJSONDataRelativetoFixationDotDisplayMS: dt in milliseconds relative to fixation appearance when to save eye data into json. if dt<0, this means eye data immediately before fixation appears will be included in the json datafile. Note, for parallel saving to bigquery, we keep up 1000ms before fixation, but for json data file may want to keep less to save space.
+
 Eye.BlinkGracePeriod: time in milliseconds that eye is allowed to be outside the fixation window without counting it as a fixation break. Any period longer than Eye.BlinkGracePeriod milliseconds outside the window is considered a fixation break.
 
 Eye.CalibXTransform: Stores the parameters from the linear regression fit of eye tracker's x,y --> screen x (eg x_screen = a*x + b*y + c)

@@ -1003,7 +1003,7 @@ function index_housekeeping_effector_data(){
     for (let i=0; i<=nsamples-1; i++ ){
       var trialnum = EVENTS[eventtype][eventname][i][0]
       var timestamp = new Date(EVENTS[eventtype][eventname][i][1]) - ENV.CurrentDate
-      if (trialnum == CURRTRIAL.num && timestamp >= EVENTS['trialseries']['StartTime'][trialnum]-1000){
+      if (trialnum == CURRTRIAL.num && timestamp >= EVENTS['trialseries']['StartTime'][trialnum]+ENV.EffectorSaveJSONDataRelativetoFixationDotDisplayMS){
         t.push(timestamp - EVENTS['trialseries']['StartTime'][trialnum])
 
         if (eventname == 'EyeData'){

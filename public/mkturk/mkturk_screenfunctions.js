@@ -1939,60 +1939,41 @@ function updateHeadsUpDisplay() {
       }
     }
     textobj.innerHTML =
-      'User: ' +
-      ENV.ResearcherDisplayName +
-      ', ' +
-      ENV.ResearcherEmail +
+      'User: ' + ENV.ResearcherDisplayName +
+      ', ' + ENV.ResearcherEmail +
+      '<br>' + 'No trials performed' +
       '<br>' +
-      'No trials performed' +
-      '<br>' +
-      '<br><b>' +
-      firestoreRecordFound +
-      ' for ' +
-      ENV.DeviceName.toLowerCase() +
+      '<br><b>' + firestoreRecordFound +
+      ' for ' + ENV.DeviceName.toLowerCase() +
       '</b>' +
       '<br>' +
-      'Screen Size = ' +
-      ENV.ScreenSizeInches[2] +
-      'in (' +
-      ENV.ViewportPixels +
-      'px; ' +
-      ENV.ScreenRatio +
-      'x' +
-      ')' +
+      'Screen Size = ' + ENV.ScreenSizeInches[2] +
+      'in (' + ENV.ViewportPixels +
+      'px; ' + ENV.ScreenRatio +
+      'x' + ')' +
       '<br>' +
       screenRatioMatchesDPR +
       '<br>' +
       '<br>' +
-      'Device brand,name,type: ' +
-      ENV.DeviceBrand +
+      'Device brand,name,type: ' + ENV.DeviceBrand +
       ', ' +
-      '<u><font color = green>' +
-      ENV.DeviceName +
-      '</font></u>' +
-      ', ' +
-      ENV.DeviceType +
+      '<u><font color = green>' + ENV.DeviceName +
+      '</font></u>' + ', ' + ENV.DeviceType +
       '<br>' +
-      'Screen: ' +
-      ENV.DeviceScreenWidth +
-      'x' +
-      ENV.DeviceScreenHeight +
+      'Screen: ' + ENV.DeviceScreenWidth +
+      'x' + ENV.DeviceScreenHeight +
       ' pixels' +
       '<br>' +
-      'TouchScreen: ' +
-      ENV.DeviceTouchScreen +
+      'TouchScreen: ' + ENV.DeviceTouchScreen +
       '<br>' +
-      'GPU: ' +
-      ENV.DeviceGPU +
+      'GPU: ' + ENV.DeviceGPU +
       '<br>' +
-      'OS name,codename,ver: ' +
-      ENV.DeviceOSName +
+      'OS name,codename,ver: ' + ENV.DeviceOSName +
       ', ' +
       '<u><font color = green>' +
       ENV.DeviceOSCodeName +
       '</font></u>' +
-      ', ' +
-      ENV.DeviceOSVersion +
+      ', ' + ENV.DeviceOSVersion +
       '<br>' +
       'Browser: ' +
       '<u><font color = green>' +
