@@ -1013,8 +1013,8 @@ function index_housekeeping_effector_data(){
           // a.push(EVENTS[eventtype][eventname][i][6])
         }//IF Eye
         else if (eventname == 'TouchData'){
-          x.push(EVENTS[eventtype][eventname][i][2])
-          y.push(EVENTS[eventtype][eventname][i][3])
+          x.push( EVENTS[eventtype][eventname][i][2] + CANVAS.offsetleft )
+          y.push( -EVENTS[eventtype][eventname][i][3] + ENV.ViewportPixels[1] )
           // q.push(EVENTS[eventtype][eventname][i][4])
         }//IF Touch
       }//IF within 1000ms of currtrial

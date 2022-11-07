@@ -7,6 +7,13 @@ function computeBasicStats(data){
   mkeye.stats.agent = data.TASK.Agent
   mkeye.stats.pctCorrect = Math.round(100*ncorrect/data.TRIALEVENTS.Response.length);
   mkeye.stats.trials = data.TRIALEVENTS.Response.length;
+
+  if ( typeof(data.ENV.Eye.TrackEye) == 'undefined' || data.ENV.Eye.TrackEye<=0){
+    mkeye.stats.effector = 'touch'
+  }
+  else{
+    mkeye.stats.effector = 'eye'
+  }
 }//basicStats
 
 function smooth(data, n) {

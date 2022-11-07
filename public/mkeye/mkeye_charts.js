@@ -3,6 +3,8 @@ var fixationXYTChart
 function initializeChartData(){
   //COLORS
   mkeye.colors.grid = chooseRandColorsRGB(mkeye.data.ENV.XGridCenter.length);
+  mkeye.colors.correct = 'rgb(0,255,0)'
+  mkeye.colors.incorrect = 'rgb(100, 100, 100)'
 
   //SCATTER PLOTS
   mkeye.scatters = [];
@@ -12,6 +14,9 @@ function initializeChartData(){
   for (let i=0; i<=mkeye.scatters.length-1; i++){
     mkeye.scatters[i].init()
   }//FOR i scatters
+
+  mkeye.line_EffectorTrajectories = new LineXY('EffectorXY','Effector Trajectories','trajectoryXYCanvas')
+  mkeye.line_EffectorTrajectories.init()
 
   updateCharts();
 }//FUNCTION initializeChartData()
@@ -24,13 +29,16 @@ function updateCharts(){
     mkeye.scatters[i].update()
   }//FOR i scatters
 
+  mkeye.line_EffectorTrajectories.update()
+
   console.log('--> DONE UPDATING CHARTS')
 }//FUNCTION updateCharts()
 
 function updateBasicStatsText(){
   let statsTextSelector = document.querySelector('#basicstatstext');
   statsTextSelector.innerHTML = mkeye.stats.agent + ": " +
-                                mkeye.stats.pctCorrect + '% (n=' + mkeye.stats.trials + ')'
+                                mkeye.stats.pctCorrect + '% (n=' + mkeye.stats.trials + ')  ' + 
+                                mkeye.stats.effector + 'track'
 }//FUNCTION updateBasicStatsText()
 
 class ScatterXY{
@@ -115,7 +123,7 @@ class ScatterXY{
         } 
       }
     };//config
-    this.trials = xy.length
+    this.trials = xyt[0].length
     this.chart = new Chart( document.getElementById(this.canvasname), config );
   }//FUNCTION init
 
@@ -136,6 +144,117 @@ class ScatterXY{
       this.chart.data.datasets[targind].data.push( { x: xyt[0][i], y: xyt[1][i] } )
     }//FOR i trials
     this.trials = xyt[0].length
+    this.chart.update()
+  }//FUNCTION update
+}//CONSTRUCTOR ScatterXY
+
+
+class LineXY{
+  constructor(variablename,plotname, canvasname){
+    this.variablename = variablename
+    this.plotname = plotname
+    this.canvasname = canvasname
+    this.trials = 0
+    this.correct = [];
+  }
+
+  init(){
+    let xyt = [];
+    xyt[0] = mkeye.data.TIMEEVENTS[this.variablename]['x']
+    xyt[1] = mkeye.data.TIMEEVENTS[this.variablename]['y']
+    xyt[2] = mkeye.data.TIMEEVENTS[this.variablename]['t']
+    if (typeof(xyt[0]) == 'undefined'){
+      return
+    }//IF
+
+    let ntrials = mkeye.data.TRIALEVENTS.Response.length;
+    for (let i=0; i<=ntrials-1; i++){
+      if (mkeye.data.TRIALEVENTS.Response[i] == mkeye.data.TRIALEVENTS.CorrectItem[i]){ this.correct[i] = 1}
+      else { this.correct[i] = 0 }
+    }//FOR i trials
+  
+    let xy=[]
+    xy[0] = [];//incorrect
+    xy[1] = [];//correct
+    for (let i=0;i<=ntrials-1;i++){
+      for (let j=0; j<=xyt[0][i].length-1; j++){
+        xy[ this.correct[i] ].push( { x: xyt[0][i][j], y: xyt[1][i][j] } )
+      }
+      xy[ this.correct[i] ].push( {x: null, y: null} ) //break between trials
+    }//FOR i trials
+
+    const data = {datasets: []}
+    for (let i=0; i<=xy.length-1; i++){
+      let lbl
+      let col
+      if (i==0){
+        lbl = 'incorrect';
+        col = mkeye.colors.incorrect;
+      }
+      else if (i==1){
+        lbl = 'correct';
+        col = mkeye.colors.correct;
+      }
+      data.datasets.push({
+          label: lbl,
+          data: xy[i],
+          borderColor: col,
+          // pointRadius: 0,
+          fill: false,
+          spanGaps: false,
+          // tension: 0.1
+        })
+    }//FOR incorrect/correct trials
+    const config = {
+      type: 'line',
+      data: data,
+      options: {
+        scales: {
+          x: {
+              type: 'linear',
+              position: 'bottom',
+              min: 0,
+              max: mkeye.data.ENV.ViewportPixels[0]
+            },
+          y: {
+              reverse: 'true',
+              min: 0,
+              max: mkeye.data.ENV.ViewportPixels[1]
+            }
+        },
+        plugins: {
+            title: {
+                display: true,
+                text: this.plotname
+            }
+        }//plugins
+      }//options
+    };//config
+    this.trials = ntrials
+    this.chart = new Chart( document.getElementById(this.canvasname), config );
+  }//FUNCTION init
+
+  update(){
+    let xyt = [];
+    xyt[0] = mkeye.data.TIMEEVENTS[this.variablename]['x']
+    xyt[1] = mkeye.data.TIMEEVENTS[this.variablename]['y']
+    xyt[2] = mkeye.data.TIMEEVENTS[this.variablename]['t']
+    if (typeof(xyt[0]) == 'undefined'){
+      return
+    }//IF
+
+    let ntrials = mkeye.data.TRIALEVENTS.Response.length;
+    for (let i=this.trials;i<=ntrials-1;i++){
+      if (mkeye.data.TRIALEVENTS.Response[i] == mkeye.data.TRIALEVENTS.CorrectItem[i]){ this.correct[i] = 1}
+      else { this.correct[i] = 0 }
+
+      for (let j=0; j<=xyt[0][i].length-1; j++){
+        this.chart.data.datasets[ this.correct[i] ].data.push( { x: xyt[0][i][j], y: xyt[1][i][j] } )
+      }
+      this.chart.data.datasets[ this.correct[i] ].data.push( {x: null, y: null} ) //break between trials
+    }//FOR i trials
+
+    this.trials = ntrials
     this.chart.update()
   }//FUNCTION update
 }//CONSTRUCTOR ScatterXY

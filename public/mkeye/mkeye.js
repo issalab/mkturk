@@ -13,7 +13,11 @@ mkeye.file ={
   // name: 'mkturkfiles/datafiles/Eliaso/2022-11-04T14:41:07_Eliaso.json',
   // name: 'mkturkfiles/datafiles/Eliaso/2022-11-07T00:29:48_Eliaso.json',
   // name: 'mkturkfiles/datafiles/Eliaso/2022-11-07T04:29:41_Eliaso.json',
-  name: 'mkturkfiles/datafiles/Eliaso/2022-11-07T05:16:52_Eliaso.json',
+  // name: 'mkturkfiles/datafiles/Eliaso/2022-11-07T05:16:52_Eliaso.json',
+  // name: '/mkturkfiles/datafiles/Eliaso/2022-11-07T20:57:22_Eliaso.json',
+  // name: '/mkturkfiles/datafiles/Eliaso/2022-11-07T21:02:39_Eliaso.json',
+  // name: '/mkturkfiles/datafiles/Eliaso/2022-11-07T21:15:29_Eliaso.json',
+  name: '/mkturkfiles/datafiles/Eliaso/2022-11-07T21:36:31_Eliaso.json',
   ver: null,
   date: null,
   dataChanged: false,
@@ -24,6 +28,7 @@ mkeye.stats = {
   agent: null,
   pctCorrect: 0,
   trials: 0,
+  effector: '',
 };
 mkeye.colors = { 'grid': [] }
 mkeye.scatters = [];
