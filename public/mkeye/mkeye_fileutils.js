@@ -91,15 +91,52 @@ async function getStorageFileMetadata(path) {
 }//FUNCTION getStorageFileMetadata
 
 async function processData(data) {
-  // mkeye.data = flattenData(data);
   mkeye.data = data;
 
-  //Store EffectorXY data more efficiently
+  //----- Store EffectorXY data more efficiently
   if (typeof(mkeye.data.TIMEEVENTS.EffectorXY) != 'undefined'){
     mkeye.data.TIMEEVENTS.EffectorXY = convertToInt16Array(mkeye.data.TIMEEVENTS.EffectorXY);
   }//IF EffectorXY
 
-  //Create a TestGridIndex
+  //----- Bounding Boxes Sample & Test Objects
+  mkeye.boundingBoxes.sample = getObjectBoundingBoxes(mkeye.data.SCENES.SampleScenes);
+  mkeye.boundingBoxes.test = getObjectBoundingBoxes(mkeye.data.SCENES.TestScenes)
+
+  //----- Bounding Boxes Fixation, SampleFixation
+  let fixRad
+  let sampleFixRad
+  if (mkeye.data.TASK.FixationWindowSizeInches > 0){
+    fixRad = mkeye.data.ENV.FixationWindowRadius
+    sampleFixRad = mkeye.data.ENV.FixationWindowRadius
+  }
+  else{
+    fixRad = mkeye.data.ENV.FixationRadius
+    sampleFixRad = 0
+  }
+  for (var i=0; i<=mkeye.data.TRIALEVENTS.FixationGridIndex.length-1; i++){
+    mkeye.boundingBoxes.fixation.bb[i] = [ convertToBB( mkeye.data.TRIALEVENTS.FixationGridIndex[i], fixRad) ]
+    mkeye.boundingBoxes.fixation.name[i] = [ mkeye.data.TRIALEVENTS.FixationGridIndex[i] ]
+
+    if ( typeof(mkeye.data.TRIALEVENTS.SampleGridIndex[0]) != 'undefined' ){
+      mkeye.boundingBoxes.samplefixation.bb[i] = [ convertToBB( mkeye.data.TRIALEVENTS.SampleGridIndex[i], sampleFixRad) ]
+      mkeye.boundingBoxes.samplefixation.name[i] = [ mkeye.data.TRIALEVENTS.SampleGridIndex[i] ]
+    }//IF samplegrid exists
+  }//FOR i trials
+
+  //----- Bounding Boxes Choice
+  mkeye.boundingBoxes.choice.bb[0]=[];
+  mkeye.boundingBoxes.choice.name[0]=[];
+  for (let i=0; i<=mkeye.data.TASK.ChoiceGridIndex.length-1; i++){
+    mkeye.boundingBoxes.choice.bb[0][i] = convertToBB(mkeye.data.TASK.ChoiceGridIndex[i], mkeye.data.ENV.ChoiceRadius)
+    if (i==0){
+      mkeye.boundingBoxes.choice.name[0][i] = 'Same_circle'
+    }
+    else if (i==1){
+      mkeye.boundingBoxes.choice.name[0][i] = 'Different_square'
+    }
+  }//FOR i choices
+
+  //----- Create a TestGridIndex (complements FixationGridIndex & SampleGridIndex)
   mkeye.data.TRIALEVENTS.TestGridIndex = [];
   if (mkeye.data.TASK.RewardStage > 0 ){
     if (mkeye.data.TASK.NRSVP<=0){
@@ -136,21 +173,53 @@ async function processData(data) {
   }
 }//FUNCTION processData(data)
 
-function flattenData(data) {
-  let tmp = {};
+function getObjectBoundingBoxes(scenes){
+  let allbb = { bb: [], name: [] }
+  let stimind = 0
+  for (let i=0; i<=scenes.length-1; i++){
+    stimind = allbb.bb.length;
 
-  for (let outerKey in data) {
-    if (data.hasOwnProperty(outerKey)) {
-      for (let innerKey in data[outerKey]) {
-        if (data[outerKey].hasOwnProperty(innerKey)) {
-          tmp[innerKey] = data[outerKey][innerKey];
-        }
+    //Prepend background images bounding box
+    for (let j=0; j<=scenes[i].IMAGES.boundingBoxCube2DPixels.length-1; j++){
+      allbb.bb[ stimind + j ] = []
+      allbb.name[ stimind + j ] = []
+
+      if ( typeof(scenes[i].IMAGES.boundingBoxCube2DPixels[0][0]) == 'undefined' ){
+        continue
+      }//IF no bounding boxes available because screen not used in task
+
+      if (scenes[i].IMAGES.boundingBoxCube2DPixels[j][0] == null){
+        allbb.bb[ stimind + j ].push( [null, null, null, null] )
+        allbb.name [ stimind + j ].push('no image')
       }
-    }//IF
-  }//FOR outerKey
+      else{
+        allbb.bb[ stimind + j ].push(
+                  [...scenes[i].IMAGES.boundingBoxCube2DPixels[j][0].x,
+                   ...scenes[i].IMAGES.boundingBoxCube2DPixels[j][0].y])
+        allbb.name[ stimind + j ].push('backgroundimage')
+      }
+    }//FOR j images
 
-  return tmp;
-}//FUNCTION flattendata
+    for (let obj in scenes[i].OBJECTS){
+      if (typeof(scenes[i].OBJECTS[obj].boundingBox2DPixels[0][0]) == 'undefined'){
+        continue
+      }//IF no bounding boxes available because screen not used in task
+
+      for (let j=0; j<=scenes[i].OBJECTS[obj].boundingBox2DPixels.length-1; j++){
+        if ( scenes[i].OBJECTS[obj].visible[j] == 0){
+          allbb.bb[ stimind + j ].push( [null, null, null, null] )
+          allbb.name [ stimind + j ].push('no ' + obj)  
+        }
+        else{
+          allbb.bb[ stimind + j ].push( [...scenes[i].OBJECTS[obj].boundingBox2DPixels[j][0].x, 
+            ...scenes[i].OBJECTS[obj].boundingBox2DPixels[j][0].y ] )
+          allbb.name[ stimind + j ].push(obj)
+        }
+      }//FOR j images
+    }//FOR obj
+  }//FOR i scenes
+  return allbb
+}//FUNCTION getObjectBoundingBoxes(scenes)
 
 function convertToInt16Array(data){
   for (let outerKey in data){
@@ -197,3 +266,9 @@ async function checkFileStatus() {
   }
   return false; // why needed
 }//FUNCTION checkFileStatus()
+
+function convertToBB(gridind,rad){
+  let xcent = mkeye.data.ENV.XGridCenter[ gridind ]
+  let ycent = mkeye.data.ENV.YGridCenter[ gridind ]
+  return [ xcent-rad, xcent+rad, ycent-rad, ycent+rad]
+}//FUNCTION convertToBB

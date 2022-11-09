@@ -237,12 +237,10 @@ index_init();
       let touchhold_return;
       if (ENV.StressTest == 1) {
         touchhold_return = { type: 'theld' };
-        let x =
-          boundingBoxesFixation.x[0][0] +
-          Math.round( Math.random() * (boundingBoxesFixation.x[0][1] - boundingBoxesFixation.x[0][0]) );
-        let y =
-          boundingBoxesFixation.y[0][0] +
-          Math.round( Math.random() * (boundingBoxesFixation.y[0][1] - boundingBoxesFixation.y[0][0]) );
+        let x = boundingBoxesFixation.x[0][0] +
+                Math.round( Math.random() * (boundingBoxesFixation.x[0][1] - boundingBoxesFixation.x[0][0]) );
+        let y = boundingBoxesFixation.y[0][0] +
+                Math.round( Math.random() * (boundingBoxesFixation.y[0][1] - boundingBoxesFixation.y[0][0]) );
 
         touchhold_return.cxyt = [ 0, x, y, Date.now() - ENV.CurrentDate.valueOf() ];
         FLAGS.waitingforTouches--;

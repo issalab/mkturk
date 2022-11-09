@@ -15,8 +15,11 @@ function initializeChartData(){
     mkeye.scatters[i].init()
   }//FOR i scatters
 
-  mkeye.line_EffectorTrajectories = new LineXY('EffectorXY','Effector Trajectories','trajectoryXYCanvas')
-  mkeye.line_EffectorTrajectories.init()
+  mkeye.line.EffectorTrajectories = new LineXY('EffectorXY','Effector Trajectories','trajectoryXYCanvas')
+  mkeye.line.EffectorTrajectories.init()
+
+  mkeye.line.BoundingBoxes = new LineBoxes('Bounding Boxes','boundingBoxesCanvas')
+  mkeye.line.BoundingBoxes.init()
 
   updateCharts();
 }//FUNCTION initializeChartData()
@@ -29,7 +32,8 @@ function updateCharts(){
     mkeye.scatters[i].update()
   }//FOR i scatters
 
-  mkeye.line_EffectorTrajectories.update()
+  mkeye.line.EffectorTrajectories.update()
+  mkeye.line.BoundingBoxes.update()
 
   console.log('--> DONE UPDATING CHARTS')
 }//FUNCTION updateCharts()
@@ -148,7 +152,6 @@ class ScatterXY{
   }//FUNCTION update
 }//CONSTRUCTOR ScatterXY
 
-
 class LineXY{
   constructor(variablename,plotname, canvasname){
     this.variablename = variablename
@@ -257,7 +260,103 @@ class LineXY{
     this.trials = ntrials
     this.chart.update()
   }//FUNCTION update
-}//CONSTRUCTOR ScatterXY
+}//CONSTRUCTOR LineXY
+
+class LineBoxes{
+  constructor(plotname, canvasname){
+    this.plotname = plotname
+    this.canvasname = canvasname
+    this.trials = 0
+  }//constructor
+
+  init(){
+    let ntrials = mkeye.data.TRIALEVENTS.Response.length;
+
+    const data = {datasets: []}
+    for (let screen in mkeye.boundingBoxes){
+      let xy = [];
+      for (let i=0; i<=mkeye.boundingBoxes[screen].bb.length-1; i++){
+        for (let j=0; j<=mkeye.boundingBoxes[screen].bb[i].length-1; j++){
+            let bb = mkeye.boundingBoxes[screen].bb[i][j]
+            if (typeof(bb[0]) != 'undefined' && bb[0] != null){
+              xy.push( { x: bb[0], y: bb[2] } )
+              xy.push( { x: bb[1], y: bb[2] } )
+              xy.push( { x: bb[1], y: bb[3] } )
+              xy.push( { x: bb[0], y: bb[3] } )
+              xy.push( { x: bb[0], y: bb[2] } )
+              xy.push( { x: null, y: null } )  
+            }//IF !null
+          }//FOR j items within
+      }//FOR i trials/stim
+
+      data.datasets.push({
+        label: screen,
+        data: xy,
+        borderColor: mkeye.colors[screen],
+        // pointRadius: 0,
+        fill: false,
+        spanGaps: false,
+      })
+    }//FOR screen
+
+    const config = {
+      type: 'line',
+      data: data,
+      options: {
+        scales: {
+          x: {
+              type: 'linear',
+              position: 'bottom',
+              min: 0,
+              max: mkeye.data.ENV.ViewportPixels[0]
+            },
+          y: {
+              reverse: 'true',
+              min: 0,
+              max: mkeye.data.ENV.ViewportPixels[1]
+            }
+        },
+        plugins: {
+            title: {
+                display: true,
+                text: this.plotname
+            }
+        }//plugins
+      }//options
+    };//config
+    this.trials = ntrials
+    this.chart = new Chart( document.getElementById(this.canvasname), config );
+  }//FUNCTION init
+
+  update(){
+    
+    let ntrials = mkeye.data.TRIALEVENTS.Response.length;
+    let screens = [ 'fixation', 'samplefixation']
+    for (var s=0; s<=screens.length-1; s++){
+      let xy = [];
+      for (let i=this.trials; i<=ntrials-1; i++){
+        for (let j=0; j<=mkeye.boundingBoxes[screens[s]].bb[i].length-1; j++){
+            let bb = mkeye.boundingBoxes[screens[s]].bb[i][j]
+            xy.push( { x: bb[0], y: bb[2] } )
+            xy.push( { x: bb[1], y: bb[2] } )
+            xy.push( { x: bb[1], y: bb[3] } )
+            xy.push( { x: bb[0], y: bb[3] } )
+            xy.push( { x: bb[0], y: bb[2] } )
+            xy.push( { x: null, y: null } )  
+          }//FOR j items within
+      }//FOR i trials/stim
+
+      for (let i=0; i<=this.chart.data.datasets.length-1; i++){
+        if (this.chart.data.datasets[i].label == screens[s]){
+            this.chart.data.datasets[i].data.push(...xy)          
+        }//IF screen
+      }//FOR i datasets plotted
+    }//FOR screen
+
+    this.trials = ntrials
+    this.chart.update()
+  }//FUNCTION update
+}//CONSTRUCTOR LineBoxes
 
 function chooseRandColorsHex(ncols){
   let randColors = []

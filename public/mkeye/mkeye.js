@@ -8,30 +8,41 @@ var mkeye = {}
 mkeye.file ={
   path: DATA_PATH,
   list: [],
-  // name: 'mkturkfiles/datafiles/Eliaso/2022-11-02T20:58:51_Eliaso.json',
   // name: 'mkturkfiles/datafiles/Eliaso/2022-11-03T11:34:33_Eliaso.json', //15.8MB
-  // name: 'mkturkfiles/datafiles/Eliaso/2022-11-04T14:41:07_Eliaso.json',
-  // name: 'mkturkfiles/datafiles/Eliaso/2022-11-07T00:29:48_Eliaso.json',
-  // name: 'mkturkfiles/datafiles/Eliaso/2022-11-07T04:29:41_Eliaso.json',
-  // name: 'mkturkfiles/datafiles/Eliaso/2022-11-07T05:16:52_Eliaso.json',
-  // name: '/mkturkfiles/datafiles/Eliaso/2022-11-07T20:57:22_Eliaso.json',
-  // name: '/mkturkfiles/datafiles/Eliaso/2022-11-07T21:02:39_Eliaso.json',
-  // name: '/mkturkfiles/datafiles/Eliaso/2022-11-07T21:15:29_Eliaso.json',
-  name: '/mkturkfiles/datafiles/Eliaso/2022-11-07T21:36:31_Eliaso.json',
+  // name: '/mkturkfiles/datafiles/Eliaso/2022-11-07T21:36:31_Eliaso.json',
+  // name: '/mkturkfiles/datafiles/Eliaso/2022-11-08T16:01:18_Eliaso.json',
+  // name: '/mkturkfiles/datafiles/Eliaso/2022-11-08T16:32:31_Eliaso.json',
+  // name: '/mkturkfiles/datafiles/Eliaso/2022-11-09T03:27:39_Eliaso.json',
+  // name: '/mkturkfiles/datafiles/Eliaso/2022-11-09T14:29:02_Eliaso.json',
+  // name: '/mkturkfiles/datafiles/Eliaso/2022-11-09T14:29:57_Eliaso.json',
+  // name: '/mkturkfiles/datafiles/Eliaso/2022-11-09T14:33:50_Eliaso.json',
+  name: '/mkturkfiles/datafiles/Eliaso/2022-11-09T14:40:17_Eliaso.json',
   ver: null,
   date: null,
   dataChanged: false,
   fileChanged: true,
 };
 mkeye.data = []
+mkeye.boundingBoxes = { fixation: {'bb': [], 'name': []},
+                        sample: {'bb': [], 'name': []},
+                        samplefixation: {'bb': [], 'name': [] },
+                        test: {'bb': [], 'name': []},
+                        choice: {'bb': [], 'name': []}
+                      }
 mkeye.stats = {
   agent: null,
   pctCorrect: 0,
   trials: 0,
   effector: '',
 };
-mkeye.colors = { 'grid': [] }
+mkeye.colors = { grid: [],
+   fixation: 'rgb(50,50,200)',
+   samplefixation: 'rgb(200,200,100)',
+   sample: 'rgb(200,50,50)',
+   test: 'rgb(50,200,50)',
+   choice: 'rgb(100,100,100)' }
 mkeye.scatters = [];
+mkeye.line = [];
 
 let fileListSelector = document.querySelector('#file-list');
 //============== (END) INITIALIZE VARIABLES
