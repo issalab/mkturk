@@ -1,6 +1,8 @@
 const storage = firebase.storage();
 const storageRef = storage.ref();
 
+const rtdb = firebase.database();
+
 async function populateFileList(elem) {
 try {
     let fileList = await getFileList(mkeye.file.path);
@@ -162,6 +164,7 @@ async function processData(data) {
   console.log(mkeye.file.dateSaved);
 
   if (mkeye.file.fileChanged) {
+    initializeRTDBCallbacks();
     initializeChartData();
     checkFileStatus();
     mkeye.file.fileChanged = false;
@@ -172,6 +175,27 @@ async function processData(data) {
     checkFileStatus();
   }
 }//FUNCTION processData(data)
+
+function initializeRTDBCallbacks(){
+  rtdb.ref(`instances/${mkeye.data.TASK.Agent}`).on('value', (snap) => {
+    mkeye.live.trial = snap.val().trialnum
+    mkeye.live.filename = snap.val().filename
+    mkeye.live.performance = snap.val().performance
+  })//ON CALLBACK for mkturk instances
+
+  rtdb.ref(`data/${mkeye.data.TASK.Agent}`).on('value', (snap) => {
+    if (typeof(mkeye.realtimescatter != "undefined")){
+      mkeye.realtimescatter.update(snap.val())
+
+      mkeye.live.x = snap.val().x
+      mkeye.live.y = snap.val().y
+      mkeye.live.boundingBoxes = snap.val().boundingBoxes
+      mkeye.live.meta = snap.val().meta
+      mkeye.live.timestamp = new Date(snap.val().timestamp)
+    }//IF plot initialized
+  })//ON CALLBACK for effector data
+
+}//FUNCTION initializeAgentConnection()
 
 function getObjectBoundingBoxes(scenes){
   let allbb = { bb: [], name: [] }

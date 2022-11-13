@@ -21,6 +21,9 @@ function initializeChartData(){
   mkeye.line.BoundingBoxes = new LineBoxes('Bounding Boxes','boundingBoxesCanvas')
   mkeye.line.BoundingBoxes.init()
 
+  mkeye.realtimescatter = new RealtimeScatter('Realtime XY','realtimeXYCanvas')
+  mkeye.realtimescatter.init()
+
   updateCharts();
 }//FUNCTION initializeChartData()
 
@@ -44,6 +47,133 @@ function updateBasicStatsText(){
                                 mkeye.stats.pctCorrect + '% (n=' + mkeye.stats.trials + ')  ' + 
                                 mkeye.stats.effector + 'track'
 }//FUNCTION updateBasicStatsText()
+
+class RealtimeScatter{
+  constructor(plotname, canvasname){
+    this.plotname = plotname
+    this.canvasname = canvasname
+    this.lasttimestamp = new Date()
+    this.currtrial = null
+    this.maxpoints = 500;
+  }//constructor
+
+  init(){
+    const data = {datasets: []}
+    for (let i=0; i<=3-1; i++){
+      if (i==0){
+        data.datasets.push({
+          type: 'scatter',
+          showLine: false,
+          label: 'mkturk_calib',
+          data: [ { x: 0, y: 0 } ],
+          backgroundColor: mkeye.colors.realtime,
+          order: 1 //1=drawn on top
+        })//data
+      }//IF
+      else if (i==1){
+        data.datasets.push({
+          type: 'scatter',
+          showLine: false,
+          label: 'manual_calib',
+          data: [ { x: 0, y: 0 } ],
+          backgroundColor: mkeye.colors.realtime_manual,
+          order: 2
+        })
+      }//ELSE IF manual
+      else if (i==2){
+        data.datasets.push({
+          type: 'line',
+          showLine: true,
+          label: 'boundingBox',
+          data: [],
+          borderColor: mkeye.colors.realtime_bb,
+          order: 3
+        })
+      }//ELSE IF boundingBox
+    }//FOR i eyetraces
+    const config = {
+      // type: 'scatter',
+      data: data,
+      options: {
+        scales: {
+          x: {
+            type: 'linear',
+            position: 'bottom',
+            min: 0,
+            max: mkeye.data.ENV.ViewportPixels[0]
+          },
+          y: {
+            reverse: 'true',
+            min: 0,
+            max: mkeye.data.ENV.ViewportPixels[1]
+          }
+        },
+        elements:{
+          point: {
+            borderWidth: 0,
+            radius: this.customRadius
+          }//point
+        },//elements
+        plugins: {
+            title: {
+                display: true,
+                text: this.plotname
+            }
+        },//plugins 
+        animation: false,
+      }//options
+    };//config
+
+    this.chart = new Chart( document.getElementById(this.canvasname), config );
+  }//FUNCTION init
+
+  customRadius( context )
+  {
+    let index = context.dataIndex;
+    if ( index <= context.dataset.data.length-2){
+      return 3
+    }//ELSEIF all points except last
+    else if ( index == context.dataset.data.length-1){
+      return 10
+    }//ELSEIF last point
+  }//FUNCTION customRadius(context)
+
+  update(newdata){
+    if (mkeye.live.trial != this.currtrial || this.chart.data.datasets[0].data.length > this.maxpoints ){
+      this.chart.data.datasets[0].data = []
+    }//Need to clear datapoints
+
+    let x0 = mkeye.data.CANVAS.offsetleft
+    let y0 = mkeye.data.ENV.ViewportPixels[1]
+    if (newdata.meta == 2){
+      this.chart.data.datasets[2].data = [] //empty old boxes
+
+      let xy = []
+      for (let i=0; i<=newdata.boundingBoxes.length-1; i++){
+        let bb = newdata.boundingBoxes[i]
+        xy.push( { x: bb['x_0']+x0, y: -bb['y_0']+y0 } )
+        xy.push( { x: bb['x_1']+x0, y: -bb['y_0']+y0 } )
+        xy.push( { x: bb['x_1']+x0, y: -bb['y_1']+y0 } )
+        xy.push( { x: bb['x_0']+x0, y: -bb['y_1']+y0 } )
+        xy.push( { x: bb['x_0']+x0, y: -bb['y_0']+y0 } )
+        xy.push( { x: null, y: null } )
+      }//FOR i boundingBoxes
+      this.chart.data.datasets[2].data.push(...xy);
+    }//IF new fixation hold with new targets
+
+    this.chart.data.datasets[0].data.push( { x: newdata.x + x0, y: -newdata.y + y0 });
+    this.chart.update()
+
+    //get lag
+    let t0 = new Date(newdata.timestamp)
+    console.log('lag: ' + ( new Date() - t0 ) + ' ms,   ' +
+                 'SR: ' + Math.round(1000/( t0 - this.lasttimestamp ) ) + ' Hz'
+               )
+    this.lasttimestamp = t0;
+    this.currtrial = mkeye.live.trial
+  }//FUNCTION update
+}//CLASS RealtimeScatter
+
 
 class ScatterXY{
   constructor(targetname, variablename,plotname, canvasname){
@@ -150,7 +280,7 @@ class ScatterXY{
     this.trials = xyt[0].length
     this.chart.update()
   }//FUNCTION update
-}//CONSTRUCTOR ScatterXY
+}//CLASS ScatterXY
 
 class LineXY{
   constructor(variablename,plotname, canvasname){
@@ -260,7 +390,7 @@ class LineXY{
     this.trials = ntrials
     this.chart.update()
   }//FUNCTION update
-}//CONSTRUCTOR LineXY
+}//CLASS LineXY
 
 class LineBoxes{
   constructor(plotname, canvasname){
@@ -356,7 +486,7 @@ class LineBoxes{
     this.trials = ntrials
     this.chart.update()
   }//FUNCTION update
-}//CONSTRUCTOR LineBoxes
+}//CLASS LineBoxes
 
 function chooseRandColorsHex(ncols){
   let randColors = []
@@ -365,7 +495,6 @@ function chooseRandColorsHex(ncols){
   }//FOR i gridpoints
   return randColors
 }//FUNCTION chooseGridColorsHex(ncols)
-
 
 function chooseRandColorsRGB(ncols){
   let randColors = []

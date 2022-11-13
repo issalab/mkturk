@@ -9,40 +9,48 @@ mkeye.file ={
   path: DATA_PATH,
   list: [],
   // name: 'mkturkfiles/datafiles/Eliaso/2022-11-03T11:34:33_Eliaso.json', //15.8MB
-  // name: '/mkturkfiles/datafiles/Eliaso/2022-11-07T21:36:31_Eliaso.json',
-  // name: '/mkturkfiles/datafiles/Eliaso/2022-11-08T16:01:18_Eliaso.json',
-  // name: '/mkturkfiles/datafiles/Eliaso/2022-11-08T16:32:31_Eliaso.json',
-  // name: '/mkturkfiles/datafiles/Eliaso/2022-11-09T03:27:39_Eliaso.json',
-  // name: '/mkturkfiles/datafiles/Eliaso/2022-11-09T14:29:02_Eliaso.json',
-  // name: '/mkturkfiles/datafiles/Eliaso/2022-11-09T14:29:57_Eliaso.json',
-  // name: '/mkturkfiles/datafiles/Eliaso/2022-11-09T14:33:50_Eliaso.json',
   name: '/mkturkfiles/datafiles/Eliaso/2022-11-09T14:40:17_Eliaso.json',
   ver: null,
   date: null,
   dataChanged: false,
   fileChanged: true,
-};
+}//file
 mkeye.data = []
 mkeye.boundingBoxes = { fixation: {'bb': [], 'name': []},
                         sample: {'bb': [], 'name': []},
                         samplefixation: {'bb': [], 'name': [] },
                         test: {'bb': [], 'name': []},
                         choice: {'bb': [], 'name': []}
-                      }
+                      }//boundingBoxes
 mkeye.stats = {
   agent: null,
   pctCorrect: 0,
   trials: 0,
   effector: '',
-};
+}//stats
 mkeye.colors = { grid: [],
    fixation: 'rgb(50,50,200)',
    samplefixation: 'rgb(200,200,100)',
    sample: 'rgb(200,50,50)',
    test: 'rgb(50,200,50)',
-   choice: 'rgb(100,100,100)' }
+   choice: 'rgb(100,100,100)',
+   realtime: 'rgb(50,50,200)',
+   realtime_manual: 'rgb(120,120,255)',
+   realtime_bb: 'rgb(0,0,0)'
+}//colors
 mkeye.scatters = [];
 mkeye.line = [];
+
+mkeye.live = {
+  trial: null,
+  filename: null,
+  performance: null,
+  x: null,
+  y: null,
+  boundingBoxes: [],
+  meta: '',
+  timestamp: new Date().toJSON(),
+}//live data from realtime database
 
 let fileListSelector = document.querySelector('#file-list');
 //============== (END) INITIALIZE VARIABLES
