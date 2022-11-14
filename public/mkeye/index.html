@@ -28,6 +28,26 @@
 
     <div><canvas id="realtimeXYCanvas"></canvas></div>
 
+    <div>
+      <label for="xgain">g_x:</label>
+      <input type="text" id="xgain" name="xgain" placeholder="0">
+      <label for="xoffset">x0:</label>
+      <input type="text" id="xoffset" name="xoffset" placeholder="0">      
+      <label for="ycross">g_yx:</label>
+      <input type="text" id="ycross" name="ycross" placeholder="0">
+    </div>
+
+    <div>
+      <label for="ygain">g_y:</label>
+      <input type="text" id="ygain" name="ygain" placeholder="0">
+      <label for="xoffset">y0:</label>
+      <input type="text" id="yoffset" name="yoffset" placeholder="0">      
+      <label for="xcross">g_xy:</label>
+      <input type="text" id="xcross" name="xcross" placeholder="0">
+      <button type="button" id="uploadCalib"> UPLOAD to mkturk</button>
+    </div>
+
+
     <div><canvas id="fixationXYCanvas"></canvas></div>
 
     <div><canvas id="samplefixationXYCanvas"></canvas></div>
@@ -43,8 +63,10 @@
     <script src="/__/firebase/8.2.3/firebase-app.js"></script>
     <script src="/__/firebase/8.2.3/firebase-auth.js"></script>
     <script src="/__/firebase/8.2.3/firebase-storage.js"></script>
-		<script src="/__/firebase/init.js"></script>
 		<script src="/__/firebase/8.2.3/firebase-database.js"></script>
+    <script src="/__/firebase/8.2.3/firebase-firestore.js"></script>
+		<script src="/__/firebase/init.js"></script>
+
 		<!-- <script src="/__/firebase/8.2.3/firebase-functions.js"></script> -->
   	<!-- ======== (END) FIREBASE ======== -->
 

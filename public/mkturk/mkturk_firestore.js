@@ -229,15 +229,9 @@ async function queryDeviceonFirestore(deviceName) {
   }); //Promise
 } //FUNCTION queryDeviceonFirestore
 
-async function saveEyeCalibrationtoFirestore(
-  xparams,
-  yparams,
-  calibtype,
-  ntrain,
-  trainmse,
-  ntest,
-  testmse
-) {
+async function saveEyeCalibrationtoFirestore(xparams,yparams,calibtype,
+                                              ntrain,trainmse,ntest,testmse)
+{
   db.collection(FIRESTORECOLLECTION.CALIBRATION)
     .doc(ENV.Subject)
     .set({
@@ -265,7 +259,7 @@ async function saveEyeCalibrationtoFirestore(
     .catch(function (error) {
       console.error('FIRESTORE: !Error creating eye calibration doc: ', error);
     });
-} //FUNCTION saveEyeCalibrationtoFirestore
+}//FUNCTION saveEyeCalibrationtoFirestore
 
 async function loadEyeCalibrationfromFirestore(subject) {
   var doc = await db

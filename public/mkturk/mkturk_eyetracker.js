@@ -15,20 +15,12 @@ function runcalibration() {
   xtformInverse[2] = 0;
   ytformInverse[2] = 0;
 
-  for (
-    let i = 0, len = EVENTS['trialseries']['FixationGridIndex'].length;
-    i < len;
-    i++
-  ) {
+  for (let i = 0, len = EVENTS['trialseries']['FixationGridIndex'].length; i < len; i++)
+  {
     if (EVENTS['trialseries']['FixationTouchEvent'][i] == 'theld') {
       //ACTUAL TARGET LOCATIONS
-      xactual.push(
-        ENV.XGridCenter[EVENTS['trialseries']['FixationGridIndex'][i]]
-      );
-      yactual.push(
-        ENV.YGridCenter[EVENTS['trialseries']['FixationGridIndex'][i]] +
-          CANVAS.offsettop
-      );
+      xactual.push(ENV.XGridCenter[EVENTS['trialseries']['FixationGridIndex'][i]]);
+      yactual.push(ENV.YGridCenter[EVENTS['trialseries']['FixationGridIndex'][i]] + CANVAS.offsettop);
 
       //RAW EYE POSITIONS (invert back to raw coords)
       const xy = applyLinearTransform(
@@ -165,7 +157,7 @@ function applyLinearTransform(xEye, yEye, xform, yform) {
     yform
   );
   return [xScreen, yScreen];
-} //FUNCTION applyLinearTransform
+}//FUNCTION applyLinearTransform
 
 function compute_mse(predicted, actual) {
   if (predicted.length === undefined) {

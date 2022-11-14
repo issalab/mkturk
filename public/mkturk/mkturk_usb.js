@@ -275,12 +275,7 @@ serial.Port.prototype.onReceive = (data) => {
       w = parseInt('0x' + w) / 32767; //Raw
       a = parseInt('0x' + a) / 32767; //Raw
       if (ENV.Eye.CalibXTransform.length > 0) {
-        var xy = applyLinearTransform(
-          x,
-          y,
-          ENV.Eye.CalibXTransform,
-          ENV.Eye.CalibYTransform
-        ); //Calibrated
+        var xy = applyLinearTransform(x,y,ENV.Eye.CalibXTransform,ENV.Eye.CalibYTransform); //Calibrated
       } else {
         xy = ['null', 'null'];
         console.log('recording null eye values')

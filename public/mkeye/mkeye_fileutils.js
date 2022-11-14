@@ -2,6 +2,7 @@ const storage = firebase.storage();
 const storageRef = storage.ref();
 
 const rtdb = firebase.database();
+var db = firebase.firestore();
 
 async function populateFileList(elem) {
 try {
@@ -164,6 +165,7 @@ async function processData(data) {
   console.log(mkeye.file.dateSaved);
 
   if (mkeye.file.fileChanged) {
+    initializeFirestoreCallbacks();
     initializeRTDBCallbacks();
     initializeChartData();
     checkFileStatus();
@@ -176,6 +178,50 @@ async function processData(data) {
   }
 }//FUNCTION processData(data)
 
+//FIRESTORE DATABASE (calibration parameters)
+function initializeFirestoreCallbacks(){
+  if (typeof(unsubscribeFirestore) != 'undefined'){
+    unsubscribeFirestore()
+  }//IF previous callback exists, detach listener
+  unsubscribeFirestore = db.collection("eyecalibrations").doc(mkeye.data.TASK.Agent)
+      .onSnapshot((doc) => {
+        mkeye.calib.xparam = doc.data().CalibXTransform;
+        mkeye.calib.yparam = doc.data().CalibYTransform;
+
+        updateManualCalibGUI()
+    });//listener
+}//FUNCTION initializeFirestoreCallbacks()
+
+function uploadCalibrationToFirestore(){
+  db.collection("eyecalibrations").doc(mkeye.data.TASK.Agent).set(
+    {
+      Doctype: 'calibration',
+      //General
+      Agent: mkeye.data.TASK.Agent,
+      ResearcherID: 'mkeye', //XX'ENV.ResearcherID',
+      ResearcherDisplayName: 'mkeye', //XXENV.ResearcherDisplayName,
+      CurrentDate: new Date(),
+      CurrentDateValue: new Date().valueOf(),
+      Docname: mkeye.data.TASK.Agent,
+      Taskdoc: 'mkeye_manual',
+      //Calib specific
+      CalibXTransform: mkeye.calib.xparam,
+      CalibYTransform: mkeye.calib.yparam,
+      CalibType: 'linear',
+      NCalibPointsTrain: 0,
+      NCalibPointsTest: 0,
+      CalibTrainMSE: null, //XX
+      CalibTestMSE: null, //XX
+    }
+  ).then(function () {
+    console.log('FIRESTORE: Wrote manual EyeCalibration');
+  })
+  .catch(function (error) {
+    console.error('FIRESTORE: !Error creating eye calibration doc: ', error);
+  });
+}//FUNCTION writeCalibrationToFirestore
+
+//REALTIME DATABASE (effector tracking)
 function initializeRTDBCallbacks(){
   rtdb.ref(`instances/${mkeye.data.TASK.Agent}`).on('value', (snap) => {
     mkeye.live.trial = snap.val().trialnum
@@ -194,8 +240,7 @@ function initializeRTDBCallbacks(){
       mkeye.live.timestamp = new Date(snap.val().timestamp)
     }//IF plot initialized
   })//ON CALLBACK for effector data
-
-}//FUNCTION initializeAgentConnection()
+}//FUNCTION initializeRTDBCallbacks()
 
 function getObjectBoundingBoxes(scenes){
   let allbb = { bb: [], name: [] }
@@ -290,6 +335,40 @@ async function checkFileStatus() {
   }
   return false; // why needed
 }//FUNCTION checkFileStatus()
+
+function saveEyeCalibrationtoFirestore(
+  xparams,yparams,calibtype,
+  ntrain,trainmse,ntest,testmse)
+{
+  db.collection(FIRESTORECOLLECTION.CALIBRATION)
+    .doc(ENV.Subject)
+    .set({
+      Doctype: 'calibration',
+      //General
+      Agent: ENV.Subject,
+      ResearcherID: ENV.ResearcherID,
+      ResearcherDisplayName: ENV.ResearcherDisplayName,
+      CurrentDate: ENV.CurrentDate,
+      CurrentDateValue: ENV.CurrentDate.valueOf(),
+      Docname: ENV.Subject,
+      Taskdoc: ENV.FirestoreDocRoot + '_task',
+      //Calib specific
+      CalibXTransform: xparams,
+      CalibYTransform: yparams,
+      CalibType: calibtype,
+      NCalibPointsTrain: ntrain,
+      NCalibPointsTest: ntest,
+      CalibTrainMSE: trainmse,
+      CalibTestMSE: testmse,
+    }) //link docs
+    .then(function () {
+      console.log('FIRESTORE: New EyeCalibration');
+    })
+    .catch(function (error) {
+      console.error('FIRESTORE: !Error creating eye calibration doc: ', error);
+    });
+}//FUNCTION saveEyeCalibrationtoFirestore
+
 
 function convertToBB(gridind,rad){
   let xcent = mkeye.data.ENV.XGridCenter[ gridind ]

@@ -52,6 +52,16 @@ mkeye.live = {
   timestamp: new Date().toJSON(),
 }//live data from realtime database
 
+mkeye.calib = {xparam: [], yparam: [], guielementnames: ['xgain','xoffset','ycross','ygain','yoffset','xcross'], guiIDs: []}
+for (let i=0; i<=mkeye.calib.guielementnames.length-1; i++){
+  mkeye.calib.guiIDs[i] = document.querySelector('input[id=' + CSS.escape(mkeye.calib.guielementnames[i]) + "]")
+  mkeye.calib.guiIDs[i].addEventListener('input', updateManualCalibVar );
+}//FOR i gui elements
+
+//Callbacks for writing calib to cloud
+document.querySelector("button[id=uploadCalib]").addEventListener('pointerUp',uploadCalibrationToFirestore)
+document.querySelector("button[id=uploadCalib]").addEventListener('click',uploadCalibrationToFirestore)
+
 let fileListSelector = document.querySelector('#file-list');
 //============== (END) INITIALIZE VARIABLES
 
