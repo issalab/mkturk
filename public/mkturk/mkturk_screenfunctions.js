@@ -1620,7 +1620,7 @@ function setupCanvasHeadsUp() {
       'pointerup',
       function () {
         event.preventDefault();
-        runPump('flush');
+        runPumpButtonCallback('flush');
       },
       false
     );
@@ -1628,7 +1628,7 @@ function setupCanvasHeadsUp() {
       'pointerup',
       function () {
         event.preventDefault();
-        runPump('trigger');
+        runPumpButtonCallback('trigger');
       },
       false
     );

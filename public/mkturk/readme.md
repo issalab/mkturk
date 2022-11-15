@@ -95,7 +95,9 @@ Pump: 1=adafruit peristaltic 2=submersible centrifugal tcs 3=diaphragm pump tcs 
 
 **PunishTimeOut:** Time out in milliseconds for incorrect responses. Black square and incorrect sound may be presented for feedback during this time.
 
-**RewardPer1000Trials:** Amount of liquid reward in mL for 1000 correct trials. For macaques, this is around 100mL for every 1000 correct trials.
+RewardDuration (optional): Duration of reward pulse in milliseconds. If TASK.RewardDuration is not specified, then will use legacy pump calibration.
+
+RewardPer1000Trials (optional): Amount of liquid reward in mL for 1000 correct trials. For macaques, this is around 100mL for every 1000 correct trials. Utilizes legacy calibration. Recommend usage of TASK.RewardDuration instead.
 
 **RewardStage:** RewardStage=0 rewards for successful fixtion and skips the choice phase of task. RewardStage=1 rewards for selecting the correct choice.
 
@@ -319,6 +321,13 @@ TSequenceDesired (bigquery): part of displayData --> [agent, timestamp, trialnum
 
 Weight (json): [trial, timestamp, weight]
 
+
+## KEYBOARD SHORTCUTS
+ALT/OPTION + r --> manually deliver a single reward pulse (reward sound will be played & reward indicator LED will light up)
+ALT/OPTION + 1 --> manually flush pump for 1 minute (2 x 30second pulses)
+ALT/OPTION + 2 --> manually flush pump for 1 minute (4 x 30second pulses)
+ALT/OPTION + 3 --> manually flush pump for 1 minute (6 x 30second pulses)
+ALT/OPTION + 4 --> manually flush pump for 1 minute (8 x 30second pulses)
 
 ## ARDUINO V0.3 -- mkturk
 Digital Pins

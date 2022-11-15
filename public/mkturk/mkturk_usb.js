@@ -403,7 +403,7 @@ serial.Port.prototype.writepumptopauseeyetoUSB = async function (data) {
 
   port.statustext_sent = 'TRANSFERRED CHAR --> USB:' + msgstr;
   updateHeadsUpDisplayDevices();
-}; //port.writepumpdurationUSB
+}; //port.writepumptopauseeyetoUSB
 
 //PORT - transferOut sample command to external devices (eg, Camera)
 serial.Port.prototype.writeSampleCommandTriggertoUSB = async function (data) {

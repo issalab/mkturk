@@ -659,7 +659,6 @@ index_init();
     //REWARD PUNISH    REWARD PUNISH    REWARD PUNISH    REWARD PUNISH    REWARD PUNISH    //
 
     index_determine_numrewards();
-    ENV.RewardDuration = setReward();
     logEVENTS('NReward', CURRTRIAL.nreward, 'trialseries');
 
     //============ DELIVER REWARD/PUNISH ============//
