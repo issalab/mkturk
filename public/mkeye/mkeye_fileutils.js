@@ -83,7 +83,7 @@ async function getStorageFile(path) {
   }).catch(e => {
     console.error('Error Getting URL:', e);
   });
-processData(file)
+  // processData(file)
   return file;
 }//FUNCTION getStorageFile(path)
 
@@ -150,7 +150,6 @@ async function processData(data) {
       }//FOR i trials
     }//IF choice task
     else if (mkeye.data.TASK.NRSVP>0){
-      mkeye.data.TRIALEVENTS.SampleFixationXYT = mkeye.data.TRIALEVENTS.ResponseXYT
       mkeye.data.TRIALEVENTS.ResponseXYT = [];
     }//ELSE IF RSVP
   }//IF not fixation only task
@@ -187,12 +186,14 @@ function initializeFirestoreCallbacks(){
       .onSnapshot((doc) => {
         mkeye.calib.xparam = doc.data().CalibXTransform;
         mkeye.calib.yparam = doc.data().CalibYTransform;
+        mkeye.calib.inverse_mkturk = getCalibInverse(mkeye.calib.xparam,mkeye.calib.yparam)
 
         updateManualCalibGUI()
     });//listener
 }//FUNCTION initializeFirestoreCallbacks()
 
 function uploadCalibrationToFirestore(){
+  mkeye.calib.inverse_mkturk = getCalibInverse(mkeye.calib.xparam,mkeye.calib.yparam)
   db.collection("eyecalibrations").doc(mkeye.data.TASK.Agent).set(
     {
       Doctype: 'calibration',
@@ -231,13 +232,15 @@ function initializeRTDBCallbacks(){
 
   rtdb.ref(`data/${mkeye.data.TASK.Agent}`).on('value', (snap) => {
     if (typeof(mkeye.realtimescatter != "undefined")){
-      mkeye.realtimescatter.update(snap.val())
+      // if (Math.random()<=1){
+        mkeye.realtimescatter.update(snap.val())
 
-      mkeye.live.x = snap.val().x
-      mkeye.live.y = snap.val().y
-      mkeye.live.boundingBoxes = snap.val().boundingBoxes
-      mkeye.live.meta = snap.val().meta
-      mkeye.live.timestamp = new Date(snap.val().timestamp)
+        mkeye.live.x = snap.val().x
+        mkeye.live.y = snap.val().y
+        mkeye.live.boundingBoxes = snap.val().boundingBoxes
+        mkeye.live.meta = snap.val().meta
+        mkeye.live.timestamp = new Date(snap.val().timestamp)  
+      // }
     }//IF plot initialized
   })//ON CALLBACK for effector data
 }//FUNCTION initializeRTDBCallbacks()
@@ -368,7 +371,6 @@ function saveEyeCalibrationtoFirestore(
       console.error('FIRESTORE: !Error creating eye calibration doc: ', error);
     });
 }//FUNCTION saveEyeCalibrationtoFirestore
-
 
 function convertToBB(gridind,rad){
   let xcent = mkeye.data.ENV.XGridCenter[ gridind ]

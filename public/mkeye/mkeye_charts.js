@@ -8,9 +8,9 @@ function initializeChartData(){
 
   //SCATTER PLOTS
   mkeye.scatters = [];
-  mkeye.scatters.push( new ScatterXY('FixationGridIndex','FixationXYT', 'Fixation XY', 'fixationXYCanvas') )
-  mkeye.scatters.push( new ScatterXY('SampleGridIndex','SampleFixationXYT', 'Sample Fixation XY', 'samplefixationXYCanvas') )
-  mkeye.scatters.push( new ScatterXY('TestGridIndex','ResponseXYT', 'Choice XY', 'choiceXYCanvas') )
+  mkeye.scatters.push( new ScatterXY('FixationGridIndex','FixationXYT', 'Fixation', 'fixationXYCanvas') )
+  mkeye.scatters.push( new ScatterXY('SampleGridIndex','SampleFixationXYT', 'SampleFixation', 'samplefixationXYCanvas') )
+  mkeye.scatters.push( new ScatterXY('TestGridIndex','ResponseXYT', 'Choice', 'choiceXYCanvas') )
   for (let i=0; i<=mkeye.scatters.length-1; i++){
     mkeye.scatters[i].init()
   }//FOR i scatters
@@ -54,7 +54,7 @@ class RealtimeScatter{
     this.canvasname = canvasname
     this.lasttimestamp = new Date()
     this.currtrial = null
-    this.maxpoints = 500;
+    this.maxpoints = 350;
   }//constructor
 
   init(){
@@ -95,6 +95,7 @@ class RealtimeScatter{
       // type: 'scatter',
       data: data,
       options: {
+        aspectRatio: mkeye.data.ENV.ViewportPixels[0]/mkeye.data.ENV.ViewportPixels[1],
         scales: {
           x: {
             type: 'linear',
@@ -141,6 +142,7 @@ class RealtimeScatter{
   update(newdata){
     if (mkeye.live.trial != this.currtrial || this.chart.data.datasets[0].data.length > this.maxpoints ){
       this.chart.data.datasets[0].data = []
+      this.chart.data.datasets[1].data = []
     }//Need to clear datapoints
 
     let x0 = mkeye.data.CANVAS.offsetleft
@@ -161,19 +163,60 @@ class RealtimeScatter{
       this.chart.data.datasets[2].data.push(...xy);
     }//IF new fixation hold with new targets
 
-    this.chart.data.datasets[0].data.push( { x: newdata.x + x0, y: -newdata.y + y0 });
+    //--- mkturk trace
+    let x_mk = newdata.x + x0
+    let y_mk = -newdata.y + y0
+
+    //move to boundary if off screen
+    if (x_mk <= 0){ x_mk = 3 };
+    if (y_mk <= 0){ y_mk = 3 };
+    if (x_mk >= mkeye.data.ENV.ViewportPixels[0]){ x_mk = mkeye.data.ENV.ViewportPixels[0] - 3}
+    if (y_mk >= mkeye.data.ENV.ViewportPixels[1]){ y_mk = mkeye.data.ENV.ViewportPixels[1] - 3}
+
+    this.chart.data.datasets[0].data.push({x: x_mk, y: y_mk});
+
+    //--- manual calib trace
+    if (typeof(mkeye.calib.xparam[0]) != 'undefined' && Math.random()<=0.1){
+      let xy
+      if (mkeye.stats.effector == 'eye'){
+        xy = applyLinearTransform(
+          newdata.x + x0 - mkeye.calib.inverse_mkturk[2][0], //X shifted back prior to inverse
+          -newdata.y + y0 - mkeye.calib.inverse_mkturk[2][1], //Y shifted back prior to inverse
+          mkeye.calib.inverse_mkturk[0],
+          mkeye.calib.inverse_mkturk[1]
+        );//Backward: screen coords --> raw coords
+        if (Math.random()<=0.1){
+          console.log('xy_raw: ' + xy[0] + ', ' + xy[1])
+        }
+      }//IF eye, undo mkturk calibration to go back to raw eye coordinates
+      else if (mkeye.stats.effector == 'touch'){
+        xy = [newdata.x + x0, -newdata.y + y0]   
+      }//ELSE IF touch, just apply forward manual transform
+      
+      let xy_screen = applyLinearTransform(xy[0],xy[1],mkeye.calib.xparam, mkeye.calib.yparam)//Forward: raw coords --> screen coords
+
+      //move to boundary if off screen
+      if (xy_screen[0] <= 0){ xy_screen[0] = 3 };
+      if (xy_screen[1] <= 0){ xy_screen[1] = 3 };
+      if (xy_screen[0] >= mkeye.data.ENV.ViewportPixels[0]){ xy_screen[0] = mkeye.data.ENV.ViewportPixels[0] - 3}
+      if (xy_screen[1] >= mkeye.data.ENV.ViewportPixels[1]){ xy_screen[1] = mkeye.data.ENV.ViewportPixels[1] - 3}
+
+      this.chart.data.datasets[1].data.push( { x: xy_screen[0], y: xy_screen[1] });      
+    }//IF manual calib available
+
     this.chart.update()
 
     //get lag
     let t0 = new Date(newdata.timestamp)
-    console.log('lag: ' + ( new Date() - t0 ) + ' ms,   ' +
-                 'SR: ' + Math.round(1000/( t0 - this.lasttimestamp ) ) + ' Hz'
-               )
+
+    if (Math.random() <= 0.01){
+      console.log('lag: ' + ( new Date() - t0 ) + ' ms,   ' +
+      'SR: ' + Math.round(1000/( t0 - this.lasttimestamp ) ) + ' Hz')
+    }
     this.lasttimestamp = t0;
     this.currtrial = mkeye.live.trial
   }//FUNCTION update
 }//CLASS RealtimeScatter
-
 
 class ScatterXY{
   constructor(targetname, variablename,plotname, canvasname){
@@ -210,8 +253,10 @@ class ScatterXY{
     }//ELSE user-specified
 
     let xy=[]
+    let crct = [];
     for (let i=0; i<=this.targets.g.length-1; i++){
       xy[i] = []
+      crct[i] = []
     }//FOR i targets
     for (let i=0;i<=xyt[0].length-1;i++){
       let trialtarg = mkeye.data.TRIALEVENTS[this.targetname][i]
@@ -221,21 +266,44 @@ class ScatterXY{
           targind = j;
         }
       }
+
+      for (let j=0; j<=mkeye.boundingBoxes[this.plotname.toLowerCase()].bb[i].length-1; j++){
+        let bb = mkeye.boundingBoxes[this.plotname.toLowerCase()].bb[i][j]
+        xy[targind].push( { x: bb[0], y: bb[2] } ); crct[targind].push(0)
+        xy[targind].push( { x: bb[1], y: bb[2] } ); crct[targind].push(0)
+        xy[targind].push( { x: bb[1], y: bb[3] } ); crct[targind].push(0)
+        xy[targind].push( { x: bb[0], y: bb[3] } ); crct[targind].push(0)
+        xy[targind].push( { x: bb[0], y: bb[2] } ); crct[targind].push(0)
+        xy[targind].push( { x: null, y: null } ); crct[targind].push(0)
+      }//FOR j targets  
+
       xy[targind].push( { x: xyt[0][i], y: xyt[1][i] } )
+      xy[targind].push( { x: null, y: null } )
+
+      if (mkeye.data.TRIALEVENTS.Response[i] == mkeye.data.TRIALEVENTS.CorrectItem[i]){
+        crct[targind].push(1)
+        crct[targind].push(1)
+      }
+      else{
+        crct[targind].push(0)
+        crct[targind].push(0)
+      }
     }//FOR i trials
 
     const data = {datasets: []}
     for (let i=0; i<=this.targets.g.length-1; i++){
       data.datasets.push({
-          label: this.targets.g[i],
+          label: i,
           data: xy[i],
-          backgroundColor: mkeye.colors.grid[this.targets.g[i]]
+          backgroundColor: mkeye.colors.grid[this.targets.g[i]],
+          meta: crct[i] //custom by user
         })
     }//FOR i targs
     const config = {
-      type: 'scatter',
+      type: 'line',
       data: data,
       options: {
+        aspectRatio: mkeye.data.ENV.ViewportPixels[0]/mkeye.data.ENV.ViewportPixels[1],
         scales: {
           x: {
             type: 'linear',
@@ -249,6 +317,12 @@ class ScatterXY{
             max: mkeye.data.ENV.ViewportPixels[1]
           }
         },
+        elements:{
+          point: {
+            borderWidth: 0,
+            radius: this.customRadius2
+          }//point
+        },//elements
         plugins: {
             title: {
                 display: true,
@@ -260,6 +334,17 @@ class ScatterXY{
     this.trials = xyt[0].length
     this.chart = new Chart( document.getElementById(this.canvasname), config );
   }//FUNCTION init
+
+  customRadius2( context )
+  {
+    let index = context.dataIndex;
+    if ( context.dataset.meta[index] == 0){
+      return 2
+    }//IF incorrect
+    else if ( context.dataset.meta[index] == 1){
+      return 4
+    }//ELSEIF correct
+  }//FUNCTION customRadius(context)
 
   update(){
     let xyt=mkeye.data.TRIALEVENTS[this.variablename]
@@ -274,8 +359,34 @@ class ScatterXY{
           targind = j;
         }
       }//FOR j possible targets
-  
+
+      for (let j=0; j<=mkeye.boundingBoxes[this.plotname.toLowerCase()].bb[i].length-1; j++){
+        let bb = mkeye.boundingBoxes[this.plotname.toLowerCase()].bb[i][j]
+        this.chart.data.datasets[targind].data.push( 
+              { x: bb[0], y: bb[2] } ); this.chart.data.datasets[targind].meta.push(0)
+        this.chart.data.datasets[targind].data.push(
+              { x: bb[1], y: bb[2] } ); this.chart.data.datasets[targind].meta.push(0)
+        this.chart.data.datasets[targind].data.push(
+              { x: bb[1], y: bb[3] } ); this.chart.data.datasets[targind].meta.push(0)
+        this.chart.data.datasets[targind].data.push(
+              { x: bb[0], y: bb[3] } ); this.chart.data.datasets[targind].meta.push(0)
+        this.chart.data.datasets[targind].data.push(
+          { x: bb[0], y: bb[2] } ); this.chart.data.datasets[targind].meta.push(0)
+        this.chart.data.datasets[targind].data.push(
+          { x: null, y: null } ); this.chart.data.datasets[targind].meta.push(0)
+      }//FOR j targets
+      
       this.chart.data.datasets[targind].data.push( { x: xyt[0][i], y: xyt[1][i] } )
+      this.chart.data.datasets[targind].data.push( { x: null, y: null } )
+
+      if (mkeye.data.TRIALEVENTS.Response[i] == mkeye.data.TRIALEVENTS.CorrectItem[i]){
+        this.chart.data.datasets[targind].meta.push(1)
+        this.chart.data.datasets[targind].meta.push(1)
+      }//IF correct
+      else{
+        this.chart.data.datasets[targind].meta.push(0)
+        this.chart.data.datasets[targind].meta.push(0)
+      }//ELSE incorrect
     }//FOR i trials
     this.trials = xyt[0].length
     this.chart.update()
@@ -289,7 +400,8 @@ class LineXY{
     this.canvasname = canvasname
     this.trials = 0
     this.correct = [];
-  }
+    this.maxtrials = 10
+  }//constructor
 
   init(){
     let xyt = [];
@@ -342,6 +454,7 @@ class LineXY{
       type: 'line',
       data: data,
       options: {
+        aspectRatio: mkeye.data.ENV.ViewportPixels[0]/mkeye.data.ENV.ViewportPixels[1],
         scales: {
           x: {
               type: 'linear',
@@ -375,6 +488,11 @@ class LineXY{
     if (typeof(xyt[0]) == 'undefined'){
       return
     }//IF
+
+    if ( Math.round(this.trials/this.maxtrials) == this.trials/this.maxtrials  ){
+      this.chart.data.datasets[0].data = []
+      this.chart.data.datasets[1].data = []
+    }//Need to clear datapoints every this.maxtrials
 
     let ntrials = mkeye.data.TRIALEVENTS.Response.length;
     for (let i=this.trials;i<=ntrials-1;i++){
@@ -433,6 +551,7 @@ class LineBoxes{
       type: 'line',
       data: data,
       options: {
+        aspectRatio: mkeye.data.ENV.ViewportPixels[0]/mkeye.data.ENV.ViewportPixels[1],
         scales: {
           x: {
               type: 'linear',

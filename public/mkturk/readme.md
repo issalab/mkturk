@@ -93,6 +93,8 @@ Liquid: 1=water 2=water-condensed milk 3=marshmallow slurry (4/30mL)
 
 Pump: 1=adafruit peristaltic 2=submersible centrifugal tcs 3=diaphragm pump tcs 4=piezoelectric 3mL takasago 5=newer diaphragm pumps tcs 6=piezoelectric 7mL takasago
 
+Photodiode (optional): Photodiode == 1 leads to display of alternating white/black square in bottom right corner of canvas. If there are multiple clips, then every other clip is coded using light gray/dark gray (e.g., clip 1 will be white/black alternation in frame flips while clip 2 will be light gray/dark gray alternation in frame flips). If TASK.Photodiode is not specified, then will not display the flickering photodiode square.
+
 **PunishTimeOut:** Time out in milliseconds for incorrect responses. Black square and incorrect sound may be presented for feedback during this time.
 
 RewardDuration (optional): Duration of reward pulse in milliseconds. If TASK.RewardDuration is not specified, then will use legacy pump calibration.

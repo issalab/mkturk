@@ -223,13 +223,9 @@ serial.Port.prototype.onReceive = (data) => {
         new Date(EVENTS['timeseries']['RFIDTag'][nrfid - 2][1]);
     }
     port.statustext_received =
-      'Parsed TAG ' +
-      EVENTS['timeseries']['RFIDTag'][nrfid - 1][2] +
-      ' @ ' +
-      new Date().toLocaleTimeString('en-US') +
-      ' dt=' +
-      dt +
-      'ms';
+      'Parsed TAG ' + EVENTS['timeseries']['RFIDTag'][nrfid - 1][2] +
+      ' @ ' + new Date().toLocaleTimeString('en-US') +
+      ' dt=' + dt + 'ms';
 
     if (FLAGS.RFIDGeneratorCreated == 1) {
       var event = {
@@ -286,7 +282,7 @@ serial.Port.prototype.onReceive = (data) => {
                             xy[0],xy[1],w,a,
                             null,null,null,null, ],'timeseries');
 
-      if (FLAGS.touchGeneratorCreated == 1 && ENV.Eye.TrackEye > 0) {
+      if (ENV.Eye.TrackEye > 0 && FLAGS.touchGeneratorCreated == 1) {
         //Send calibrated signal, convert from eye coordinates to tablet coordinates
 
         // DISPLAY median filtered calibrated eye signal
@@ -330,8 +326,8 @@ serial.Port.prototype.onReceive = (data) => {
           time: Date.now(),
           type: 'undefined',
         };
-        waitforEvent.next(event_xytt); //send to hold_promise generator
-      } //if generated created
+        waitforEvent.next(event_xytt); //send to hold_promise generator          
+      }//IF TrackEye
 
       eyebuffer.success = eyebuffer.success + 1;
 

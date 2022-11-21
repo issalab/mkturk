@@ -9,7 +9,7 @@ mkeye.file ={
   path: DATA_PATH,
   list: [],
   // name: 'mkturkfiles/datafiles/Eliaso/2022-11-03T11:34:33_Eliaso.json', //15.8MB
-  name: '/mkturkfiles/datafiles/Eliaso/2022-11-09T14:40:17_Eliaso.json',
+  name: '',
   ver: null,
   date: null,
   dataChanged: false,
@@ -52,7 +52,7 @@ mkeye.live = {
   timestamp: new Date().toJSON(),
 }//live data from realtime database
 
-mkeye.calib = {xparam: [], yparam: [], guielementnames: ['xgain','xoffset','ycross','ygain','yoffset','xcross'], guiIDs: []}
+mkeye.calib = {xparam: [], yparam: [], inverse_mkturk: [], guielementnames: ['xgain','ycross','xoffset','xcross','ygain','yoffset'], guiIDs: []}
 for (let i=0; i<=mkeye.calib.guielementnames.length-1; i++){
   mkeye.calib.guiIDs[i] = document.querySelector('input[id=' + CSS.escape(mkeye.calib.guielementnames[i]) + "]")
   mkeye.calib.guiIDs[i].addEventListener('input', updateManualCalibVar );
@@ -71,8 +71,8 @@ let fileListSelector = document.querySelector('#file-list');
 // (listen for file || data changes) --> processData
 // processData --> (flattenData, getStorageFileMetadata) --> (initializeCharts+updatePlots || updatePlots)
 fileSelectionChangedListener(fileListSelector);//adds listener to dom element
-// populateFileList(fileListSelector);
-getStorageFile(mkeye.file.name)
+populateFileList(fileListSelector);
+// getStorageFile(mkeye.file.name)
 
 let provider = new firebase.auth.GoogleAuthProvider();
 provider.addScope('https://www.googleapis.com/auth/contacts.readonly');
