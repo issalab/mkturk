@@ -13,7 +13,19 @@
   text-align: center;
 }
 
-#liveplot2-link {
+#mkeye-link {
+  display: block;
+  font-family: Roboto;
+  color: white;
+  font-style: normal;
+  font-weight: 700;
+  font-size: 60px;
+  line-height: 60px;
+  text-decoration: none;
+  text-align: center;
+}
+
+#liveplot-link {
   display: block;
   font-family: Roboto;
   color: white;

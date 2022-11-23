@@ -93,9 +93,13 @@ Liquid: 1=water 2=water-condensed milk 3=marshmallow slurry (4/30mL)
 
 Pump: 1=adafruit peristaltic 2=submersible centrifugal tcs 3=diaphragm pump tcs 4=piezoelectric 3mL takasago 5=newer diaphragm pumps tcs 6=piezoelectric 7mL takasago
 
+Photodiode (optional): Photodiode == 1 leads to display of alternating white/black square in bottom right corner of canvas. If there are multiple clips, then every other clip is coded using light gray/dark gray (e.g., clip 1 will be white/black alternation in frame flips while clip 2 will be light gray/dark gray alternation in frame flips). If TASK.Photodiode is not specified, then will not display the flickering photodiode square.
+
 **PunishTimeOut:** Time out in milliseconds for incorrect responses. Black square and incorrect sound may be presented for feedback during this time.
 
-**RewardPer1000Trials:** Amount of liquid reward in mL for 1000 correct trials. For macaques, this is around 100mL for every 1000 correct trials.
+RewardDuration (optional): Duration of reward pulse in milliseconds. If TASK.RewardDuration is not specified, then will use legacy pump calibration.
+
+RewardPer1000Trials (optional): Amount of liquid reward in mL for 1000 correct trials. For macaques, this is around 100mL for every 1000 correct trials. Utilizes legacy calibration. Recommend usage of TASK.RewardDuration instead.
 
 **RewardStage:** RewardStage=0 rewards for successful fixtion and skips the choice phase of task. RewardStage=1 rewards for selecting the correct choice.
 
@@ -169,6 +173,8 @@ DeviceScreenHeight: full window (viewport) pixels
 DeviceTouchscreen: 0 (not available) or 1 (available), indicates if touchscreen functionality available on device
 
 DeviceType:desktop or mobile
+
+EffectorSaveJSONDataRelativetoFixationDotDisplayMS: dt in milliseconds relative to fixation appearance when to save eye data into json. if dt<0, this means eye data immediately before fixation appears will be included in the json datafile. Note, for parallel saving to bigquery, we keep up 1000ms before fixation, but for json data file may want to keep less to save space.
 
 Eye.BlinkGracePeriod: time in milliseconds that eye is allowed to be outside the fixation window without counting it as a fixation break. Any period longer than Eye.BlinkGracePeriod milliseconds outside the window is considered a fixation break.
 
@@ -317,6 +323,13 @@ TSequenceDesired (bigquery): part of displayData --> [agent, timestamp, trialnum
 
 Weight (json): [trial, timestamp, weight]
 
+
+## KEYBOARD SHORTCUTS
+ALT/OPTION + r --> manually deliver a single reward pulse (reward sound will be played & reward indicator LED will light up)
+ALT/OPTION + 1 --> manually flush pump for 1 minute (2 x 30second pulses)
+ALT/OPTION + 2 --> manually flush pump for 1 minute (4 x 30second pulses)
+ALT/OPTION + 3 --> manually flush pump for 1 minute (6 x 30second pulses)
+ALT/OPTION + 4 --> manually flush pump for 1 minute (8 x 30second pulses)
 
 ## ARDUINO V0.3 -- mkturk
 Digital Pins

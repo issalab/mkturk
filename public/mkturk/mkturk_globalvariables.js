@@ -131,6 +131,8 @@ ENV.Eye.CalibTrainMSE = [];
 ENV.Eye.CalibTestMSE = [];
 ENV.Eye.CalibTestMSETarg = {x: [], y: [], n: []};
 
+ENV.EffectorSaveJSONDataRelativetoFixationDotDisplayMS = -500;
+
 ENV.PhotodiodeSquareSizeInches = 1;
 ENV.PhotodiodeSquareX = 0;
 ENV.PhotodiodeSquareY = 0;
@@ -163,7 +165,7 @@ FLAGS.firestoretimeron = 0;
 FLAGS.underlayGridPoints = 0;
 FLAGS.RFIDGeneratorCreated = 0;
 FLAGS.automatortext = '';
-FLAGS.rtdbAgentNumConnections = null;
+FLAGS.rtdbAgentNumConnections = 1;
 
 FLAGS.filecodeSent = 0;
 

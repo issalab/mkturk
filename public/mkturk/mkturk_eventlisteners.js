@@ -253,20 +253,18 @@ function hold_promise(touchduration, boundingBoxes, punishOutsideTouch) {
       //================== (END) 4-END HOLD prematurely ==================//
     }//WHILE events
     
-    if (ENV.Eye.TrackEye) {
-      //Median x,y = final eye position estimate
-      var xs = [];
-      var ys = [];
-      if (CURRTRIAL.cxyt.length > 0) {
-        for (var q = 0; q <= CURRTRIAL.cxyt.length - 1; q++) {
-          xs.push(CURRTRIAL.cxyt[q][1]);
-          ys.push(CURRTRIAL.cxyt[q][2]);
-        } //FOR q samples
-        touchcxyt[1] = math.median(xs);
-        touchcxyt[2] = math.median(ys);
-      }//IF xy data
-      else { console.log('NO EYE POINTS ' + CURRTRIAL.cxyt); }//ELSE no xy samples
-    }
+    //Median x,y = final position estimate
+    var xs = [];
+    var ys = [];
+    if (CURRTRIAL.cxyt.length > 0) {
+      for (var q = 0; q <= CURRTRIAL.cxyt.length - 1; q++) {
+        xs.push(CURRTRIAL.cxyt[q][1]);
+        ys.push(CURRTRIAL.cxyt[q][2]);
+      } //FOR q samples
+      touchcxyt[1] = math.median(xs);
+      touchcxyt[2] = math.median(ys);
+    }//IF xy data
+    else { console.log('NO EFFECTOR POINTS ' + CURRTRIAL.cxyt); }//ELSE no xy samples
     return_event.cxyt = touchcxyt;
     resolveFunc(return_event);
   }//Generator

@@ -29,6 +29,8 @@ function index_init(){
   textobj.addEventListener('click', headsuptext_listener, false);
   //---- (END) for Safari
 
+  document.addEventListener('keyup', manualPumpKeyboardCallback, false);
+
   //============= Initialize Audio & Battery Objects ==================//
   // Prevent window scrolling and bounce back effect
   document.body.addEventListener('touchmove',(event) => { event.preventDefault(); }, { capture: false, passive: false });
@@ -405,6 +407,14 @@ async function index_reloadparameters(){
     console.log('Automatically using sequential sampling since SAVE IMAGES was specified.');
     // FLAGS.DirHandle = await window.showDirectoryPicker();
   } //IF SaveImages
+
+
+  if (typeof(TASK.RewardDuration) != "undefined"){
+    ENV.RewardDuration = TASK.RewardDuration/1000
+  }//IF TASK.RewardDuration
+  else{
+    ENV.RewardDuration = setReward(); //legacy
+  }//ELSE
 
   if (typeof TASK.DragtoRespond == 'undefined') {
     if (ENV.Eye.TrackEye == 0) {
@@ -1003,7 +1013,7 @@ function index_housekeeping_effector_data(){
     for (let i=0; i<=nsamples-1; i++ ){
       var trialnum = EVENTS[eventtype][eventname][i][0]
       var timestamp = new Date(EVENTS[eventtype][eventname][i][1]) - ENV.CurrentDate
-      if (trialnum == CURRTRIAL.num && timestamp >= EVENTS['trialseries']['StartTime'][trialnum]-1000){
+      if (trialnum == CURRTRIAL.num && timestamp >= EVENTS['trialseries']['StartTime'][trialnum]+ENV.EffectorSaveJSONDataRelativetoFixationDotDisplayMS){
         t.push(timestamp - EVENTS['trialseries']['StartTime'][trialnum])
 
         if (eventname == 'EyeData'){
@@ -1013,8 +1023,8 @@ function index_housekeeping_effector_data(){
           // a.push(EVENTS[eventtype][eventname][i][6])
         }//IF Eye
         else if (eventname == 'TouchData'){
-          x.push(EVENTS[eventtype][eventname][i][2])
-          y.push(EVENTS[eventtype][eventname][i][3])
+          x.push( EVENTS[eventtype][eventname][i][2] + CANVAS.offsetleft )
+          y.push( -EVENTS[eventtype][eventname][i][3] + ENV.ViewportPixels[1] )
           // q.push(EVENTS[eventtype][eventname][i][4])
         }//IF Touch
       }//IF within 1000ms of currtrial
@@ -1065,13 +1075,13 @@ function index_housekeeping_cloudstorage(){
     FLAGS.need2saveParameters = saveParameterstoFirebase(); // Save parameters asynchronously
   }
 
-  rtdb.ref('agents/' + ENV.Subject).once('value').then((snap) => {
-    try { FLAGS.rtdbAgentNumConnections = Object.keys(snap.val()).length; }
-    catch (err) {
-      FLAGS.rtdbAgentNumConnections = 0;
-      // console.error(`rtdbAgentRef most likely not yet instantiated: ${err}`);
-    }
-  });//rtdb.agent.then() when outside connection  
+  // rtdb.ref('agents/' + ENV.Subject).once('value').then((snap) => {
+  //   try { FLAGS.rtdbAgentNumConnections = Object.keys(snap.val()).length; }
+  //   catch (err) {
+  //     FLAGS.rtdbAgentNumConnections = 0;
+  //     // console.error(`rtdbAgentRef most likely not yet instantiated: ${err}`);
+  //   }
+  // });//rtdb.agent.then() when outside connection
 }//FUNCTION index_housekeeping_cloudstorage()
 
 function index_housekeeping_exits(){
@@ -1276,57 +1286,6 @@ async function playSound(idx) {
   // source.connect(audiocontext.destination);       // connect the source to the context's destination (the speakers)
   source.start(0); // play the source now
 }
-// Promise: dispense reward (through audio control)
-function dispenseReward() {
-  console.log('Legacy dispense reward');
-  return;
-  return new Promise(function (resolve, reject) {
-    audiocontext.resume();
-    var oscillator = audiocontext.createOscillator();
-    gainNode.gain.value = 1;
-    if (TASK.Pump == 1) {
-      oscillator.type = 'square'; //Square wave
-      oscillator.frequency.value = 25; //frequency in hertz
-    } //peristaltic (adafruit)
-    else if (TASK.Pump == 2) {
-      oscillator.type = 'square'; //Square wave
-      oscillator.frequency.value = 0.1; //frequency in hertz
-    } //submersible (TCS)
-    else if (TASK.Pump == 3) {
-      oscillator.type = 'square'; //Square wave
-      oscillator.frequency.value = 10; //frequency in hertz
-    } //diaphragm (TCS)
-    else if (TASK.Pump == 4) {
-      oscillator.type = 'square'; //Square wave
-      oscillator.frequency.value = 0.1; //frequency in hertz
-    } //piezoelectric (takasago)
-    else if (TASK.Pump == 5) {
-      oscillator.type = 'square';
-      oscillator.frequency.value = 0.1;
-    } //diaphragm new (TCS)
-    else if (TASK.Pump == 6) {
-      oscillator.type = 'square'; //Square wave
-      oscillator.frequency.value = 0.1; //frequency in hertz
-    } //piezoelectric 7ml/min (takasago)
-    // oscillator.connect(audiocontext.destination); //Connect sound to output
-    // //var gainNode = audiocontext.createGainNode(); //Create boost pedal
-    // //gainNode.gain.value=0.3; //set boost pedal to 30% volume
-    oscillator.connect(gainNode);
-    // //gainNode.connect(audiocontext.destination); //Connect boost pedal to output
-    // // oscillator.onended=function(){
-    // //   console.log('done with reward pulse');
-    // //   resolve(1);
-    // // }
-    var currentTime = audiocontext.currentTime;
-
-    oscillator.start(currentTime);
-    oscillator.stop(currentTime + ENV.RewardDuration);
-    setTimeout(function () {
-      console.log('sound done');
-      resolve(1);
-    }, ENV.RewardDuration * 1000);
-  }).then();
-}
 
 // Promise: choice time-out
 function choiceTimeOut(timeout) {
@@ -1387,7 +1346,7 @@ function setReward() {
   return (TASK.RewardPer1000Trials - b) / m / 1000;
 } //FUNCTION setReward()
 
-async function runPump(str) {
+async function runPumpButtonCallback(str) {
   var dur = 0;
   var npulse = 0;
 
@@ -1395,10 +1354,9 @@ async function runPump(str) {
     FLAGS.runPump = 1;
     if (str == 'flush') {
       dur = 5000; //milliseconds
-      npulse = 12;
+      npulse = 12*4; //4 minutes
     } else if (str == 'trigger') {
-      // dur = ENV.RewardDuration*1000 //milliseconds
-      dur = 190; //50 pulse * 20 uL/pulse = 1 mL milk, 1.24 mL water
+      dur = ENV.RewardDuration*1000 //milliseconds
       npulse = 50;
     }
     document.querySelector('button[id=pumpflush]').innerHTML = 'Stop Pump';
@@ -1407,8 +1365,8 @@ async function runPump(str) {
     //user pressed button again to stop pump
     FLAGS.runPump = 0;
     port.statustext_connect = '!!!! USER STOPPED PUMP !!!!';
-    document.querySelector('button[id=pumpflush]').innerHTML = '1min';
-    document.querySelector('button[id=pumptrigger]').innerHTML = '1mL';
+    document.querySelector('button[id=pumpflush]').innerHTML = '4min';
+    document.querySelector('button[id=pumptrigger]').innerHTML = '50x';
     updateHeadsUpDisplayDevices();
     return;
   }
@@ -1420,8 +1378,7 @@ async function runPump(str) {
     } else if (FLAGS.runPump == 0) {
       port.statustext_connect = '!!!! USER STOPPED PUMP !!!!';
       document.querySelector('button[id=pumpflush]').innerHTML = 'Flush 1min';
-      document.querySelector('button[id=pumptrigger]').innerHTML =
-        'Calibrate 1mL milk';
+      document.querySelector('button[id=pumptrigger]').innerHTML = '50 pulses';
       updateHeadsUpDisplayDevices();
       return; //pump was stopped by user
     } else if (FLAGS.runPump == 1 && ble.connected == true) {
@@ -1454,15 +1411,48 @@ async function runPump(str) {
       port.statustext_connect = '!!!! DONE PUMP CALIBRATION !!!!';
       port.statustext_sent = '!!!! Weight after ' + i + ' pulses @ ' + dur + 'ms = '
                               + Math.round([endweight - startweight] * 100) / 100 +
-                              'g vs (1, 1.24) for 100 pulse (milk,water) calibration';
-    } //if blescale
+                              'g vs 50 pulses calibration';
+    }//IF blescale
     console.log(port.statustext_sent);
-    document.querySelector('button[id=pumpflush]').innerHTML = '1min';
-    document.querySelector('button[id=pumptrigger]').innerHTML = '1mL';
+    document.querySelector('button[id=pumpflush]').innerHTML = '4min';
+    document.querySelector('button[id=pumptrigger]').innerHTML = '50x';
     FLAGS.runPump = 0;
     updateHeadsUpDisplayDevices();
   } //if usb pump
-}
+}//FUNCTION runPumpButtonCallback()
+
+async function manualPumpKeyboardCallback(event)
+{
+  var name = event.key;
+  var code = event.code;
+  if (name === 'Alt') {
+    return; //Do nothing
+  }
+  if (event.altKey && code == 'KeyR') {
+    if (port.connected == true){
+      playSound(2);
+      port.writepumpdurationtoUSB( Math.round(ENV.RewardDuration * 1000) );
+      console.log(`~~~MANUAL REWARD PULSE~~~ \n Combination of altKey + ${name} with Key code Value: ${code}`);
+    }
+  }//IF manual reward
+  else if (event.altKey && (code == 'Digit1' || code == 'Digit2' || code == 'Digit3' || code == 'Digit4') ) {
+    if (port.connected == true){
+      let num = Number(code[code.length-1])
+      console.log(`~~~FLUSHING PUMP ${num} minutes ~~~ \n Combination of altKey + ${name} with Key code Value: ${code}`);
+      //Digit1 = 1 minutes, ..., Digit4 = 4 minutes (in 30ms pulses)
+       for (let i=1; i<=num; i++){
+        playSound(2);
+        await port.writepumpdurationtoUSB( Math.round(30 * 1000) );
+        await timeout(30000 + 500);
+
+        playSound(2);
+        await port.writepumpdurationtoUSB( Math.round(30 * 1000) );
+        await timeout(30000 + 500);
+      }//FOR i seconds
+      console.log('~~~DONE FLUSHING PUMP~~~')
+    }//IF port.connected
+  }//ELSE IF flush
+}//FUNCTION manualPumpKeyboardCallback(event)
 
 function timeout(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));

@@ -237,12 +237,10 @@ index_init();
       let touchhold_return;
       if (ENV.StressTest == 1) {
         touchhold_return = { type: 'theld' };
-        let x =
-          boundingBoxesFixation.x[0][0] +
-          Math.round( Math.random() * (boundingBoxesFixation.x[0][1] - boundingBoxesFixation.x[0][0]) );
-        let y =
-          boundingBoxesFixation.y[0][0] +
-          Math.round( Math.random() * (boundingBoxesFixation.y[0][1] - boundingBoxesFixation.y[0][0]) );
+        let x = boundingBoxesFixation.x[0][0] +
+                Math.round( Math.random() * (boundingBoxesFixation.x[0][1] - boundingBoxesFixation.x[0][0]) );
+        let y = boundingBoxesFixation.y[0][0] +
+                Math.round( Math.random() * (boundingBoxesFixation.y[0][1] - boundingBoxesFixation.y[0][0]) );
 
         touchhold_return.cxyt = [ 0, x, y, Date.now() - ENV.CurrentDate.valueOf() ];
         FLAGS.waitingforTouches--;
@@ -411,7 +409,20 @@ index_init();
 
         if (typeof race_return.type == 'undefined') {
           CURRTRIAL.samplefixationtouchevent = 'theld';
-          CURRTRIAL.samplefixationxyt = [ 0, 0, Date.now() - ENV.CurrentDate.valueOf() ];
+          //Median x,y = final position estimate
+          let xs = []; let ys = [];
+          if (CURRTRIAL.cxyt.length > 0) {
+            for (var q = 0; q <= CURRTRIAL.cxyt.length - 1; q++) {
+              xs.push(CURRTRIAL.cxyt[q][1]);
+              ys.push(CURRTRIAL.cxyt[q][2]);
+            } //FOR q samples
+          }//IF xy data
+          if (xs.length > 0){
+            CURRTRIAL.samplefixationxyt = [ math.median(xs), math.median(ys), Date.now() - ENV.CurrentDate.valueOf() ];
+          }
+          else{
+            CURRTRIAL.samplefixationxyt = [ -1, -1, Date.now() - ENV.CurrentDate.valueOf() ];
+          }
         }//IF held fixation during Sample
         else {
           CURRTRIAL.samplefixationtouchevent = race_return.type;
@@ -661,7 +672,6 @@ index_init();
     //REWARD PUNISH    REWARD PUNISH    REWARD PUNISH    REWARD PUNISH    REWARD PUNISH    //
 
     index_determine_numrewards();
-    ENV.RewardDuration = setReward();
     logEVENTS('NReward', CURRTRIAL.nreward, 'trialseries');
 
     //============ DELIVER REWARD/PUNISH ============//
