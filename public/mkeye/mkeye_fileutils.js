@@ -29,6 +29,7 @@ try {
 
     mkeye.file.name = mkeye.file.list[0].fullpath;
     mkeye.file.fileChanged = true;
+  // mkeye.file.name = '/mkturkfiles/datafiles/Eliaso/2022-11-21T20:49:16_Eliaso.json'
     let rawStorageFile = await getStorageFile(mkeye.file.name);
 
     processData(rawStorageFile);
@@ -105,6 +106,16 @@ async function processData(data) {
   mkeye.boundingBoxes.sample = getObjectBoundingBoxes(mkeye.data.SCENES.SampleScenes);
   mkeye.boundingBoxes.test = getObjectBoundingBoxes(mkeye.data.SCENES.TestScenes)
 
+  let bbtest= getObjectBoundingBoxes(mkeye.data.SCENES.TestScenes)
+  for (var i=0; i<=mkeye.data.TRIALEVENTS.FixationGridIndex.length-1; i++){
+    mkeye.boundingBoxes.test.bb[i] = [];
+    mkeye.boundingBoxes.test.name[i] = [];
+    for (let j=0; j<= Object.keys(mkeye.data.TRIALEVENTS.Test).length-1; j++){
+      mkeye.boundingBoxes.test.bb[i].push(...bbtest.bb[j])
+      mkeye.boundingBoxes.test.name[i].push(...bbtest.name[j])
+    }//FOR j test boxes
+  }//FOR i trials
+
   //----- Bounding Boxes Fixation, SampleFixation
   let fixRad
   let sampleFixRad
@@ -129,15 +140,17 @@ async function processData(data) {
   //----- Bounding Boxes Choice
   mkeye.boundingBoxes.choice.bb[0]=[];
   mkeye.boundingBoxes.choice.name[0]=[];
-  for (let i=0; i<=mkeye.data.TASK.ChoiceGridIndex.length-1; i++){
-    mkeye.boundingBoxes.choice.bb[0][i] = convertToBB(mkeye.data.TASK.ChoiceGridIndex[i], mkeye.data.ENV.ChoiceRadius)
-    if (i==0){
-      mkeye.boundingBoxes.choice.name[0][i] = 'Same_circle'
-    }
-    else if (i==1){
-      mkeye.boundingBoxes.choice.name[0][i] = 'Different_square'
-    }
-  }//FOR i choices
+  if (typeof(mkeye.data.TASK.ChoiceGridIndex) != 'undefined'){
+    for (let i=0; i<=mkeye.data.TASK.ChoiceGridIndex.length-1; i++){
+      mkeye.boundingBoxes.choice.bb[0][i] = convertToBB(mkeye.data.TASK.ChoiceGridIndex[i], mkeye.data.ENV.ChoiceRadius)
+      if (i==0){
+        mkeye.boundingBoxes.choice.name[0][i] = 'Same_circle'
+      }
+      else if (i==1){
+        mkeye.boundingBoxes.choice.name[0][i] = 'Different_square'
+      }
+    }//FOR i choices
+  }//IF ChoiceGridIndex defined
 
   //----- Create a TestGridIndex (complements FixationGridIndex & SampleGridIndex)
   mkeye.data.TRIALEVENTS.TestGridIndex = [];
@@ -164,6 +177,7 @@ async function processData(data) {
   console.log(mkeye.file.dateSaved);
 
   if (mkeye.file.fileChanged) {
+    destroyCharts();
     initializeFirestoreCallbacks();
     initializeRTDBCallbacks();
     initializeChartData();
@@ -184,8 +198,14 @@ function initializeFirestoreCallbacks(){
   }//IF previous callback exists, detach listener
   unsubscribeFirestore = db.collection("eyecalibrations").doc(mkeye.data.TASK.Agent)
       .onSnapshot((doc) => {
-        mkeye.calib.xparam = doc.data().CalibXTransform;
-        mkeye.calib.yparam = doc.data().CalibYTransform;
+        if (typeof(doc.data()) != "undefined"){
+          mkeye.calib.xparam = doc.data().CalibXTransform;
+          mkeye.calib.yparam = doc.data().CalibYTransform;  
+        }
+        else{
+          mkeye.calib.xparam = [1,0,1]
+          mkeye.calib.yparam = [0,1,0]
+        }
         mkeye.calib.inverse_mkturk = getCalibInverse(mkeye.calib.xparam,mkeye.calib.yparam)
 
         updateManualCalibGUI()
@@ -228,19 +248,30 @@ function initializeRTDBCallbacks(){
     mkeye.live.trial = snap.val().trialnum
     mkeye.live.filename = snap.val().filename
     mkeye.live.performance = snap.val().performance
+
+    if ( mkeye.live.filename.indexOf(mkeye.file.name) >= 0  ){
+      mkeye.file.active = '√Active'
+    }
+    else{
+      mkeye.file.active = '!Active'
+    }
+    updateBasicStatsText()
   })//ON CALLBACK for mkturk instances
 
   rtdb.ref(`data/${mkeye.data.TASK.Agent}`).on('value', (snap) => {
     if (typeof(mkeye.realtimescatter != "undefined")){
-      // if (Math.random()<=1){
+      try{
         mkeye.realtimescatter.update(snap.val())
 
         mkeye.live.x = snap.val().x
         mkeye.live.y = snap.val().y
         mkeye.live.boundingBoxes = snap.val().boundingBoxes
         mkeye.live.meta = snap.val().meta
-        mkeye.live.timestamp = new Date(snap.val().timestamp)  
-      // }
+        mkeye.live.timestamp = new Date(snap.val().timestamp)
+      }
+      catch{
+        console.log('rtdb')
+      }
     }//IF plot initialized
   })//ON CALLBACK for effector data
 }//FUNCTION initializeRTDBCallbacks()
@@ -278,13 +309,13 @@ function getObjectBoundingBoxes(scenes){
       }//IF no bounding boxes available because screen not used in task
 
       for (let j=0; j<=scenes[i].OBJECTS[obj].boundingBox2DPixels.length-1; j++){
-        if ( scenes[i].OBJECTS[obj].visible[j] == 0){
+        if ( scenes[i].OBJECTS[obj].visible[j] == 0 || scenes[i].OBJECTS[obj].boundingBox2DPixels[j].length == 0){
           allbb.bb[ stimind + j ].push( [null, null, null, null] )
           allbb.name [ stimind + j ].push('no ' + obj)  
-        }
+        }//IF object not visible || box not created yet for that stimulus
         else{
           allbb.bb[ stimind + j ].push( [...scenes[i].OBJECTS[obj].boundingBox2DPixels[j][0].x, 
-            ...scenes[i].OBJECTS[obj].boundingBox2DPixels[j][0].y ] )
+                                         ...scenes[i].OBJECTS[obj].boundingBox2DPixels[j][0].y ] )        
           allbb.name[ stimind + j ].push(obj)
         }
       }//FOR j images
@@ -373,7 +404,7 @@ function saveEyeCalibrationtoFirestore(
 }//FUNCTION saveEyeCalibrationtoFirestore
 
 function convertToBB(gridind,rad){
-  let xcent = mkeye.data.ENV.XGridCenter[ gridind ]
-  let ycent = mkeye.data.ENV.YGridCenter[ gridind ]
+  let xcent = mkeye.data.ENV.XGridCenter[ gridind ] + mkeye.data.CANVAS.offsetleft
+  let ycent = mkeye.data.ENV.YGridCenter[ gridind ] + mkeye.data.CANVAS.offsettop
   return [ xcent-rad, xcent+rad, ycent-rad, ycent+rad]
 }//FUNCTION convertToBB

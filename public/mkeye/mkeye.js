@@ -53,6 +53,7 @@ mkeye.live = {
 }//live data from realtime database
 
 mkeye.calib = {xparam: [], yparam: [], inverse_mkturk: [], guielementnames: ['xgain','ycross','xoffset','xcross','ygain','yoffset'], guiIDs: []}
+mkeye.instantCalib = { fixation: [], samplefixation: [] }
 for (let i=0; i<=mkeye.calib.guielementnames.length-1; i++){
   mkeye.calib.guiIDs[i] = document.querySelector('input[id=' + CSS.escape(mkeye.calib.guielementnames[i]) + "]")
   mkeye.calib.guiIDs[i].addEventListener('input', updateManualCalibVar );

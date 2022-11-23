@@ -10,7 +10,12 @@ function initializeChartData(){
   mkeye.scatters = [];
   mkeye.scatters.push( new ScatterXY('FixationGridIndex','FixationXYT', 'Fixation', 'fixationXYCanvas') )
   mkeye.scatters.push( new ScatterXY('SampleGridIndex','SampleFixationXYT', 'SampleFixation', 'samplefixationXYCanvas') )
-  mkeye.scatters.push( new ScatterXY('TestGridIndex','ResponseXYT', 'Choice', 'choiceXYCanvas') )
+  if (mkeye.data.TASK.SameDifferent >0 && mkeye.boundingBoxes['choice'].bb[0].length >0){
+    mkeye.scatters.push( new ScatterXY('TestGridIndex','ResponseXYT', 'Choice', 'choiceXYCanvas') )
+  }
+  else if (mkeye.boundingBoxes['test'].bb[0].length>0){
+    mkeye.scatters.push( new ScatterXY('TestGridIndex','ResponseXYT', 'Test', 'choiceXYCanvas') )
+  }
   for (let i=0; i<=mkeye.scatters.length-1; i++){
     mkeye.scatters[i].init()
   }//FOR i scatters
@@ -41,11 +46,30 @@ function updateCharts(){
   console.log('--> DONE UPDATING CHARTS')
 }//FUNCTION updateCharts()
 
+function destroyCharts(){
+  for (let i=0; i<=mkeye.scatters.length-1; i++){
+    if (typeof(mkeye.scatters[i].chart) != 'undefined'){
+      mkeye.scatters[i].chart.destroy()
+    }
+  }//FOR i scatters
+  if (typeof(mkeye.line.EffectorTrajectories) != 'undefined' && typeof(mkeye.line.EffectorTrajectories.chart) != 'undefined'){
+    mkeye.line.EffectorTrajectories.chart.destroy()
+  }
+  if (typeof(mkeye.line.BoundingBoxes) != 'undefined' && typeof(mkeye.line.BoundingBoxes.chart) != 'undefined'){
+    mkeye.line.BoundingBoxes.chart.destroy()
+  }
+  if (typeof(mkeye.realtimescatter)!='undefined' && typeof(mkeye.realtimescatter.chart) != 'undefined'){
+    mkeye.realtimescatter.chart.destroy() 
+  }
+  console.log('destroyed charts')  
+}//FUNCTION destroyCharts
+
 function updateBasicStatsText(){
   let statsTextSelector = document.querySelector('#basicstatstext');
   statsTextSelector.innerHTML = mkeye.stats.agent + ": " +
                                 mkeye.stats.pctCorrect + '% (n=' + mkeye.stats.trials + ')  ' + 
-                                mkeye.stats.effector + 'track'
+                                mkeye.stats.effector + 'track '
+                                + mkeye.file.active
 }//FUNCTION updateBasicStatsText()
 
 class RealtimeScatter{
@@ -176,7 +200,7 @@ class RealtimeScatter{
     this.chart.data.datasets[0].data.push({x: x_mk, y: y_mk});
 
     //--- manual calib trace
-    if (typeof(mkeye.calib.xparam[0]) != 'undefined' && Math.random()<=0.1){
+    if (typeof(mkeye.calib.xparam[0]) != 'undefined' && Math.random()<=0.25){
       let xy
       if (mkeye.stats.effector == 'eye'){
         xy = applyLinearTransform(
@@ -185,7 +209,7 @@ class RealtimeScatter{
           mkeye.calib.inverse_mkturk[0],
           mkeye.calib.inverse_mkturk[1]
         );//Backward: screen coords --> raw coords
-        if (Math.random()<=0.1){
+        if (Math.random()<=0.25){
           console.log('xy_raw: ' + xy[0] + ', ' + xy[1])
         }
       }//IF eye, undo mkturk calibration to go back to raw eye coordinates
@@ -209,7 +233,7 @@ class RealtimeScatter{
     //get lag
     let t0 = new Date(newdata.timestamp)
 
-    if (Math.random() <= 0.01){
+    if (Math.random() <= 0.02){
       console.log('lag: ' + ( new Date() - t0 ) + ' ms,   ' +
       'SR: ' + Math.round(1000/( t0 - this.lasttimestamp ) ) + ' Hz')
     }
@@ -299,6 +323,32 @@ class ScatterXY{
           meta: crct[i] //custom by user
         })
     }//FOR i targs
+
+    //---- add instant calibration
+    let cols = []
+    for (let i=0; i<=4-1; i++){
+      xy = []
+      crct = []
+      cols = []
+      for (let j=0; j<=this.targets.g.length-1; j++){
+        xy.push( {x: 0, y: 0} )
+        crct.push(2)
+        cols.push(mkeye.colors.grid[this.targets.g[j]])
+      }//FOR j targets
+      let lbl
+      if (i==0){ lbl = 'trials4'}
+      else if (i==1){ lbl = 'targs4'}
+      else if (i==2){ lbl = 'trials_cross6'}
+      else if (i==3){ lbl = 'targs_cross6'}
+
+      data.datasets.push({
+        label: lbl,
+        data: xy,
+        backgroundColor: cols,
+        meta: crct //custom by user
+      })      
+    }//FOR i calibration types (cross/no cross terms, data per trial/per target)
+    
     const config = {
       type: 'line',
       data: data,
@@ -343,6 +393,9 @@ class ScatterXY{
     }//IF incorrect
     else if ( context.dataset.meta[index] == 1){
       return 4
+    }
+    else if ( context.dataset.meta[index] == 2){
+        return 8
     }//ELSEIF correct
   }//FUNCTION customRadius(context)
 
@@ -389,8 +442,49 @@ class ScatterXY{
       }//ELSE incorrect
     }//FOR i trials
     this.trials = xyt[0].length
+
+    if (mkeye.stats.trials * mkeye.stats.pctCorrect/100 > 1 && 
+        (this.plotname.toLowerCase() == 'fixation' || this.plotname.toLowerCase() == 'samplefixation')
+    ){
+      let screen = this.plotname.toLowerCase()
+      instantCalib(this.plotname,this.variablename);
+      for (let i=0; i<=mkeye.instantCalib[screen].xparam.length-1; i++){
+        if (mkeye.instantCalib[screen].xparam != []){
+          for (let j=0; j<=mkeye.instantCalib[screen].xpred[i].length-1; j++){
+            this.chart.data.datasets[ this.targets.g.length + i ].data[j] = 
+                          { x: mkeye.instantCalib[screen].xpred[i][j], y: mkeye.instantCalib[screen].ypred[i][j]}
+          }//FOR j targets
+        }//IF successful calibration (determinant != 0 in mkeye_analysis fitting function)
+      }//FOR i calib types
+      if (mkeye.instantCalib[screen].xparam != []){
+        this.updateCalibText(this.plotname)
+        document.querySelector("textarea[id=instantCalib" + this.plotname + "_text]").style.display = 'block'
+        document.querySelector("textarea[id=instantCalib" + this.plotname + "_text]").style.visibility = 'visible'
+      }
+      else{
+        document.querySelector("textarea[id=instantCalib" + this.plotname + "_text]").style.display = 'none' //if do style.visibility=hidden, element will still occupy space
+      }
+    }//IF fixation screen
+
     this.chart.update()
   }//FUNCTION update
+
+  updateCalibText(screen){
+    // document.querySelector("button[id=uploadCalib]").addEventListener('click',uploadCalibrationToFirestore)
+    let str_param = 'INSTANT CALIB (' + screen + ')\n'
+    str_param = str_param.concat('1: trials_4 | 2: targs_4 | 3: trials_cross6 | 4: targs_cross6 \n')
+
+    let str_rmse = ''
+    for (let i=0; i<=mkeye.instantCalib[screen.toLowerCase()].xparam.length-1; i++){
+      str_param = str_param.concat('X,Y: [' + math.round(mkeye.instantCalib[screen.toLowerCase()].xparam[i],1) + ']' )
+      str_param = str_param.concat(', [' + math.round(mkeye.instantCalib[screen.toLowerCase()].yparam[i],1) + ']\n')
+      str_rmse = str_rmse.concat('rmse_x,y: [' + math.round(mkeye.instantCalib[screen.toLowerCase()].xrmse[i],1) + ']') 
+      str_rmse = str_rmse.concat(', [' + math.round(mkeye.instantCalib[screen.toLowerCase()].yrmse[i],1) + ']\n')
+    }//FOR i calib types
+
+    document.querySelector("textarea[id=instantCalib" + screen + "_text]").value = str_param + '\n' + str_rmse
+    // instantCalibFixation_text
+  }//FUNCTION updateCalibText(screen)
 }//CLASS ScatterXY
 
 class LineXY{
@@ -582,6 +676,9 @@ class LineBoxes{
     let ntrials = mkeye.data.TRIALEVENTS.Response.length;
     let screens = [ 'fixation', 'samplefixation']
     for (var s=0; s<=screens.length-1; s++){
+      if (mkeye.boundingBoxes[screens[s]].bb.length == 0){
+        continue
+      }
       let xy = [];
       for (let i=this.trials; i<=ntrials-1; i++){
         for (let j=0; j<=mkeye.boundingBoxes[screens[s]].bb[i].length-1; j++){
