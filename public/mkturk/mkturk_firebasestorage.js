@@ -361,20 +361,89 @@ async function loadParametersfromFirebase(paramfile_path) {
     }
     await loadAgentRFIDfromFirestore(ENV.Subject, TASK.Species);
 
-    if (typeof TASK.ImageRewardList != 'undefined') {
-      for (var i = 0; i <= TASK.ImageRewardList.length - 1; i++) {
-        var data = await loadTextfromFirebase(TASK.ImageRewardList[i]);
-        for (var j = 0; j <= data.ImageRewardList.length / 2 - 1; j++) {
-          ImageRewardList[data.ImageRewardList[2 * j + 1]] =
-            data.ImageRewardList[2 * j];
-        }
-      } //for i reward lists
-    }
-
     var filemeta = await getFileMetadataFirebase(paramfile_path);
     ENV.ParamFileName = '/' + filemeta.fullPath;
     ENV.ParamFileRev = filemeta.generation;
     ENV.ParamFileDate = new Date(filemeta.updated);
+
+    // FIXATION SCREEN OPTIONS
+    if (typeof TASK.FixationDotSizeInches == 'undefined'){TASK.FixationDotSizeInches = 0;}
+    if (typeof TASK.FixationDuration == 'undefined'){TASK.FixationDuration = 0;}
+    if (typeof TASK.FixationWindowSizeInches == 'undefined'){TASK.FixationWindowSizeInches = 0;}
+    if (typeof TASK.NFixations == 'undefined'){TASK.NFixations = 1;}
+    if (typeof TASK.FixationUsesSample == 'undefined'){TASK.FixationUsesSample = 0;}
+    if (typeof TASK.FixationTimeOut == 'undefined'){TASK.FixationTimeOut= 3000;}
+
+    // TASK OPTONS
+    if (typeof TASK.RewardStage == 'undefined'){TASK.RewardStage = 0;}
+    if (typeof TASK.NRSVP == 'undefined'){TASK.NRSVP = 0;}
+    if (typeof TASK.SameDifferent == 'undefined'){TASK.SameDifferent = 0;}
+
+    // SAMPLE SCREEN
+    if (typeof TASK.SampleGridIndex == 'undefined'){TASK.SampleGridIndex = 0;}
+    if (typeof TASK.SamplePRE == 'undefined'){TASK.SamplePRE = 0;}
+    if (typeof TASK.SampleOFF == 'undefined'){TASK.SampleOFF = 0;}
+    if (typeof TASK.KeepSampleON == 'undefined'){TASK.KeepSampleON = 0;}
+
+    // TEST SCREEN
+    if (typeof TASK.TestGridIndex == 'undefined'){ 
+      if (TASK.ImageBagsTest.length == 1){
+        TASK.TestGridIndex = [0]        
+      }
+      else{
+        TASK.TestGridIndex = [0,1]
+      }//ELSE 2-way task using first two gridpoints
+    }
+    if (typeof TASK.ObjectGridIndex == 'undefined'){TASK.ObjectGridIndex = [];}
+    if (typeof TASK.TestOFF == 'undefined'){TASK.TestOFF = 0;}
+    if (typeof TASK.KeepTestON == 'undefined'){TASK.KeepTestON = 0;}
+
+    // CHOICE SCREEN
+    if (typeof TASK.ChoiceGridIndex == 'undefined'){TASK.ChoiceGridIndex = [0,1];}
+    if (typeof TASK.ChoiceSizeInches == 'undefined'){TASK.ChoiceSizeInches = 1;}
+    if (typeof TASK.ChoiceTimeOut == 'undefined'){TASK.ChoiceTimeOut = 5000;}
+    if (typeof TASK.HideChoiceDistractors == 'undefined'){TASK.HideChoiceDistractors = 0;}
+
+    // SAMPLING STRATEGY
+    if (typeof TASK.SamplingStrategy == 'undefined'){ TASK.SamplingStrategy = 'uniform_without_replacement'; }
+    if (typeof TASK.NStimuliPerBagBlock == 'undefined'){ TASK.NStimuliPerBagBlock = 0; }
+
+    // RESPONSE
+    if (typeof TASK.DragtoRespond == 'undefined'){TASK.DragtoRespond = 0;}
+    if (typeof TASK.NStickyResponse == 'undefined'){TASK.NStickyResponse = 0;}
+
+    // REWARD
+    if (typeof TASK.NConsecutiveHitsforBonus == 'undefined'){TASK.NConsecutiveHitsforBonus = 0;}
+    if (typeof TASK.NRewardMax == 'undefined'){TASK.NRewardMax = 1;}
+    if (typeof TASK.NRSVPMax == 'undefined'){TASK.NRSVPMax = 0;}
+
+    // AUTOMATOR
+    if (typeof TASK.Automator == 'undefined'){TASK.Automator = 0;}
+    if (typeof TASK.AutomatorFilePath == 'undefined'){TASK.AutomatorFilePath = '';}
+    if (typeof TASK.CurrentAutomatorStage == 'undefined'){TASK.CurrentAutomatorStage = 0;}
+
+    // DISPLAY
+    if (typeof TASK.GridXOffsetInches == 'undefined'){TASK.GridXOffsetInches = 0}
+    if (typeof TASK.GridYOffsetInches == 'undefined'){TASK.GridYOffsetInches = 0}
+    if (typeof TASK.BackgroundColor2D == 'undefined') {TASK.BackgroundColor2D = '#7F7F7F';}
+    if (typeof TASK.HeadsupDisplayFraction == 'undefined') {TASK.HeadsupDisplayFraction = 0;}
+    if (typeof TASK.Photodiode == 'undefined'){TASK.Photodiode = 1;}
+    if (typeof TASK.THREEJScameraFOV == 'undefined'){TASK.THREEJScameraFOV=45;} 
+    if (typeof TASK.THREEJScameraZDist == 'undefined'){TASK.THREEJScameraZDist=10;} 
+    if (typeof TASK.THREEJSRenderRatio == 'undefined'){TASK.THREEJSRenderRatio=2;} 
+    if (typeof TASK.SaveImagesResolution == 'undefined'){TASK.SaveImagesResolution = 0;}
+    if (typeof TASK.DeviceConfig == 'undefined'){TASK.DeviceConfig = '';}
+
+    // DATA SAVING
+    if (typeof TASK.BQSaveDisplayTimes == 'undefined'){TASK.BQSaveDisplayTimes = 1;}
+    if (typeof TASK.BQSaveEye == 'undefined'){TASK.BQSaveEye = 1;}
+    if (typeof TASK.BQSaveTouch == 'undefined'){TASK.BQSaveTouch = 1;}
+
+    // MISCELLANEOUS
+    if (typeof TASK.CalibrateEye == 'undefined'){TASK.CalibrateEye = 0;}
+    if (typeof TASK.CalibrateEyeCrossTerms == 'undefined'){TASK.CalibrateEyeCrossTerms = 0;}
+    if (typeof TASK.CheckRFID == 'undefined'){TASK.CheckRFID = 0;}
+    if (typeof TASK.InterTrialInterval == 'undefined'){TASK.InterTrialInterval = 0}
 
     return 0; //need2loadParameters
   } catch (error) {

@@ -406,10 +406,7 @@ async get_next_trial(){
 		}//ELSE single filename
 	}//IF sample image
 	var sample_reward = -1
-	if (typeof(ImageRewardList[sample_filename]) != "undefined"){
-		sample_reward = ImageRewardList[sample_filename]		
-	}
-	
+		
 	if (typeof(test_filenames) != "undefined"){
 		var test_images = []
 		for (var i = 0; i <= test_filenames.length-1; i++){
@@ -514,7 +511,7 @@ selectTestImages(correct_label, testbag_labels){
 	var correctSelection = NaN;
 
 	// If SR is on, 
-	if ((typeof(TASK.SameDifferent) == "undefined" || TASK.SameDifferent <= 0) &&
+	if (TASK.SameDifferent <= 0 &&
 		TASK.ObjectGridIndex.length == TASK.ImageBagsTest.length){
 		// For each object, 
 		for (var i = 0; i<TASK.ObjectGridIndex.length; i++){

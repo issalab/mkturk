@@ -111,7 +111,7 @@ function hold_promise(touchduration, boundingBoxes, punishOutsideTouch) {
             rtdb.ref('data/' + ENV.Subject).set(touchDataObj);
           }//IF realtimedatabase
 
-          if (!ENV.Eye.TrackEye && (TASK.BQSaveTouch === undefined || TASK.BQSaveTouch > 0) ) {
+          if (!ENV.Eye.TrackEye) {
             logEVENTS('TouchData', [touchDataObj.x, touchDataObj.y, touchDataObj.meta],'timeseries');
             // let tm_bq_file = new Date(new Date(Date.now()).toJSON()) - ENV.CurrentDate;
             // let tm_bq_trial = tm_bq_file - EVENTS['trialseries']['StartTime'][CURRTRIAL.num]

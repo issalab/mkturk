@@ -385,9 +385,7 @@ function render3D(taskscreen, s, f, gr, fr, sc, ob, id, im) {
     // mkm.boundingBoxVisibleCanvas = [left, top, swidth_2d, sheight_2d];
 
     // Transfer 3D Canvas to 2D Canvas
-    if ( TASK.Agent == 'SaveImages'
-          && typeof(TASK.SaveImagesResolution) != "undefined"
-          && TASK.SaveImagesResolution>0 )
+    if ( TASK.Agent == 'SaveImages' && TASK.SaveImagesResolution>0 )
     {
       VISIBLECANVAS.getContext('2d').drawImage(
         renderer.domElement,
@@ -1548,16 +1546,7 @@ function estimatefps() {
 //================== CANVAS SETUP ==================//
 function refreshCanvasSettings(TASK) {
   // Adjust location of CANVAS based on species-specific setup
-  if (typeof TASK.HeadsupDisplayFraction != 'undefined') {
-    CANVAS.headsupfraction = TASK.HeadsupDisplayFraction;
-  } //IF headsupdisplayfraction specified
-  else {
-    if (TASK.Species == 'macaque' || TASK.Species == 'human') {
-      CANVAS.headsupfraction = 0;
-    } else if (TASK.Species == 'marmoset' || TASK.Species == 'model') {
-      CANVAS.headsupfraction = 1 / 3 - 0.06;
-    }
-  }
+  CANVAS.headsupfraction = TASK.HeadsupDisplayFraction;
 
   if (CANVAS.headsupfraction == 0) {
     var textobj = document.getElementById('headsuptext');
@@ -1670,7 +1659,7 @@ function setupCanvas(canvasobj) {
     canvasobj.style.display = 'block'; //visible
     if (
       TASK.Agent == 'SaveImages' &&
-      TASK.SaveImagesResolution !== undefined &&
+      TASK.SaveImagesResolution > 0 &&
       canvasobj == VISIBLECANVAS
     ) {
       canvasobj.width = TASK.SaveImagesResolution;
@@ -1727,7 +1716,7 @@ function scaleCanvasforHiDPI(canvasobj) {
   if (ENV.DevicePixelRatio !== ENV.BackingStoreRatio) {
     if (
       TASK.Agent == 'SaveImages' &&
-      TASK.SaveImagesResolution !== undefined &&
+      TASK.SaveImagesResolution > 0 &&
       canvasobj == VISIBLECANVAS
     ) {
       canvasobj.style.width = canvasobj.width + 'px';
@@ -1881,11 +1870,9 @@ function updateHeadsUpDisplay() {
         '<br>' +
         'NRewards=' +
         nreward +
-        ', <font color=green><b>' +
-        Math.round((TASK.RewardPer1000Trials * nreward) / 1000) +
-        'mL</b></font> (' +
-        Math.round(TASK.RewardPer1000Trials) +
-        ' mL per 1000)' +
+        '</font> (' +
+        Math.round(TASK.RewardDuration) +
+        ' milliseconds)' +
         '<br> ' +
         task1 +
         '<br>' +

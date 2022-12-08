@@ -185,7 +185,7 @@ async function automateTask(automatorData, trialhistory) {
 function stageHash(task) {
   // Returns a value that uniquely describes the automator and stage of the automator
   let currentStageHashStr = '';
-  if (task.Automator != 0) {
+  if (task.Automator > 0) {
     currentStageHashStr = `${task.AutomatorFilePath}_stage${task.CurrentAutomatorStage}`;
   } else {
     currentStageHashStr = 'automator_off';

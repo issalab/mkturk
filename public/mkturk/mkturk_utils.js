@@ -222,7 +222,7 @@ async function index_init_params_screen_automator(){
     FLAGS.SaveImagesCtx = FLAGS.SaveImagesCvs.getContext('2d');
   } //IF SaveImages, ask to stream to local disk
 
-  if (TASK.DeviceConfig !== undefined) {
+  if (TASK.DeviceConfig !== '') {
     screenSpecs = await queryDevice(TASK.DeviceConfig, 'docname');
     if (screenSpecs.isEmpty) {
       console.error(`TASK.DeviceConfig was defined but no record of ${TASK.DeviceConfig} was found in firestore/devices. Behavior of all downstream display code is no longer guaranteed`);
@@ -370,11 +370,11 @@ async function index_init_params_screen_automator(){
   //===================== AWAIT INITIALIZE AUTOMATOR =================//
   // Initialize automator - change TASK to that specified by TASK.CurrentAutomatorStage.
   var num_prebuffer_trials = 300;
-  if (TASK.Automator != 0) {
+  if (TASK.Automator > 0) {
     automateTask(automator_data, trialhistory);
     await saveParameterstoFirebase();
     await loadParametersfromFirebase(ENV.ParamFileName);
-  } //IF TASK.Automator != 0
+  } //IF TASK.Automator > 0
 
   //============= AWAIT LOAD SOUNDS =============//
   soundpromises = sounds.serial.map(loadSoundfromFirebase); //create array of sound load Promises
@@ -408,23 +408,11 @@ async function index_reloadparameters(){
     // FLAGS.DirHandle = await window.showDirectoryPicker();
   } //IF SaveImages
 
+  ENV.RewardDuration = TASK.RewardDuration/1000
 
-  if (typeof(TASK.RewardDuration) != "undefined"){
-    ENV.RewardDuration = TASK.RewardDuration/1000
-  }//IF TASK.RewardDuration
-  else{
-    ENV.RewardDuration = setReward(); //legacy
-  }//ELSE
-
-  if (typeof TASK.DragtoRespond == 'undefined') {
-    if (ENV.Eye.TrackEye == 0) {
-      // IF touch, then only clicking
-      TASK.DragtoRespond = 0; // click in box
-    } else if (ENV.Eye.TrackEye != 0) {
-      // ELSE IF eyetracker, allow dragging
-      TASK.DragtoRespond = 1; // drag into box
-    }
-  } //IF TASK.DragtoRespond
+  if (ENV.Eye.TrackEye != 0) {
+    TASK.DragtoRespond = 1; // drag into box
+  }//IF eyetracker, allow dragging
 
   //load previous calibration if available
   if (ENV.Eye.TrackEye > 0) {
@@ -515,10 +503,9 @@ async function index_reloadparameters(){
   //Fixation dot, if >0, will appear on both fixation & sample screens
   ENV.FixationDotRadius = (TASK.FixationDotSizeInches / 2) * ENV.ViewportPPI;
 
-  if (TASK.FixationDotSizeInches !== undefined) {
-    ENV.FixationSquareWidth = TASK.FixationDotSizeInches * ENV.ViewportPPI;
-    ENV.FixationSquareColor = 'white';
-  }
+  ENV.FixationSquareWidth = TASK.FixationDotSizeInches * ENV.ViewportPPI;
+  ENV.FixationSquareColor = 'white';
+  
 
   //Fixation window, if specified, operates on both fixation & sample screens
   ENV.FixationWindowRadius = (TASK.FixationWindowSizeInches / 2) * ENV.ViewportPPI;
@@ -545,10 +532,6 @@ async function index_reloadparameters(){
   CURRTRIAL.reset();
   EVENTS.reset_trialseries();
   EVENTS.reset_timeseries();
-
-  if (typeof TASK.Photodiode == 'undefined') {
-    TASK.Photodiode = 0;
-  }
   return 1
 }//FUNCTION index_reloadparameters()
 
@@ -713,11 +696,7 @@ function index_expandframes(taskscreen,ind){
     );
 
     let blankdurationpre;
-    if (ind == 0) {
-      if ( typeof TASK.SamplePRE === 'undefined' || TASK.SamplePRE === null || TASK.SamplePRE < 0)
-      { blankdurationpre = Math.max(100, TASK.SampleOFF); }
-      else { blankdurationpre = TASK.SamplePRE; }//ELSE user specified
-    }//IF 1st stim
+    if (ind == 0) { blankdurationpre = TASK.SamplePRE; }//IF 1st stim
     else { blankdurationpre = 0; }
 
     let taskscreen = 'Sample'
@@ -906,11 +885,9 @@ function index_determine_numrewards(){
   }//IF RSVP, reward based on nclips fixated in RSVP sequence
   else if ( CURRTRIAL.correct && (CURRTRIAL.samplereward == -1 || TASK.RewardStage == 0) ) {
     let lastStartTimeIdx = trialhistory.starttime.length - 1;
-    if ( FLAGS.savedata &&
-      (CURRTRIAL.starttime - trialhistory.starttime[lastStartTimeIdx] < TASK.ConsecutiveHitsITI || CURRTRIAL.num == 0)
-    ) {
+    if ( FLAGS.savedata ) {
         FLAGS.consecutivehits++;
-    }//IF correct within bonus time interval, accumulates consecutive hits
+    }//IF correct during data saving, accumulates consecutive hits
     else {
       FLAGS.consecutivehits = 1;
     }//ELSE took too long, reset consecutive hits
@@ -1056,18 +1033,13 @@ function index_housekeeping_cloudstorage(){
 
       //BIGQUERY Eye/Touch
       if (ENV.Eye.TrackEye > 0) {
-        if ( (TASK.BQSaveEye === undefined || TASK.BQSaveEye > 0) ) {
-          saveEyeDatatoBigQuery()
-        }//IF BQsaveEye
+        if ( TASK.BQSaveEye > 0 ) { saveEyeDatatoBigQuery() }//IF BQsaveEye
       }//IF trackeye
-      else if ( (TASK.BQSaveTouch === undefined || TASK.BQSaveTouch > 0) ) {
-        bigQuerySaveTouchData();
+      else if ( TASK.BQSaveTouch > 0 ) { bigQuerySaveTouchData();
       } //IF BQsaveTouch
 
       //BIGQUERY DisplayTimes
-      if ( (TASK.BQSaveDisplayTimes === undefined || TASK.BQSaveDisplayTimes > 0) ) {
-        saveDisplayTimestoBigQuery()
-      }//IF BQsaveDisplayTimes
+      if ( TASK.BQSaveDisplayTimes > 0 ) { saveDisplayTimestoBigQuery() }//IF BQsaveDisplayTimes
     }//IF !SaveImages, then save to databases      
   }//IF savedata
 
@@ -1308,44 +1280,6 @@ function dispensePunish() {
 }
 
 //================== UTILITIES ==================//
-function setReward() {
-  var m = 0;
-  var b = 0;
-  if (TASK.Pump == 1) {
-    // m = 1.13; b = 15.04;
-    m = 0.99;
-    b = 14.78;
-  } //peristaltic (adafruit)
-  else if (TASK.Pump == 2) {
-    // m = 3.20; b = -15.47;
-    m = 1.4;
-    b = -58.77;
-  } //submersible (tcs)
-  else if (TASK.Pump == 3) {
-    // m = 0.80; b = -3.00;
-    m = 0.91;
-    b = -15;
-  } //diaphragm (tcs)
-  else if (TASK.Pump == 4) {
-    m = 0.0531;
-    b = -1.2594;
-  } //piezoelectric (takasago)
-  else if (TASK.Pump == 5) {
-    m = 2.4463;
-    b = 53.6418;
-  } //new diaphragm (tcs)
-  else if (TASK.Pump == 6) {
-    if (TASK.Liquid == 1 || TASK.Liquid == 3) {
-      m = 0.1251;
-      b = -0.0833; //1=water 2=water-condensed milk 3=marshmallow slurry (4/30mL)
-    } else if (TASK.Liquid == 2) {
-      m = 0.055;
-      b = 0.6951; //water-condensed milk (50/50)
-    }
-  } //piezoelectric 7mL/min (takasago)
-  return (TASK.RewardPer1000Trials - b) / m / 1000;
-} //FUNCTION setReward()
-
 async function runPumpButtonCallback(str) {
   var dur = 0;
   var npulse = 0;

@@ -36,11 +36,7 @@ index_init();
     }
     rtdb.ref('instances/' + ENV.Subject).set( { 'trialnum': CURRTRIAL.num, 'filename': ENV.DataFileName, 'performance': frac_correct } );
 
-    if (typeof TASK.BackgroundColor2D == 'undefined') { TASK.BackgroundColor2D = '#7F7F7F';}
     document.body.style.background = TASK.BackgroundColor2D;
-    if (typeof TASK.THREEJSRenderRatio == 'undefined' || TASK.THREEJSRenderRatio < 0) { TASK.THREEJSRenderRatio = 2; }
-    if (typeof TASK.THREEJScameraZDist == 'undefined') { TASK.THREEJScameraZDist = 10; }
-    if (typeof TASK.THREEJScameraFOV == 'undefined') { TASK.THREEJScameraFOV = 45; }
     if (FLAGS.need2loadScenes) {
       await index_loadScenes(); //3D Scene Set-up
     }//IF need2LoadScenes
@@ -49,16 +45,15 @@ index_init();
     if (CURRTRIAL.num <= 0 && port.connected){ port.writepumptopauseeyetoUSB('~'); }
 
     //============ SELECT SAMPLE & TEST IMAGES ============//
-    if (typeof TASK.NRSVP != 'undefined' && TASK.NRSVP > 0) {
+    if (TASK.NRSVP > 0) {
       ENV.NRSVPMax = TASK.NRSVP;
       ENV.NRSVPMin = TASK.NRSVP;
-      if (typeof TASK.NRSVPMax != 'undefined' && TASK.NRSVPMax > TASK.NRSVP) {
+      if (TASK.NRSVPMax > TASK.NRSVP) {
         ENV.NRSVPMax = TASK.NRSVPMax;
       }//IF NRSVPMax
     }//IF NRSVP
 
-    let imgSeqLen =
-      typeof TASK.NRSVP == 'undefined' || TASK.NRSVP <= 0 ? 1 : ENV.NRSVPMax;
+    let imgSeqLen = TASK.NRSVP <= 0 ? 1 : ENV.NRSVPMax;
 
     for (let i = 0; i < imgSeqLen; i++) {
       let x = await TQS.get_next_trial();
@@ -822,12 +817,10 @@ index_init();
     //================= (end) HOUSEKEEPING =================//
 
     //Await remaining ITI
-    if (typeof TASK.InterTrialInterval != 'undefined') {
-      let remainingInterTrialInterval = TASK.InterTrialInterval - (performance.now() - ITIstart);
-      if (remainingInterTrialInterval > 0) {
-        await sleep(remainingInterTrialInterval);
-      }
-    }//IF InterTrialInterval
+    let remainingInterTrialInterval = TASK.InterTrialInterval - (performance.now() - ITIstart);
+    if (remainingInterTrialInterval > 0) {
+      await sleep(remainingInterTrialInterval);
+    }
     console.log('END OF TRIAL ', CURRTRIAL.num);
     CURRTRIAL.num++;
     EVENTS.trialnum = CURRTRIAL.num;
