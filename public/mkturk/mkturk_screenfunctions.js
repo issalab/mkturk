@@ -400,9 +400,14 @@ function broadcastBoundingBoxes(boundingBoxes,areTarg){
     }//FOR i bounding boxes
 
     rtdb.ref('data/' + ENV.Subject).set({
-      x: -1, y: -1,
+      x: FLAGS.effectorState.x,
+      y: FLAGS.effectorState.y,
+      touchevent: FLAGS.effectorState.touchevent,
+      effectorstate: FLAGS.effectorState.state,
+      chosenbox: FLAGS.effectorState.chosenbox,
+      choice: FLAGS.effectorState.choice,
       boundingBoxes: boundingBoxesRtdb,
-      meta: areTarg+2,
+      meta: areTarg,
       timestamp: new Date().toJSON(),
     });
   }//IF realtime database

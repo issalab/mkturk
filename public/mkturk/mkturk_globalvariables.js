@@ -157,6 +157,7 @@ FLAGS.imagesPresent = 0;
 FLAGS.stickyresponse = 0;
 FLAGS.bbTarget = { taskscreen: [], indscreen: [], grid: [], x: [], y: [], ID: [], class: [], asset: [] }
 FLAGS.bbDisplay = { taskscreen: [], indscreen: [], grid: [], x: [], y: [], ID: [], class: [], asset: [] } //accumulate all bounding boxes for this frame
+FLAGS.effectorState = {x: 0, y: 0, touchevent: '', state: '', chosenbox: -1, choice: -1, timestamp: new Date().toJSON()}
 
 FLAGS.waitingforTouches = 0;
 FLAGS.touchduration = -1;

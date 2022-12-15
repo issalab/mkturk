@@ -1055,14 +1055,6 @@ function index_housekeeping_cloudstorage(){
   if (FLAGS.need2saveParameters == 1) {
     FLAGS.need2saveParameters = saveParameterstoFirebase(); // Save parameters asynchronously
   }
-
-  // rtdb.ref('agents/' + ENV.Subject).once('value').then((snap) => {
-  //   try { FLAGS.rtdbAgentNumConnections = Object.keys(snap.val()).length; }
-  //   catch (err) {
-  //     FLAGS.rtdbAgentNumConnections = 0;
-  //     // console.error(`rtdbAgentRef most likely not yet instantiated: ${err}`);
-  //   }
-  // });//rtdb.agent.then() when outside connection
 }//FUNCTION index_housekeeping_cloudstorage()
 
 function index_housekeeping_exits(){
