@@ -369,10 +369,10 @@ async function loadParametersfromFirebase(paramfile_path) {
     // FIXATION SCREEN OPTIONS
     if (typeof TASK.FixationDotSizeInches == 'undefined'){TASK.FixationDotSizeInches = 0;}
     if (typeof TASK.FixationDuration == 'undefined'){TASK.FixationDuration = 0;}
-    if (typeof TASK.FixationWindowSizeInches == 'undefined'){TASK.FixationWindowSizeInches = 0;}
     if (typeof TASK.NFixations == 'undefined'){TASK.NFixations = 1;}
     if (typeof TASK.FixationUsesSample == 'undefined'){TASK.FixationUsesSample = 0;}
-    if (typeof TASK.FixationTimeOut == 'undefined'){TASK.FixationTimeOut= 3000;}
+    if (typeof TASK.FixationTimeOut == 'undefined'){TASK.FixationTimeOut = 3000;}
+    if (typeof TASK.FixationOutsideGracePeriod == 'undefined'){TASK.FixationOutsideGracePeriod = 0}
 
     // TASK OPTONS
     if (typeof TASK.RewardStage == 'undefined'){TASK.RewardStage = 0;}
@@ -383,7 +383,7 @@ async function loadParametersfromFirebase(paramfile_path) {
     if (typeof TASK.SampleGridIndex == 'undefined'){TASK.SampleGridIndex = 0;}
     if (typeof TASK.SamplePRE == 'undefined'){TASK.SamplePRE = 0;}
     if (typeof TASK.SampleOFF == 'undefined'){TASK.SampleOFF = 0;}
-    if (typeof TASK.KeepSampleON == 'undefined'){TASK.KeepSampleON = 0;}
+    if (typeof TASK.SampleOutsideGracePeriod == 'undefined'){TASK.SampleOutsideGracePeriod = 0}
 
     // TEST SCREEN
     if (typeof TASK.TestGridIndex == 'undefined'){ 
@@ -396,21 +396,27 @@ async function loadParametersfromFirebase(paramfile_path) {
     }
     if (typeof TASK.ObjectGridIndex == 'undefined'){TASK.ObjectGridIndex = [];}
     if (typeof TASK.TestOFF == 'undefined'){TASK.TestOFF = 0;}
-    if (typeof TASK.KeepTestON == 'undefined'){TASK.KeepTestON = 0;}
+    if (typeof TASK.KeepSampleON == 'undefined'){TASK.KeepSampleON = 0;}
 
     // CHOICE SCREEN
     if (typeof TASK.ChoiceGridIndex == 'undefined'){TASK.ChoiceGridIndex = [0,1];}
     if (typeof TASK.ChoiceSizeInches == 'undefined'){TASK.ChoiceSizeInches = 1;}
+    if (typeof TASK.KeepTestON == 'undefined'){TASK.KeepTestON = 0;}
+
     if (typeof TASK.ChoiceTimeOut == 'undefined'){TASK.ChoiceTimeOut = 5000;}
     if (typeof TASK.HideChoiceDistractors == 'undefined'){TASK.HideChoiceDistractors = 0;}
+    if (typeof TASK.ChoiceOutsideGracePeriod == 'undefined'){TASK.ChoiceOutsideGracePeriod = TASK.ChoiceTimeOut+1}
 
     // SAMPLING STRATEGY
     if (typeof TASK.SamplingStrategy == 'undefined'){ TASK.SamplingStrategy = 'uniform_without_replacement'; }
     if (typeof TASK.NStimuliPerBagBlock == 'undefined'){ TASK.NStimuliPerBagBlock = 0; }
 
     // RESPONSE
+    if (typeof TASK.Target == 'undefined'){TASK.Target = 'gridwindow';}
+    if (typeof TASK.FixationWindowSizeInches == 'undefined'){TASK.FixationWindowSizeInches = 0;}
     if (typeof TASK.DragtoRespond == 'undefined'){TASK.DragtoRespond = 0;}
     if (typeof TASK.NStickyResponse == 'undefined'){TASK.NStickyResponse = 0;}
+    if (typeof TASK.BlinkGracePeriod == 'undefined'){TASK.BlinkGracePeriod = 200;}
 
     // REWARD
     if (typeof TASK.NConsecutiveHitsforBonus == 'undefined'){TASK.NConsecutiveHitsforBonus = 0;}

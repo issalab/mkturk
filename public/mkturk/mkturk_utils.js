@@ -506,7 +506,6 @@ async function index_reloadparameters(){
   ENV.FixationSquareWidth = TASK.FixationDotSizeInches * ENV.ViewportPPI;
   ENV.FixationSquareColor = 'white';
   
-
   //Fixation window, if specified, operates on both fixation & sample screens
   ENV.FixationWindowRadius = (TASK.FixationWindowSizeInches / 2) * ENV.ViewportPPI;
 
@@ -526,6 +525,16 @@ async function index_reloadparameters(){
   ycanvascenter = funcreturn[1];
   ENV.XGridCenter = funcreturn[2];
   ENV.YGridCenter = funcreturn[3];
+
+  //Reward/Punish Square to display at grid center (hard coded size & position)
+  ENV.RewardSquareWidth = Math.max(VISIBLECANVAS.width, VISIBLECANVAS.height)/3
+  ENV.RewardSquareSizeInches = ENV.RewardSquareWidth/ENV.ViewportPPI
+  ENV.RewardSquareXY[0] = xcanvascenter;
+  ENV.RewardSquareXY[1] = ycanvascenter;
+  
+  ENV.PunishSquareWidth = Math.max(VISIBLECANVAS.width, VISIBLECANVAS.height)
+  ENV.PunishSquareSizeInches = ENV.PunishSquareWidth/ENV.ViewportPPI
+  ENV.PunishSquareXY = ENV.RewardSquareXY
 
   FLAGS.purge = 1;
   FLAGS.createnewfirestore = 1;

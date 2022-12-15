@@ -33,13 +33,13 @@ FixationDotSizeInches (default = 0 inches): Width of white fixation dot. General
 
 FixationDuration (default = 0 milliseconds): How long subject has to hold fixation touch in milliseconds for a successful fixation to register.
 
-FixationWindowSizeInches (default = 0 inches): Width of box within which subject has to hold fixation during fixation screen and sample screen (if RSVP task). If <=0, then defaults to display element's size for the bounding box (eg, bounding box of fixation dot or sample image/object)
-
 NFixations (default = 1): Number of times fixation dot needs to be pressed to advance to the match to sample phase of the task. nfixations=1 means the subject simply has to press the fixation dot once before the sample is presented. This mode allow parametric control over fixed ratio scheduling.
 
 FixationUsesSample (default = 0 --> use blue dot, don't use sample image): FixationUsesSample=0, a fixation circle is shown for subject to touch; FixationUsesSample=1, sample image is shown as the fixation image. This allows implementation of a trianing strategy where the subject has to engage the sample image nfixations number of times before the choice screen.
 
 FixationTimeOut (default = 3000 milliseconds): Time in milliseconds that subject has to acquire fixation before fixation dot or image extinguishes. If fixation times out, then it is just re-displayed (flashes) and no reward or punishment is administered (i.e., trial is aborted)
+
+FixationOutsideGracePeriod (default = 0 --> punish touches or viewing outside fixation dot): Time in milliseconds that subject is allowed to touch or view non-target parts of screen after fixation screen appears. If do not want to punish touches (viewing) outside of fixation target, then set TASK.FixationOutsideGracePeriod to TASK.FixationTimeOut or an arbitrarily large number like 20000 milliseconds.
 
 
 ___________________________________________________________________________
@@ -61,17 +61,17 @@ SamplePRE (default = 0 milliseconds): Duration in milliseconds that a gray scree
 
 SampleOFF (default = 0 milliseconds): Duration in milliseconds that a gray screen is presented after the sample image before the response screen. This implements the delay in a DMS task. SampleOFF=0, leads to no delay
 
-KeepSampleON (default = 0 --> extinguishes sample screen before test/choice screens): KeepSampleON=0, sample is presented according to duration in scene file, KeepSampleON=1 sample remains on during test & choice screens. This implements a spatial match to sample instead of extinguishig as would happen in a delayed match-to-sample.
-
 TestGridIndex (default = [0,1] --> default to 2-way task using first two gridpoints): Index on grid where test images appear. Length of TestGridIndex corresponds to number of possible choices subject will see (n-way task). There could be m test classes but of those a subset of n = TestGridIndex.length will be shown on a given trial, where m test classes >= n test choices. One of these will be the correct class and the remaining n-1 will be distractors.
 
 ObjectGridIndex (default = [] --> Test classes are not tied to a particular screen (response) location which is the Match-to-Sample setting): TASK.ObjectGridIndex is used to convert to a Stimulus-Response (SR) task. If this variable is set, then each object is tied to a particular location on the grid. TASK.ObjectGridIndex.length must equal TASK.ImageBagsTest.length for appropriate assignment of each object label to a grid location.
 
 TestOFF (default = 0 milliseconds): Choice screen appears TestOFF milliseconds after test image is extinguished. If TestOFF=0, then test screen does not extinguish (go to blank gray) until same-different choice screen appears. If KeepTestON=1, then test image reappears during the same-different choice screen.
 
-KeepTestON (default = 0 --> extinguises test screen before choice screen): KeepTestON=0, test is presented only for testON milliseconds, KeepTestON=1 test remains on during choice screen. This only applies to same-different task when responses are indicated on additional choice screen following test screen.
+KeepSampleON (default = 0 --> extinguishes sample screen before test/choice screens): KeepSampleON=0, sample is presented according to duration in scene file, KeepSampleON=1 sample remains on during test & choice screens. This implements a spatial match to sample instead of extinguishig as would happen in a delayed match-to-sample.
 
 **HideTestDistractors (currently inactive):** HideTestDistractors=1, hides the distractor choices so that subject only sees matching choice. Still gets punished if touches blank area where the incorrect button would have been.
+
+SampleOutsideGracePeriod (default = 0 --> punish touches or viewing outside sample image sequence): Time in milliseconds that subject is allowed to touch or view non-target parts of screen after sample screen appears (note: test screen is also part of the launched sequence). If do not want to punish touches (viewing) outside of sample+test targets, then set TASK.SampleOutsideGracePeriod to be longer than the total duration of the RSVP or MtS or SR or SD image sequence being shown. Could just choose an arbitrarily large value like 20000 milliseconds if do not want to calculate the duration of the frame sequence.
 
 
 ___________________________________________________________________________
@@ -81,9 +81,14 @@ ChoiceGridIndex (default = [0,1] --> same circle at 0, different square at 1): F
 
 ChoiceSizeInches (default = 1 inch): Size of choice circle and square in physical inches on the screen
 
+KeepTestON (default = 0 --> extinguises test screen before choice screen): KeepTestON=0, test is presented only for testON milliseconds, KeepTestON=1 test remains on during choice screen. This only applies to same-different task when responses are indicated on additional choice screen following test screen.
+
 ChoiceTimeOut (default = 5000 milliseconds): Time in milliseconds that subject has to make a choice in AFC task before trial aborts and new sample is displayed. This timeout applies to test response screen in SR2 or M2S and to choice response screen in same-different.
 
 HideChoiceDistractors (default = 0): If TASK.HideChoiceDistractors=1, hides the same or different button so that subject sees only the correct one to touch. Still gets punished if touches blank area where the incorrect button would have been. This only applies to same-different choice screen. See HideTestDistractors for test response screen used in SR2 and M2S.
+
+ChoiceOutsideGracePeriod (default = TASK.ChoiceTimeOut + 1 --> do not punish any touches or viewing outside choice targets): Time in milliseconds that subject is allowed to touch or view non-target parts of screen after test (or choice) screen finishes displaying in a SR, MtS, or SD task. If do not want to punish touches (viewing) outside of choice targets, then set TASK.ChoiceOutsideGracePeriod to be larger than TASK.ChoiceTimeOut. Alternatively, if want to punish subject for any spurious touches outside the available choices, then set TASK.ChoiceOutsideGracePeriod = 0.
+
 
 ___________________________________________________________________________
 *SAMPLING STRATEGY*
@@ -95,9 +100,26 @@ NStimuliPerBagBlock (default = 0 --> draw from all sample bags on each trial): i
 ___________________________________________________________________________
 *RESPONSE OPTIONS*
 ___________________________________________________________________________
+Target (default = gridwindow): Type of target bounding box to use during Fixation, Sample, and Response (Test/Choice) Screens. This can be:
+  
+    (1) 'gridwindow' -- a static square fixation window around a gridpoint, requires TASK.FixationWindowSizeInches,
+  
+    (2) 'objectwindow' -- a dynamic square fixation window around object center, requires TASK.FixationWindowSizeInches, 
+  
+    (3) 'object' -- window follows object position and aspect ratio/size. It's the object bounding box whether the object is the blue fixation dot or the foreground objects in a scene render, OR 
+  
+    (4) 'scene' -- the overall scene bounding box which would encompass both object and background.
+  
+    Note that 'objectwindow', 'object', and 'scene' are dynamic bounding boxes where each frame render will compute a bounding box whereas 'gridwindow' is a static bounding box applied to a grid position independent of rendered assets (shape, image, object, cubemap). For now, the TASK.Target parameter is task-wide, could always be done specific to each screen (e.g., Fixation vs. Sample) to provide more flexibility in the future.
+
+FixationWindowSizeInches (default = 0 inches): Width of box within which subject has to activate targets during all screens (Fixation, Sample, Test, Choice). TASK.FixationWindowSizeInches needs to be set to >0 if TASK.Target = 'window'.
+
 DragtoRespond (default = 0 --> clicks indicates response): Flag that specifies whether a continuous move (drag) into a choice box is allowed (DragtoRespond=1) versus a discrete click in the box (DragtoRespond=0). Defaults to 0 (click to respond) if not provided, but if eyetracker is present will automatically be set to 1.
 
 NStickyResponse (default = 0 --> subject can repeatedly choose any given response option): Number of times subject can choose the same location on the screen before force them out of it by placing the correct answer somewhere else (i.e. if they have response bias, then on the next trial, the correct choice is drawn somewhere away from that bias). Currently not implemented for same-different task or SR2
+
+BlinkGracePeriod (default = 200 milliseconds): Amount of time subject can (briefly) vacate target once they were in without being punished for breaking fixation. Only applies to fixations during Fixation screen & Sample/Test screen after OutsideGracePeriod has expired.
+
 
 ___________________________________________________________________________
 *REWARD OPTIONS*
@@ -228,8 +250,6 @@ DeviceType:desktop or mobile
 
 EffectorSaveJSONDataRelativetoFixationDotDisplayMS: dt in milliseconds relative to fixation appearance when to save eye data into json. if dt<0, this means eye data immediately before fixation appears will be included in the json datafile. Note, for parallel saving to bigquery, we keep up 1000ms before fixation, but for json data file may want to keep less to save space.
 
-Eye.BlinkGracePeriod: time in milliseconds that eye is allowed to be outside the fixation window without counting it as a fixation break. Any period longer than Eye.BlinkGracePeriod milliseconds outside the window is considered a fixation break.
-
 Eye.CalibXTransform: Stores the parameters from the linear regression fit of eye tracker's x,y --> screen x (eg x_screen = a*x + b*y + c)
 
 Eye.CalibYTransform: Stores the parameters from the linear regression fit of eye tracker's x,y --> screen y (eg y_screen = a*x + b*y + c)
@@ -304,6 +324,11 @@ XGridCenter: The location of all grid points in pixels. Follows from user-specif
 
 YGridCenter: The location of all grid points in pixels. Follows from user-specified NGridPoints and GridScale (e.g. to create a 3x3 grid with adjacent non-overlapping images, set NGridPoints=3, GridScale=1 and YGridCenters will be spaced by ImageHeightPixels)
 
+## ENV (deprecated)
+___________________________________________________________________________
+*DEPRECATED ENV PARAMETERS*
+___________________________________________________________________________
+Eye.BlinkGracePeriod (Deprecated December 9, 2022; elevated to be user facing in TASK.BlinkGracePeriod which now applies directly to all responses): time in milliseconds that eye is allowed to be outside the fixation window without counting it as a fixation break. Any period longer than Eye.BlinkGracePeriod milliseconds outside the window is considered a fixation break.
 
 
 ## EVENTS TRIALSERIES (saved to json data file)

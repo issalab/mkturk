@@ -339,11 +339,8 @@ async function addToScene(taskscreen) {
           // LIGHT Position (THREEJS Coordinate)
 
           // IF LIGHTS.position.x isArray
-          if (
-            Array.isArray(
-              IMAGES[taskscreen][classlabel].LIGHTS[lt].position.x[i]
-            )
-          ) {
+          if (Array.isArray(IMAGES[taskscreen][classlabel].LIGHTS[lt].position.x[i]))
+          {
             IMAGES[taskscreen][classlabel].LIGHTS[lt].position.x[i] =
               interpParam_frames(
                 IMAGES[taskscreen][classlabel].LIGHTS[lt].position.x[i],
@@ -356,11 +353,8 @@ async function addToScene(taskscreen) {
           }
 
           // IF LIGHTS.position.y isArray
-          if (
-            Array.isArray(
-              IMAGES[taskscreen][classlabel].LIGHTS[lt].position.y[i]
-            )
-          ) {
+          if (Array.isArray(IMAGES[taskscreen][classlabel].LIGHTS[lt].position.y[i]))
+          {
             IMAGES[taskscreen][classlabel].LIGHTS[lt].position.y[i] =
               interpParam_frames(
                 IMAGES[taskscreen][classlabel].LIGHTS[lt].position.y[i],
@@ -373,11 +367,8 @@ async function addToScene(taskscreen) {
           }
 
           // IF LIGHTS.position.z isArray
-          if (
-            Array.isArray(
-              IMAGES[taskscreen][classlabel].LIGHTS[lt].position.z[i]
-            )
-          ) {
+          if (Array.isArray(IMAGES[taskscreen][classlabel].LIGHTS[lt].position.z[i]))
+          {
             IMAGES[taskscreen][classlabel].LIGHTS[lt].position.z[i] =
               interpParam_frames(
                 IMAGES[taskscreen][classlabel].LIGHTS[lt].position.z[i],
@@ -390,11 +381,8 @@ async function addToScene(taskscreen) {
           }
 
           // IF LIGHTS.intensity isArray
-          if (
-            Array.isArray(
-              IMAGES[taskscreen][classlabel].LIGHTS[lt].intensity[i]
-            )
-          ) {
+          if (Array.isArray(IMAGES[taskscreen][classlabel].LIGHTS[lt].intensity[i]))
+          {
             IMAGES[taskscreen][classlabel].LIGHTS[lt].intensity[i] =
               interpParam_frames(
                 IMAGES[taskscreen][classlabel].LIGHTS[lt].intensity[i],
@@ -408,9 +396,8 @@ async function addToScene(taskscreen) {
           }
 
           // IF LIGHTS.visible isArray
-          if (
-            Array.isArray(IMAGES[taskscreen][classlabel].LIGHTS[lt].visible[i])
-          ) {
+          if (Array.isArray(IMAGES[taskscreen][classlabel].LIGHTS[lt].visible[i]))
+          {
             IMAGES[taskscreen][classlabel].LIGHTS[lt].visible[i] = interpParam_frames(
               IMAGES[taskscreen][classlabel].LIGHTS[lt].visible[i],
               "binary",
@@ -473,18 +460,13 @@ async function addToScene(taskscreen) {
        * Future scenefile will only have sizeTHREEJS and positionTHREEJS
        */
 
-      if (
-        IMAGES[taskscreen][classlabel].OBJECTS[obj].sizeTHREEJS === undefined
-      ) {
+      if (IMAGES[taskscreen][classlabel].OBJECTS[obj].sizeTHREEJS === undefined){
         let objSize = IMAGES[taskscreen][classlabel].OBJECTS[obj].sizeInches;
         IMAGES[taskscreen][classlabel].OBJECTS[obj].sizeTHREEJS =
           rescaleArrayInchestoTHREEJS(objSize, ENV.THREEJStoInches);
       }
 
-      if (
-        IMAGES[taskscreen][classlabel].OBJECTS[obj].positionTHREEJS ===
-        undefined
-      ) {
+      if (IMAGES[taskscreen][classlabel].OBJECTS[obj].positionTHREEJS === undefined) {
         IMAGES[taskscreen][classlabel].OBJECTS[obj].positionTHREEJS = {};
         for (let key in IMAGES[taskscreen][classlabel].OBJECTS[obj]
           .positionInches) {
@@ -1175,17 +1157,15 @@ function updateSingleFrame3D(taskscreen,classlabels,index,movieframe,gridindex,c
   } // FOR sceneElements
 
   //==== TURN BACK ON THE CURRENT DISPLAY ITEMS
-  var allBoundingBoxes = [];
+  var allBoundingBoxesObjects = { x: [], y:[], ID: [], class: [] };
   var crop = [];
-  var allBoundingBoxCubes = [];
+  var allBoundingBoxesCubeMap = { x: [], y:[], ID: [], class: [] };
   if (typeof classlabels == "number") {
     classlabels = [classlabels];
   }
   for (var i = 0; i <= classlabels.length - 1; i++) {
     var classlabel = classlabels[i];
-    allBoundingBoxes[classlabel] = [];
     crop[classlabel] = [];
-    allBoundingBoxCubes[classlabel] = [];
 
     //==== crop
     if (IMAGES[taskscreen][classlabel].crop != undefined) {
@@ -1200,10 +1180,7 @@ function updateSingleFrame3D(taskscreen,classlabels,index,movieframe,gridindex,c
     for (var cam in IMAGES[taskscreen][classlabel].CAMERAS) {
       var camera = scene[taskscreen].getObjectByName("cam" + classlabel);
       var nextvisible = chooseArrayElement(
-        IMAGES[taskscreen][classlabel].CAMERAS[cam].visible,
-        index,
-        0
-      );
+        IMAGES[taskscreen][classlabel].CAMERAS[cam].visible,index,0);
 
       //CAMERA POSITION
       var nextcamPosition = [
@@ -1379,130 +1356,57 @@ function updateSingleFrame3D(taskscreen,classlabels,index,movieframe,gridindex,c
       //OBJECT POSITION
       var nextobjPosition = [
         chooseArrayElement(
-          IMAGES[taskscreen][classlabel].OBJECTS[obj].positionTHREEJS.x,
-          index,
-          0
-        ),
+          IMAGES[taskscreen][classlabel].OBJECTS[obj].positionTHREEJS.x,index,0),
         chooseArrayElement(
-          IMAGES[taskscreen][classlabel].OBJECTS[obj].positionTHREEJS.y,
-          index,
-          0
-        ),
+          IMAGES[taskscreen][classlabel].OBJECTS[obj].positionTHREEJS.y,index,0),
         chooseArrayElement(
-          IMAGES[taskscreen][classlabel].OBJECTS[obj].positionTHREEJS.z,
-          index,
-          0
-        ),
+          IMAGES[taskscreen][classlabel].OBJECTS[obj].positionTHREEJS.z,index,0),
       ];
 
       if (Number.isInteger(movieframe)) {
         nextobjPosition = [
-          chooseArrayElement(
-            nextobjPosition[0],
-            movieframe,
-            nextobjPosition[0].length - 1
-          ),
-          chooseArrayElement(
-            nextobjPosition[1],
-            movieframe,
-            nextobjPosition[1].length - 1
-          ),
-          chooseArrayElement(
-            nextobjPosition[2],
-            movieframe,
-            nextobjPosition[2].length - 1
-          ),
+          chooseArrayElement(nextobjPosition[0], movieframe, nextobjPosition[0].length - 1),
+          chooseArrayElement(nextobjPosition[1],movieframe,nextobjPosition[1].length - 1),
+          chooseArrayElement(nextobjPosition[2],movieframe,nextobjPosition[2].length - 1),
         ];
-      } //IF get movieframe
+      }//IF get movieframe
 
       //OBJECT ROTATION
       var nextobjRotation = [
-        chooseArrayElement(
-          IMAGES[taskscreen][classlabel].OBJECTS[obj].rotationDegrees.x,
-          index,
-          0
-        ),
-        chooseArrayElement(
-          IMAGES[taskscreen][classlabel].OBJECTS[obj].rotationDegrees.y,
-          index,
-          0
-        ),
-        chooseArrayElement(
-          IMAGES[taskscreen][classlabel].OBJECTS[obj].rotationDegrees.z,
-          index,
-          0
-        ),
+        chooseArrayElement( IMAGES[taskscreen][classlabel].OBJECTS[obj].rotationDegrees.x,index,0),
+        chooseArrayElement(IMAGES[taskscreen][classlabel].OBJECTS[obj].rotationDegrees.y,index,0),
+        chooseArrayElement(IMAGES[taskscreen][classlabel].OBJECTS[obj].rotationDegrees.z,index,0),
       ];
       if (Number.isInteger(movieframe)) {
         nextobjRotation = [
-          chooseArrayElement(
-            nextobjRotation[0],
-            movieframe,
-            nextobjRotation[0].length - 1
-          ),
-          chooseArrayElement(
-            nextobjRotation[1],
-            movieframe,
-            nextobjRotation[1].length - 1
-          ),
-          chooseArrayElement(
-            nextobjRotation[2],
-            movieframe,
-            nextobjRotation[2].length - 1
-          ),
+          chooseArrayElement(nextobjRotation[0], movieframe, nextobjRotation[0].length - 1),
+          chooseArrayElement(nextobjRotation[1],movieframe,nextobjRotation[1].length - 1),
+          chooseArrayElement(nextobjRotation[2],movieframe,nextobjRotation[2].length - 1),
         ];
-      } //IF get movieframe
+      }//IF get movieframe
 
       //OBJECT SIZE
-      var nextobjSize = chooseArrayElement(
-        IMAGES[taskscreen][classlabel].OBJECTS[obj].sizeTHREEJS,
-        index,
-        0
-      );
+      var nextobjSize = chooseArrayElement(IMAGES[taskscreen][classlabel].OBJECTS[obj].sizeTHREEJS,index,0);
       if (Number.isInteger(movieframe)) {
-        nextobjSize = chooseArrayElement(
-          nextobjSize,
-          movieframe,
-          nextobjSize.length - 1
-        );
-      } //IF get movieframe
+        nextobjSize = chooseArrayElement(nextobjSize,movieframe,nextobjSize.length - 1);
+      }//IF get movieframe
 
       nextobjSize = nextobjSize;
       //OBJECT VISIBILITY
-      var nextvisible = chooseArrayElement(
-        IMAGES[taskscreen][classlabel].OBJECTS[obj].visible,
-        index,
-        0
-      );
+      var nextvisible = chooseArrayElement(IMAGES[taskscreen][classlabel].OBJECTS[obj].visible,index,0);
       if (Number.isInteger(movieframe)) {
         nextvisible = chooseArrayElement(nextvisible,movieframe,nextvisible.length - 1);
       } //IF get movieframe
 
       //OPACITY
-      var nexttransparent = chooseArrayElement(
-        IMAGES[taskscreen][classlabel].OBJECTS[obj].material.opacity,
-        index,
-        0
-      );
+      var nexttransparent = chooseArrayElement(IMAGES[taskscreen][classlabel].OBJECTS[obj].material.opacity,index,0);
       if (Number.isInteger(movieframe)) {
-        nexttransparent = chooseArrayElement(
-          nexttransparent,
-          movieframe,
-          nexttransparent.length - 1
-        );
+        nexttransparent = chooseArrayElement(nexttransparent,movieframe,nexttransparent.length - 1);
       } //IF get movieframe
 
       //MORPH
-      var morphDelta = chooseArrayElement(
-        IMAGES[taskscreen][classlabel].OBJECTS[obj].morphTargetDelta,
-        index,
-        0
-      );
-      var morphMultiplier = chooseArrayElement(
-        IMAGES[taskscreen][classlabel].OBJECTS[obj].morphMultiplier,
-        index,
-        0
-      );
+      var morphDelta = chooseArrayElement(IMAGES[taskscreen][classlabel].OBJECTS[obj].morphTargetDelta,index,0);
+      var morphMultiplier = chooseArrayElement(IMAGES[taskscreen][classlabel].OBJECTS[obj].morphMultiplier,index,0);
 
       var nextmorph = {};
       if (Number.isInteger(movieframe)) {
@@ -1518,30 +1422,20 @@ function updateSingleFrame3D(taskscreen,classlabels,index,movieframe,gridindex,c
               deltaMesh[meshpartnames[m]][j] = { position: [], normal: [] };
               var nextmorphDeltaVert = morphDelta[j][meshpartnames[m]].position;
               var nextmorphDeltaNormal = morphDelta[j][meshpartnames[m]].normal;
-              var deltaMultiplier = chooseArrayElement(
-                morphMultiplier[j],
-                movieframe,
-                morphMultiplier.length - 1
-              );
-              deltaMesh[meshpartnames[m]][j].position = math.multiply(
-                nextmorphDeltaVert,
-                deltaMultiplier
-              );
-              deltaMesh[meshpartnames[m]][j].normal = math.multiply(
-                nextmorphDeltaNormal,
-                deltaMultiplier
-              );
-            }
-          }
+              var deltaMultiplier = chooseArrayElement(morphMultiplier[j],movieframe,morphMultiplier.length - 1);
+              deltaMesh[meshpartnames[m]][j].position =
+                  math.multiply(nextmorphDeltaVert,deltaMultiplier);
+              deltaMesh[meshpartnames[m]][j].normal =
+                  math.multiply(nextmorphDeltaNormal,deltaMultiplier);
+            }//FOR j
+          }//FOR m
 
           for (keys in deltaMesh) {
             nextmorph[keys] = { position: [], normal: [] };
             var originVert =
-              IMAGES[taskscreen][classlabel].OBJECTS[obj].originmesh[keys]
-                .position;
+              IMAGES[taskscreen][classlabel].OBJECTS[obj].originmesh[keys].position;
             var originNormal =
-              IMAGES[taskscreen][classlabel].OBJECTS[obj].originmesh[keys]
-                .normal;
+              IMAGES[taskscreen][classlabel].OBJECTS[obj].originmesh[keys].normal;
             var d = math.zeros(deltaMesh[keys][0].position._data.length);
             for (var j = 0; j < deltaMesh[keys].length; j++) {
               d = math.add(deltaMesh[keys][j].position, d);
@@ -1566,12 +1460,8 @@ function updateSingleFrame3D(taskscreen,classlabels,index,movieframe,gridindex,c
 
       var camera = scene[taskscreen].getObjectByName("cam" + classlabel);
 
-      if (nextvisible == 1) {
-        objects.visible = true;
-      } //IF visible
-      else {
-        objects.visible = false;
-      } //ELSE !visible
+      if (nextvisible == 1) { objects.visible = true; } //IF visible
+      else { objects.visible = false; } //ELSE !visible
       var scenecenterX = ENV.XGridCenter[gridindex];
       var scenecenterY = ENV.YGridCenter[gridindex];
 
@@ -1600,40 +1490,29 @@ function updateSingleFrame3D(taskscreen,classlabels,index,movieframe,gridindex,c
         IMAGES[taskscreen][classlabel].OBJECTS[obj].boundingBox2DPixels[index] = boundingBox;
       }//ELSE
 
-      allBoundingBoxes[classlabel].push(boundingBox);
-    } //FOR obj in scene
+      if (nextvisible > 0){
+        allBoundingBoxesObjects.x.push(boundingBox.x)
+        allBoundingBoxesObjects.y.push(boundingBox.y)
+        allBoundingBoxesObjects.ID.push(obj)
+        allBoundingBoxesObjects.class.push(classlabel)  
+      }//IF visible
+    }//FOR obj in scene
 
     //======== 3D CUBE BACKGROUND
-    var nextimsize = chooseArrayElement(
-      IMAGES[taskscreen][classlabel].IMAGES.sizeTHREEJS,
-      index,
-      0
-    );
+    var nextimsize = chooseArrayElement(IMAGES[taskscreen][classlabel].IMAGES.sizeTHREEJS,index,0);
 
     if (Number.isInteger(movieframe)) {
-      neximsize = chooseArrayElement(
-        nextimsize,
-        movieframe,
-        nextimsize.length - 1
-      );
-    } //IF get movieframe
+      neximsize = chooseArrayElement(nextimsize,movieframe,nextimsize.length - 1);
+    }//IF get movieframe
 
     var backgroundCube = scene[taskscreen].getObjectByName("backgroundCube" + classlabel);
     //BACKGROUND VISIBILITY
 
     if (cubeTexture != undefined) {
-      var nextvisible = chooseArrayElement(
-        IMAGES[taskscreen][classlabel].IMAGES.visible,
-        index,
-        0
-      );
+      var nextvisible = chooseArrayElement(IMAGES[taskscreen][classlabel].IMAGES.visible,index,0);
       if (Number.isInteger(movieframe)) {
-        nextvisible = chooseArrayElement(
-          nextvisible,
-          movieframe,
-          nextvisible.length - 1
-        );
-      } //IF get movieframe
+        nextvisible = chooseArrayElement(nextvisible,movieframe,nextvisible.length - 1);
+      }//IF get movieframe
     } else {
       var nextvisible = 0;
     }
@@ -1643,7 +1522,7 @@ function updateSingleFrame3D(taskscreen,classlabels,index,movieframe,gridindex,c
     } else {
       backgroundCube.visible = false;
     }
-    boundingBoxCube = updateImageSingleFrame(
+    boundingBoxCubeMap = updateImageSingleFrame(
       taskscreen,
       backgroundCube,
       cubeTexture,
@@ -1654,15 +1533,20 @@ function updateSingleFrame3D(taskscreen,classlabels,index,movieframe,gridindex,c
     );
 
     if (Number.isInteger(movieframe)){
-      IMAGES[taskscreen][classlabel].IMAGES.boundingBoxCube2DPixels[index][movieframe] = boundingBoxCube;
+      IMAGES[taskscreen][classlabel].IMAGES.boundingBoxCube2DPixels[index][movieframe] = boundingBoxCubeMap;
     }//IF movieframe
     else{
-      IMAGES[taskscreen][classlabel].IMAGES.boundingBoxCube2DPixels[index] = boundingBoxCube;
+      IMAGES[taskscreen][classlabel].IMAGES.boundingBoxCube2DPixels[index] = boundingBoxCubeMap;
     }//ELSE
 
-    allBoundingBoxCubes[classlabel].push(boundingBoxCube);
+    if (typeof boundingBoxCubeMap != 'undefined' && typeof boundingBoxCubeMap.x != 'undefined'){
+      allBoundingBoxesCubeMap.x.push(boundingBoxCubeMap.x)
+      allBoundingBoxesCubeMap.y.push(boundingBoxCubeMap.y)
+      allBoundingBoxesCubeMap.ID.push('backgroundimage3d')
+      allBoundingBoxesCubeMap.class.push(classlabel)  
+    }//IF background image
   }//FOR classlabel in classlabels
-  return [allBoundingBoxes, allBoundingBoxCubes, crop];
+  return [allBoundingBoxesObjects, allBoundingBoxesCubeMap, crop];
 }//FUNCTION updateSingleFrame3D
 
 function updateCameraSingleFrame(camera, cameraPosition, camTarget) {
@@ -1718,13 +1602,12 @@ function updateObjectSingleFrame(
           .geometry.setAttribute(
             "normal",
             new THREE.BufferAttribute(
-              new Float32Array(objMorph[keys].normal._data),
-              3
+              new Float32Array(objMorph[keys].normal._data),3
             )
           );
-      }
+      }//IF
     }
-  } //IF morph mesh
+  }//IF morph mesh
 
   //====ROTATION
   //rotate around the World Axis
@@ -1779,38 +1662,14 @@ function updateObjectSingleFrame(
 
   let vertices2 = [];
   let vertices = [
-    new THREE.Vector3().fromBufferAttribute(
-      box.geometry.attributes.position,
-      0
-    ),
-    new THREE.Vector3().fromBufferAttribute(
-      box.geometry.attributes.position,
-      1
-    ),
-    new THREE.Vector3().fromBufferAttribute(
-      box.geometry.attributes.position,
-      2
-    ),
-    new THREE.Vector3().fromBufferAttribute(
-      box.geometry.attributes.position,
-      3
-    ),
-    new THREE.Vector3().fromBufferAttribute(
-      box.geometry.attributes.position,
-      4
-    ),
-    new THREE.Vector3().fromBufferAttribute(
-      box.geometry.attributes.position,
-      5
-    ),
-    new THREE.Vector3().fromBufferAttribute(
-      box.geometry.attributes.position,
-      6
-    ),
-    new THREE.Vector3().fromBufferAttribute(
-      box.geometry.attributes.position,
-      7
-    ),
+    new THREE.Vector3().fromBufferAttribute(box.geometry.attributes.position,0),
+    new THREE.Vector3().fromBufferAttribute(box.geometry.attributes.position,1),
+    new THREE.Vector3().fromBufferAttribute(box.geometry.attributes.position,2),
+    new THREE.Vector3().fromBufferAttribute(box.geometry.attributes.position,3),
+    new THREE.Vector3().fromBufferAttribute(box.geometry.attributes.position,4),
+    new THREE.Vector3().fromBufferAttribute(box.geometry.attributes.position,5),
+    new THREE.Vector3().fromBufferAttribute(box.geometry.attributes.position,6),
+    new THREE.Vector3().fromBufferAttribute(box.geometry.attributes.position,7),
   ];
 
   vertices.forEach((vertex) => {
@@ -1853,20 +1712,14 @@ function updateObjectSingleFrame(
 
   let boundingBox = {
     x: [
-      (minVec.x / TASK.THREEJSRenderRatio / ENV.CanvasRatio + left) *
-        ENV.CanvasRatio,
-      (maxVec.x / TASK.THREEJSRenderRatio / ENV.CanvasRatio + left) *
-        ENV.CanvasRatio,
+      (minVec.x / TASK.THREEJSRenderRatio / ENV.CanvasRatio + left) * ENV.CanvasRatio,
+      (maxVec.x / TASK.THREEJSRenderRatio / ENV.CanvasRatio + left) * ENV.CanvasRatio,
     ].sort((a, b) => {
       return a - b;
     }),
     y: [
-      (maxVec.y / TASK.THREEJSRenderRatio / ENV.CanvasRatio + top) *
-        ENV.CanvasRatio +
-        CANVAS.offsettop,
-      (minVec.y / TASK.THREEJSRenderRatio / ENV.CanvasRatio + top) *
-        ENV.CanvasRatio +
-        CANVAS.offsettop,
+      (maxVec.y / TASK.THREEJSRenderRatio / ENV.CanvasRatio + top) * ENV.CanvasRatio + CANVAS.offsettop,
+      (minVec.y / TASK.THREEJSRenderRatio / ENV.CanvasRatio + top) * ENV.CanvasRatio + CANVAS.offsettop,
     ].sort((a, b) => {
       return a - b;
     }),

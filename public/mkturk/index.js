@@ -142,7 +142,6 @@ index_init();
     // FIXATION   FIXATION   FIXATION   FIXATION   FIXATION   FIXATION   //
     //============ WHILE RUN FIXATION SCREEN ============//
     FLAGS.waitingforTouches = TASK.NFixations;
-    if (TASK.RewardStage == 0) { FLAGS.punishOutsideTouch = 1; }
 
     while (FLAGS.waitingforTouches > 0) {
       //Fixation grid index
@@ -150,9 +149,7 @@ index_init();
         CURRTRIAL.fixationgridindex = TASK.FixationGridIndex;
       }//IF user-specified fixation position
       else if (TASK.FixationGridIndex < 0) {
-        CURRTRIAL.fixationgridindex = Math.floor(
-          Math.random() * ENV.XGridCenter.length
-        );
+        CURRTRIAL.fixationgridindex = Math.floor( Math.random() * ENV.XGridCenter.length );
       }//ELSE randomly choose fixation position
       logEVENTS('FixationGridIndex',CURRTRIAL.fixationgridindex,'trialseries');
 
@@ -193,14 +190,12 @@ index_init();
       }//IF USB, send trial# on trial line
 
       //========= AWAIT SHOW FIXATION =========//
-      if (TASK.Species == 'marmoset' || TASK.Species == 'model') {
-        playSound(0);
-      }
+      playSound(0);
 
-      if (TASK.FixationUsesSample <= 0) {
+      if (!TASK.FixationUsesSample) {
         await displayTrial(CANVAS.tsequencepre,[CURRTRIAL.fixationgridindex],[0],[0],CANVAS.sequencepre,[0],[0],[],mkm);
       }//IF !FixationUsesSample, show fixation dot
-      else if (TASK.FixationUsesSample > 0) {
+      else if (TASK.FixationUsesSample) {
         displayTrial(
           CURRTRIAL.tsequencedesired,
           CURRTRIAL.sequencegridindex,
@@ -218,17 +213,6 @@ index_init();
       audiocontext.suspend();
 
       //========= AWAIT HOLD FIXATION TOUCH =========//
-      if (ENV.FixationWindowRadius > 0) {
-        // TODO: contain the scope of funcreturn to each file.
-        funcreturn = getFixationWindowBoundingBox(CURRTRIAL.fixationgridindex,ENV.FixationWindowRadius);
-        boundingBoxesFixation.x[0] = funcreturn[0];
-        boundingBoxesFixation.y[0] = funcreturn[1];
-      }//IF FixationWindowRadius, then override object size
-      else if (TASK.FixationUsesSample > 0 && ENV.FixationWindowRadius <= 0) {
-        // alt. fixation window
-        boundingBoxesFixation = boundingBoxesChoice3D;
-      }//ELSE fixation window is object size
-
       let touchhold_return;
       if (ENV.StressTest == 1) {
         touchhold_return = { type: 'theld' };
@@ -242,7 +226,7 @@ index_init();
       }//IF StressTest, automate fixation
       else {
         FLAGS.acquiredTouch = 0;
-        let p1 = hold_promise( TASK.FixationDuration, boundingBoxesFixation, FLAGS.punishOutsideTouch );
+        let p1 = hold_promise(TASK.FixationDuration, TASK.FixationOutsideGracePeriod );
         let p2 = choiceTimeOut(TASK.FixationTimeOut);
         touchhold_return = await Promise.race([p1, p2]);
       }//ELSE await fixation hold
@@ -261,7 +245,6 @@ index_init();
         CURRTRIAL.fixationtouchevent = 'tbroken';
         CURRTRIAL.fixationxyt = [-1, -1, -1];
       }
-
       logEVENTS('FixationTouchEvent',CURRTRIAL.fixationtouchevent,'trialseries');
       logEVENTS('FixationXYT', CURRTRIAL.fixationxyt, 'trialseries');
 
@@ -350,103 +333,82 @@ index_init();
         }//FOR i remaining frames after Test, append last test scene rendered
       }//IF KeepTestON
 
-      //Display Sample & Test/Choice
-      if (TASK.NRSVP > 0 && TASK.FixationWindowSizeInches > 0) {
-        // IF RSVP, hold sample fixation
-        let fixationWindowBoundingBox = getFixationWindowBoundingBox( CURRTRIAL.samplegridindex, ENV.FixationWindowRadius );
-        boundingBoxesSampleFixation.x[0] = fixationWindowBoundingBox[0];
-        boundingBoxesSampleFixation.y[0] = fixationWindowBoundingBox[1];
-        FLAGS.punishOutsideTouch = 1;
-        FLAGS.waitingforTouches = 1;
-        FLAGS.acquiredTouch = 1;
-        if (ENV.Eye.TrackEye) {
-          ENV.Eye.EventType = 'eyemove';
-        }
+      //------ (BEGIN) Display Sample & Test/Choice
+      CURRTRIAL.samplefixationtouchevent = '';
+      CURRTRIAL.samplefixationxyt = [];
 
-        let p1 = hold_promise(0, boundingBoxesSampleFixation, FLAGS.punishOutsideTouch);
-        let p2 = displayTrial(
-          CURRTRIAL.tsequencedesired,
-          CURRTRIAL.sequencegridindex,
-          CURRTRIAL.sequenceclip,
-          CURRTRIAL.sequenceframe,
-          CURRTRIAL.sequencetaskscreen,
-          CURRTRIAL.sequencelabel,
-          CURRTRIAL.sequenceindex,
-          CURRTRIAL.images,
-          mkm,FLAGS.savedata
-        );
+      FLAGS.waitingforTouches = 1;
+      FLAGS.acquiredTouch = 1;
+      if (ENV.Eye.TrackEye) { ENV.Eye.EventType = 'eyemove'; }
 
-        let race_return = [];
-        if (ENV.StressTest == 0){
-          race_return = await Promise.race([p1, p2]);
+      let p1 = hold_promise(0, TASK.SampleOutsideGracePeriod);
+      let p2 = displayTrial(
+        CURRTRIAL.tsequencedesired,
+        CURRTRIAL.sequencegridindex,
+        CURRTRIAL.sequenceclip,
+        CURRTRIAL.sequenceframe,
+        CURRTRIAL.sequencetaskscreen,
+        CURRTRIAL.sequencelabel,
+        CURRTRIAL.sequenceindex,
+        CURRTRIAL.images,
+        mkm,FLAGS.savedata
+      );
+console.log('sample promise START --------->')
+      let race_return = [];
+      if (ENV.StressTest <= 0){
+        race_return = await Promise.race([p1, p2]);
+      }
+      else{
+        race_return = await p2;
+      }//ELSE STRESSTEST
+      FLAGS.acquiredTouch = 0;
+      FLAGS.waitingforTouches = 0;
+console.log('sample promise END --------->')
+
+      //Determine number of clips fixated
+      CURRTRIAL.nclipshown = frame.shown.lastIndexOf(1) !== undefined ? CURRTRIAL.sequenceclip[frame.shown.lastIndexOf(1)] : 0;
+      if (typeof race_return.type == 'undefined') {
+        CURRTRIAL.nclipshown++;
+      }//IF held until completion, count all i clips; otw only count i-1
+
+      if (FLAGS.movieplaying == 1) {
+        frame.current = frame.shown.length - 1;
+        frame.shown[frame.current] = 1;
+        await moviefinish_promise();
+      }//IF movie still playing after broke fixation, stop Sample movie
+
+      if (ENV.Eye.TrackEye > 0) {
+        ENV.Eye.EventType = 'eyestart'; // Reset eye state
+      }//IF trackeye, reset eye state
+
+      if (typeof race_return.type == 'undefined') {
+        CURRTRIAL.samplefixationtouchevent = 'theld';
+        //Median x,y = final position estimate
+        let xs = []; let ys = [];
+        if (CURRTRIAL.cxyt.length > 0) {
+          for (var q = 0; q <= CURRTRIAL.cxyt.length - 1; q++) {
+            xs.push(CURRTRIAL.cxyt[q][1]);
+            ys.push(CURRTRIAL.cxyt[q][2]);
+          } //FOR q samples
+        }//IF xy data
+        if (xs.length > 0){
+          CURRTRIAL.samplefixationxyt = [ math.median(xs), math.median(ys), Date.now() - ENV.CurrentDate.valueOf() ];
         }
         else{
-          race_return = await p2;
-        }//ELSE STRESSTEST
-        FLAGS.acquiredTouch = 0;
-        FLAGS.waitingforTouches = 0;
-
-        //Determine number of clips fixated
-        CURRTRIAL.nclipshown = frame.shown.lastIndexOf(1) !== undefined ? CURRTRIAL.sequenceclip[frame.shown.lastIndexOf(1)] : 0;
-        if (typeof race_return.type == 'undefined') {
-          CURRTRIAL.nclipshown++;
-        }//IF held until completion, count all i clips; otw only count i-1
-
-        if (FLAGS.movieplaying == 1) {
-          frame.current = frame.shown.length - 1;
-          frame.shown[frame.current] = 1;
-          await moviefinish_promise();
-        }//IF movie still playing after broke fixation, stop Sample movie
-
-        if (ENV.Eye.TrackEye > 0) {
-          ENV.Eye.EventType = 'eyestart'; // Reset eye state
+          CURRTRIAL.samplefixationxyt = [ -1, -1, Date.now() - ENV.CurrentDate.valueOf() ];
         }
-
-        if (typeof race_return.type == 'undefined') {
-          CURRTRIAL.samplefixationtouchevent = 'theld';
-          //Median x,y = final position estimate
-          let xs = []; let ys = [];
-          if (CURRTRIAL.cxyt.length > 0) {
-            for (var q = 0; q <= CURRTRIAL.cxyt.length - 1; q++) {
-              xs.push(CURRTRIAL.cxyt[q][1]);
-              ys.push(CURRTRIAL.cxyt[q][2]);
-            } //FOR q samples
-          }//IF xy data
-          if (xs.length > 0){
-            CURRTRIAL.samplefixationxyt = [ math.median(xs), math.median(ys), Date.now() - ENV.CurrentDate.valueOf() ];
-          }
-          else{
-            CURRTRIAL.samplefixationxyt = [ -1, -1, Date.now() - ENV.CurrentDate.valueOf() ];
-          }
-        }//IF held fixation during Sample
-        else {
-          CURRTRIAL.samplefixationtouchevent = race_return.type;
-          // Quick Fix for race_return.cxyt[1:4] returning undefined
-          for (let i = 1; i < 4; i++) {
-            if (typeof race_return.cxyt[i] == 'undefined') {
-              race_return.cxyt[i] = -1;
-            }
-          }//FOR i
-          CURRTRIAL.samplefixationxyt = [ race_return.cxyt[1], race_return.cxyt[2], race_return.cxyt[3] ];
-        }//ELSE broke fixation during Sample
-      }//IF RSVP, fixation hold required
+      }//IF held fixation during Sample
       else {
-        boundingBoxesChoice3D = { x: [], y: [] }; // determined on the fly during display
-        CURRTRIAL.samplefixationtouchevent = '';
-        CURRTRIAL.samplefixationxyt = [];
-
-        await displayTrial(
-          CURRTRIAL.tsequencedesired,
-          CURRTRIAL.sequencegridindex,
-          CURRTRIAL.sequenceclip,
-          CURRTRIAL.sequenceframe,
-          CURRTRIAL.sequencetaskscreen,
-          CURRTRIAL.sequencelabel,
-          CURRTRIAL.sequenceindex,
-          CURRTRIAL.images,
-          mkm, FLAGS.savedata
-        );
-      }//ELSE !RSVP --> display Sample movie, no fixation hold required
+        CURRTRIAL.samplefixationtouchevent = race_return.type;
+        // Quick Fix for race_return.cxyt[1:4] returning undefined
+        for (let i = 1; i < 4; i++) {
+          if (typeof race_return.cxyt[i] == 'undefined') {
+            race_return.cxyt[i] = -1;
+          }
+        }//FOR i
+        CURRTRIAL.samplefixationxyt = [ race_return.cxyt[1], race_return.cxyt[2], race_return.cxyt[3] ];
+      }//ELSE broke fixation during Sample
+      //------ (END) Display Sample & Test/Choice
 
       logEVENTS('SampleFixationTouchEvent',CURRTRIAL.samplefixationtouchevent,'trialseries');
       logEVENTS('SampleFixationXYT',CURRTRIAL.samplefixationxyt,'trialseries');
@@ -460,14 +422,10 @@ index_init();
       //========= AWAIT TOUCH CHOICE =========//
       FLAGS.waitingforTouches = 1;
 
-      //XX HideTestDistractors
-      if (TASK.HideTestDistractors >= 1) { FLAGS.punishOutsideTouch = 1; }
-      else { FLAGS.punishOutsideTouch = 0;}
-
-      let race_return = { type: 'theld' };
+      race_return = { type: 'theld' };
       let currchoice;
       if (ENV.StressTest == 1){
-        let nchoices = boundingBoxesChoice3D.x.length;
+       //XX let nchoices = boundingBoxesChoice3D.x.length;
         let distractor_array;
         let x;
         let y;
@@ -603,10 +561,9 @@ index_init();
               distractor_array = shuffle(distractor_array);
               currchoice = distractor_array[0];
             }//simulate incorrect
-
+//XX x,y
             x = boundingBoxesChoice3D.x[currchoice][0] +
                 Math.round( Math.random() * (boundingBoxesChoice3D.x[currchoice][1] - boundingBoxesChoice3D.x[currchoice][0]) );
-
             y = boundingBoxesChoice3D.y[currchoice][0] +
                 Math.round( Math.random() * (boundingBoxesChoice3D.y[currchoice][1] - boundingBoxesChoice3D.y[currchoice][0]) );
           }//ELSE !RSVP
@@ -618,25 +575,19 @@ index_init();
       else { // ELSE !ENV.StressTest
         if (TASK.NRSVP > 0) {
           CURRTRIAL.correctitem = 1;
-          if (TASK.FixationWindowSizeInches <= 0) {
-            race_return = { type: 'theld' };
+          race_return = { type: CURRTRIAL.samplefixationtouchevent };
+          if ( CURRTRIAL.samplefixationtouchevent == 'theld' || CURRTRIAL.nclipshown >= ENV.NRSVPMin) {
             currchoice = 1;
-          }//IF no fixation required
+          }//held samplefixation
           else {
-            race_return = { type: CURRTRIAL.samplefixationtouchevent };
-            if ( CURRTRIAL.samplefixationtouchevent == 'theld' || CURRTRIAL.nclipshown >= ENV.NRSVPMin) {
-              currchoice = 1;
-            }//held samplefixation
-            else {
-              currchoice = 0;
-            }//broke samplefixation
-          }//ELSE RSVP fixation required
+            currchoice = 0;
+          }//broke samplefixation
 
           race_return.cxyt = [ currchoice, -1, -1, CURRTRIAL.samplefixationxyt[2] ];
           FLAGS.waitingforTouches--;
         }//IF RSVP, skip choice
         else {
-          let p1 = hold_promise(0, boundingBoxesChoice3D, FLAGS.punishOutsideTouch);
+          let p1 = hold_promise(0, TASK.ChoiceOutsideGracePeriod);
           let p2 = choiceTimeOut(TASK.ChoiceTimeOut);
           race_return = await Promise.race([p1, p2]);
         }//ELSE !RSVP, require choice

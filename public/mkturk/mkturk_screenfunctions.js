@@ -3,11 +3,7 @@ function displayTrial_prime(ti, gr, cl, fr, sc, ob, id, ims, mkm) {
   // ti=time, gr=grid, fr=frame, sc=screen, ob=scenebag, id=renderparam_index
   let lenArgs = arguments.length;
   updated2d = 0; updated3d = 0;
-  boundingBoxesChoice2D = { x: [], y: [] };
-  boundingBoxesChoice3JS = { x: [], y: [] };
-  boundingBoxesChoice3D = { x: [], y: [] };
   CURRTRIAL.tsequenceactual = [];
-
 
   var resolveFunc; var errFunc;
   p = new Promise(function (resolve, reject) {
@@ -57,7 +53,7 @@ function displayTrial_prime(ti, gr, cl, fr, sc, ob, id, ims, mkm) {
         }//IF sample || test
         else {
         } //ELSE hide 3D when plotting 2D elements like buttons and not keeping (overlaying) sample/test
-      } //FOR s screens within frame
+      }//FOR s screens within frame
 
       renderShape2D('Blank', [-1], VISIBLECANVAS);
 
@@ -77,16 +73,13 @@ function displayTrial_prime(ti, gr, cl, fr, sc, ob, id, ims, mkm) {
 
   window.requestAnimationFrame(updateCanvas_prime);
   return p;
-} //FUNCTION displayTrial
+}//FUNCTION displayTrial_prime
 
 //================== IMAGE RENDERING ==================//
 function displayTrial(ti, gr, cl, fr, sc, ob, id, ims, mkm, trig) {
-  // ti=time, gr=grid, fr=frame, sc=screen, ob=scenebag, id=renderparam_index
+  // ti=time, gr=grid, cl=clip, fr=frame, sc=screen, ob=scenebag, id=renderparam_index
   let lenArgs = arguments.length;
   updated2d = 0; updated3d = 0;
-  boundingBoxesChoice2D = { x: [], y: [] };
-  boundingBoxesChoice3JS = { x: [], y: [] };
-  boundingBoxesChoice3D = { x: [], y: [] };
   CURRTRIAL.tsequenceactual = [];
 
   var resolveFunc; var errFunc;
@@ -97,6 +90,9 @@ function displayTrial(ti, gr, cl, fr, sc, ob, id, ims, mkm, trig) {
   
   var start = null;
   async function updateCanvas(timestamp) {
+    // FLAGS.bbTarget = { taskscreen: [], indscreen: [], grid: [], x: [], y: [], ID: [], class: [], asset: [] }
+    FLAGS.bbDisplay = { taskscreen: [], indscreen: [], grid: [], x: [], y: [], ID: [], class: [], asset: [] } //accumulate all bounding boxes for this frame
+
     if (!start) start = timestamp; //IF start has not been set to a float timestamp, set it now.
 
     if (frame.current > 0 && frame.shown[frame.current - 1] != 1) {
@@ -140,15 +136,35 @@ function displayTrial(ti, gr, cl, fr, sc, ob, id, ims, mkm, trig) {
 
           if (FLAGS.usecanvas2D == 0){
     //RENDER 3D (transfers to 2D & filters)
-            render3D(taskscreen, s, f, gr, fr, sc, ob, id, im);
+            bbTarget = render3D(taskscreen, s, f, gr, fr, sc, ob, id, im);
+            for (let j=0; j <= bbTarget.x.length-1; j++){
+              FLAGS.bbDisplay.taskscreen.push(taskscreen)
+              FLAGS.bbDisplay.indscreen.push(s)
+              FLAGS.bbDisplay.grid.push(bbTarget.grid[j])
+              FLAGS.bbDisplay.ID.push(bbTarget.ID[j])
+              FLAGS.bbDisplay.class.push(bbTarget.class[j])
+              FLAGS.bbDisplay.asset.push(bbTarget.asset[j])
+              FLAGS.bbDisplay.x.push(bbTarget.x[j])
+              FLAGS.bbDisplay.y.push(bbTarget.y[j])
+            }//FOR j rendered items
             const defaultFilter = 'blur(0px) brightness(100%) contrast(100%) grayscale(0%) hue-rotate(0deg) invert(0%) opacity(100%) saturate(100%) sepia(0%)';
             VISIBLECANVAS.getContext('2d').filter = defaultFilter; //restore 2D filter
-          } //IF 3D canvas
+          }//IF 3D canvas
           else if (FLAGS.usecanvas2D == 1){
     //RENDER 2D Sample/Test Image
-            render2D(taskscreen, s, f, gr, fr, sc, ob, id, im, VISIBLECANVAS);
+            bbTarget = render2D(taskscreen, s, f, gr, fr, sc, ob, id, im, VISIBLECANVAS);
             updated3d = 0;
-          } //ELSEIF 2D canvas
+            for (let j=0; j <= bbTarget.x.length-1; j++){
+              FLAGS.bbDisplay.taskscreen.push(taskscreen)
+              FLAGS.bbDisplay.indscreen.push(s)
+              FLAGS.bbDisplay.grid.push(bbTarget.grid[j])
+              FLAGS.bbDisplay.ID.push(bbTarget.ID[j])
+              FLAGS.bbDisplay.class.push(bbTarget.class[j])
+              FLAGS.bbDisplay.asset.push(bbTarget.asset[j])
+              FLAGS.bbDisplay.x.push(bbTarget.x[j])
+              FLAGS.bbDisplay.y.push(bbTarget.y[j])
+            }//FOR j rendered items
+          }//ELSEIF 2D canvas
         }//IF sample || test
         else {
           updated3d = 0;
@@ -167,45 +183,56 @@ function displayTrial(ti, gr, cl, fr, sc, ob, id, ims, mkm, trig) {
             ENV.FixationRadius, ENV.ChoiceRadius,
             ENV.CanvasRatio, VISIBLECANVAS
           );
-        } //IF !savedata, underlay grid
+        }//IF !savedata, underlay grid
 
-    //RENDER 2D SHAPE (Choice/Reward/Punish)
-    
+    //RENDER 2D SHAPE (Choice/Reward/Punish)    
         if ( taskscreen == 'Choice' || taskscreen == 'Reward' || taskscreen == 'Punish') {
-          var boundingBox = renderShape2D(taskscreen, gr[f], VISIBLECANVAS);
-          if (s == 0 && taskscreen == 'Choice') {
-            boundingBoxesChoice2D = boundingBox;
-          }
+          bbTarget = renderShape2D(taskscreen, gr[f], VISIBLECANVAS);
+          for (let j=0; j <= bbTarget.x.length-1; j++){
+            FLAGS.bbDisplay.taskscreen.push(taskscreen)
+            FLAGS.bbDisplay.indscreen.push(s)
+            FLAGS.bbDisplay.grid.push(bbTarget.grid[j])
+            FLAGS.bbDisplay.ID.push(bbTarget.ID[j])
+            FLAGS.bbDisplay.class.push(bbTarget.class[j])
+            FLAGS.bbDisplay.asset.push(bbTarget.asset[j])
+            FLAGS.bbDisplay.x.push(bbTarget.x[j])
+            FLAGS.bbDisplay.y.push(bbTarget.y[j])  
+          }//FOR j rendered items
           updated2d = 1;
-        }
+        }//IF Choice/Reward/Punish, renderShape
 
     //Blue Fixation Circle
         if ( taskscreen == 'Touchfix' ){
-          renderShape2D(taskscreen, gr[f], VISIBLECANVAS);          
-        }//IF touchfix
+          bbTarget = renderShape2D(taskscreen, gr[f], VISIBLECANVAS);
+          for (let j=0; j <= bbTarget.x.length-1; j++){
+            FLAGS.bbDisplay.taskscreen.push(taskscreen)
+            FLAGS.bbDisplay.indscreen.push(s)
+            FLAGS.bbDisplay.grid.push(bbTarget.grid[j])
+            FLAGS.bbDisplay.ID.push(bbTarget.ID[j])
+            FLAGS.bbDisplay.class.push(bbTarget.class[j])
+            FLAGS.bbDisplay.asset.push(bbTarget.asset[j])
+            FLAGS.bbDisplay.x.push(bbTarget.x[j])
+            FLAGS.bbDisplay.y.push(bbTarget.y[j])  
+          }//FOR j rendered items
+        }//IF touchfix, renderShape
 
     //OVERLAY White Fixation Square
         if ( taskscreen == 'Touchfix' || taskscreen == 'Sample' || taskscreen == 'Blank' )
         {
           if (typeof gr[f] == 'number') { renderShape2D('FixationDot', gr[f], VISIBLECANVAS); }
           else { renderShape2D('FixationDot', gr[f][0], VISIBLECANVAS); }
-        } //IF touchfix || sample
-      } //FOR s screens within frame
+        }//IF touchfix || sample
+      }//FOR s screens within frame
 
     //OVERLAY Photodiode Square
       if (typeof(trig) != "undefined" && trig==1 && TASK.Photodiode > 0 ) {
         renderShape2D('PhotodiodeSquare', [ENV.PhotodiodeSquareX, ENV.PhotodiodeSquareY],VISIBLECANVAS,cl[f]);
       } //IF port.connected
 
-      //----- Merge Bounding Boxes
-      if (updated2d) {
-        boundingBoxesChoice3D.x = boundingBoxesChoice2D.x;
-        boundingBoxesChoice3D.y = boundingBoxesChoice2D.y;
-      }//IF updated2d
-      if (updated3d) {
-        boundingBoxesChoice3D.x = boundingBoxesChoice3JS.x;
-        boundingBoxesChoice3D.y = boundingBoxesChoice3JS.y;
-      } //IF updated3d
+      //----- Choose Target Bounding Box for that screen
+      FLAGS.bbTarget = updateTargetBoundingBoxes(FLAGS.bbDisplay)
+      broadcastBoundingBoxes(FLAGS.bbDisplay, 0)
+      broadcastBoundingBoxes(FLAGS.bbTarget, 1)
 
       // MkModel
       if (lenArgs >= 7 && mkm) { transferToModelCanvas(taskscreen,mkm) } //IF MkModel
@@ -238,12 +265,12 @@ function displayTrial(ti, gr, cl, fr, sc, ob, id, ims, mkm, trig) {
           {
             saveScreenshot(VISIBLECANVAS,CURRTRIAL.num,taskscreen0,frame.current,
                         ob[frame.current],id[frame.current]);
-          } //IF need to save out this frame
+          }//IF need to save out this frame
         }//IF RSVP
-      } //IF sample or test screen & save out images
+      }//IF sample or test screen & save out images
 
       frame.current++;
-    } //IF frames remain to be shown
+    }//IF frames remain to be shown
     //------(END)-------- RENDER THE NEXT FRAME ------------------//
 
     //IF prematurely ending movies externally
@@ -258,19 +285,140 @@ function displayTrial(ti, gr, cl, fr, sc, ob, id, ims, mkm, trig) {
       }
       resolveFunc(CURRTRIAL.tsequenceactual);
     } //ELSE all frames shown, promise resolve, exit animation loop
-  } //FUNCTION updateCanvas
+  }//FUNCTION updateCanvas
 
   window.requestAnimationFrame(updateCanvas);
   return p;
-} //FUNCTION displayTrial
+}//FUNCTION displayTrial
+
+function updateTargetBoundingBoxes(boundingBoxes){
+  let gridCenter = {x:0,y:0}
+  let objectCenter = {x:0,y:0}
+  let bbTarg = {taskscreen: [], indscreen: [], grid: [], x: [], y: [], ID: [], class: [], asset: [] }
+
+  if (TASK.Target == 'scene'){
+    var bbScene = {x0:[],x1:[],y0:[],y1:[],taskscreen:[],indscreen:[],grid:[],ID:[],class:[],asset:[]}
+    let classes = math.setDistinct(boundingBoxes.class)
+    for (let i=0; i<=classes.length-1; i++){
+      bbScene.x0[classes[i]] = []
+      bbScene.x1[classes[i]] = []
+      bbScene.y0[classes[i]] = []
+      bbScene.y1[classes[i]] = []
+      bbScene.ID[classes[i]] = ''
+      bbScene.asset[classes[i]] = ''
+    }//FOR i classes
+  }//IF scene, will create overall box for each scene class
+
+  for (let i=0; i<=boundingBoxes.x.length-1; i++){
+    if (boundingBoxes.indscreen[i]==0 && boundingBoxes.class[i]>=0){
+      objectCenter.x = (boundingBoxes.x[i][0] + boundingBoxes.x[i][1])/2
+      objectCenter.y = (boundingBoxes.y[i][0] + boundingBoxes.y[i][1])/2
+
+      gridCenter.x = ENV.XGridCenter[boundingBoxes.grid[i]]
+      gridCenter.y = ENV.YGridCenter[boundingBoxes.grid[i]]
+    }//IF current taskscreen and a target class
+    else{
+      continue
+    }
+    bbTarg.taskscreen.push(boundingBoxes.taskscreen[i])
+    bbTarg.indscreen.push(boundingBoxes.indscreen[i])
+    bbTarg.grid.push(boundingBoxes.grid[i])
+    bbTarg.class.push(boundingBoxes.class[i])
+    bbTarg.ID.push(boundingBoxes.ID[i])
+
+    if (TASK.Target == 'gridwindow'){
+      bbTarg.x.push([gridCenter.x-ENV.FixationWindowRadius,gridCenter.x+ENV.FixationWindowRadius])
+      bbTarg.y.push([gridCenter.y-ENV.FixationWindowRadius,gridCenter.y+ENV.FixationWindowRadius])
+      bbTarg.asset.push(boundingBoxes.asset[i] + '_gridwindow')
+    }//IF gridwindow
+    else if (TASK.Target == 'objectwindow'){
+      bbTarg.x.push([objectCenter.x-ENV.FixationWindowRadius,objectCenter.x+ENV.FixationWindowRadius])
+      bbTarg.y.push([objectCenter.y-ENV.FixationWindowRadius,objectCenter.y+ENV.FixationWindowRadius])
+      bbTarg.asset.push(boundingBoxes.asset[i] + '_objectwindow')
+    }//IF objectwindow
+    else if (TASK.Target == 'object'){
+      if (boundingBoxes.asset[i].includes('object') || boundingBoxes.asset[i].includes('shape')
+          || boundingBoxes.asset[i].includes('image')){
+        bbTarg.x.push(boundingBoxes.x[i])
+        bbTarg.y.push(boundingBoxes.y[i])
+        bbTarg.asset.push(boundingBoxes.asset[i] + '_objectboundingbox')  
+      }//IF asset is object or shape or 2D image (but not cubemap background)
+    }//IF object targets
+    else if (TASK.Target == 'scene'){
+      bbTarg.x.push(boundingBoxes.x[i])
+      bbTarg.y.push(boundingBoxes.y[i])
+      bbTarg.asset.push(boundingBoxes.asset[i] + '_objectboundingbox')
+
+      //concatenate asset and ID names
+      bbScene.asset[boundingBoxes.class[i]] = bbScene.asset[boundingBoxes.class[i]] + '_' + boundingBoxes.asset[i]
+      bbScene.ID[boundingBoxes.class[i]] = bbScene.ID[boundingBoxes.class[i]] + '_' + boundingBoxes.ID[i]
+      bbScene.x0[boundingBoxes.class[i]].push(boundingBoxes.x[i][0])
+      bbScene.x1[boundingBoxes.class[i]].push(boundingBoxes.x[i][1])
+      bbScene.y0[boundingBoxes.class[i]].push(boundingBoxes.y[i][0])
+      bbScene.y1[boundingBoxes.class[i]].push(boundingBoxes.y[i][1])
+
+      bbScene.taskscreen[boundingBoxes.class[i]] = boundingBoxes.taskscreen[i]
+      bbScene.indscreen[boundingBoxes.class[i]] = boundingBoxes.indscreen[i]
+      bbScene.grid[boundingBoxes.class[i]] = boundingBoxes.grid[i]
+      bbScene.class[boundingBoxes.class[i]] = boundingBoxes.class[i]
+    }//IF scene target, include cubemap background
+    else{
+      console.log('MISSING PARAMETER: no valid target type as TASK.Target = ' + TASK.Target)
+    }//ELSE no valid target type
+  }//FOR j display bounding boxes
+
+  if (TASK.Target == 'scene'){
+    for (let i=0; i<=bbScene.x0.length-1; i++){
+      bbTarg.x.push( [math.min(bbScene.x0), math.max(bbScene.x1)] )
+      bbTarg.y.push( [math.min(bbScene.y0), math.max(bbScene.y1)] )
+      bbTarg.asset.push(bbScene.asset[i] + '_sceneboundingbox')//append scene to accumulated name
+      bbTarg.ID.push( bbScene.ID[i] )
+      bbTarg.taskscreen.push(bbScene.taskscreen[i])
+      bbTarg.indscreen.push(bbScene.indscreen[i])
+      bbTarg.grid.push(bbScene.grid[i])
+      bbTarg.class.push(bbScene.class[i])
+    }//FOR i classes
+  }//IF scene target, add an overall scene window for each class
+  return bbTarg
+}//FUNCTION updateTargetBoundingBoxes
+
+function broadcastBoundingBoxes(boundingBoxes,areTarg){
+  let boundingBoxesRtdb = {};
+  if (FLAGS.rtdbAgentNumConnections > 0) {
+    for (let i = 0; i < boundingBoxes.x.length; i++) {
+      boundingBoxesRtdb[`${i}`] = {};
+      boundingBoxesRtdb[`${i}`]['taskscreen'] = boundingBoxes.taskscreen[i]
+      boundingBoxesRtdb[`${i}`]['indscreen'] = boundingBoxes.indscreen[i]
+      boundingBoxesRtdb[`${i}`]['grid'] = boundingBoxes.grid[i]
+      boundingBoxesRtdb[`${i}`]['ID'] = boundingBoxes.ID[i]
+      boundingBoxesRtdb[`${i}`]['class'] = boundingBoxes.class[i]
+      boundingBoxesRtdb[`${i}`]['asset'] = boundingBoxes.asset[i]
+      for (let j = 0; j < boundingBoxes.x[i].length; j++) {
+        boundingBoxesRtdb[`${i}`][`x_${j}`] = boundingBoxes.x[i][j] // boundingBoxes.x[i][j] - CANVAS.offsetleft;
+        boundingBoxesRtdb[`${i}`][`y_${j}`] = boundingBoxes.y[i][j] //ENV.ViewportPixels[1] - boundingBoxes.y[i][k];
+      }//FOR y coords
+    }//FOR i bounding boxes
+
+    rtdb.ref('data/' + ENV.Subject).set({
+      x: -1, y: -1,
+      boundingBoxes: boundingBoxesRtdb,
+      meta: areTarg+2,
+      timestamp: new Date().toJSON(),
+    });
+  }//IF realtime database
+  else{
+    console.log('no RTDB connection for this Agent')
+    return
+  }//ELSE no rtdb connection
+}//FUNCTION broadcastBoundingBoxes
 
 //------- FUNCTION render3D ---------//
 function render3D(taskscreen, s, f, gr, fr, sc, ob, id, im) {
-  renderer.autoClear = false;    
-
+  renderer.autoClear = false;
+  let boundingBoxes = {x:[],y:[],grid:[],ID:[],class:[], asset:[]}
   for (var j = 0; j < ob[f].length; j++) {
     renderer.clear();
-    var [boundingBox, boundingBoxCube, crop] = updateSingleFrame3D(
+    var [boundingBoxObject, boundingBoxCubeMap, crop] = updateSingleFrame3D(
       taskscreen,
       ob[f][j],
       id[f][j],
@@ -279,67 +427,48 @@ function render3D(taskscreen, s, f, gr, fr, sc, ob, id, im) {
       im[j]
     );
 
-    if (
-      s == 0 &&
-      typeof boundingBox != 'undefined' &&
-      typeof boundingBox[ob[f][j]] != 'undefined' &&
-      typeof boundingBox[ob[f][j]][0] != 'undefined'
-    ) {
-      boundingBoxesChoice3JS.x[j] = boundingBox[ob[f][j]][0].x;
-      boundingBoxesChoice3JS.y[j] = boundingBox[ob[f][j]][0].y;
+    if (typeof boundingBoxObject.x != 'undefined'){
+      for (n_ob = 0; n_ob < boundingBoxObject.x.length; n_ob++) {
+        boundingBoxes.x.push(boundingBoxObject.x[n_ob]);
+        boundingBoxes.y.push(boundingBoxObject.y[n_ob]);
+        boundingBoxes.grid.push(gr[f][j]);
+        boundingBoxes.ID.push(boundingBoxObject.ID[n_ob] + '_scene' + boundingBoxObject.class[n_ob]);
+        boundingBoxes.asset.push('object');
+        // boundingBoxes.class.push(boundingBoxObject.class[n_ob]); //id # of that scene file
+        boundingBoxes.class.push(j) //index to choice in n-way rather than class #
+  
+      //   // multiple objects in a scene
+      //   boundingBoxes.x[j] = [
+      //     Math.min(boundingBoxes.x[j][0], boundingBoxObject[ob[f][j]][n_ob].x[0]),
+      //     Math.max(boundingBoxes.x[j][1], boundingBoxObject[ob[f][j]][n_ob].x[1]),
+      //   ];
+      //   boundingBoxes.y[j] = [
+      //     Math.min(boundingBoxes.y[j][0],boundingBoxObject[ob[f][j]][n_ob].y[0]),
+      //     Math.max(boundingBoxes.y[j][1],boundingBoxObject[ob[f][j]][n_ob].y[1]),
+      //   ];
+      }//FOR n_ob
+      
+      if (typeof boundingBoxCubeMap.x != 'undefined') {
+        for (let im=0; im<=boundingBoxCubeMap.x.length-1; im++){
+          boundingBoxes.x.push(boundingBoxCubeMap.x[im]);
+          boundingBoxes.y.push(boundingBoxCubeMap.y[im]);
+          boundingBoxes.grid.push(gr[f][j]);
+          boundingBoxes.ID.push(boundingBoxCubeMap.ID[im]);
+          boundingBoxes.asset.push('cubemap');
+          boundingBoxes.class.push(boundingBoxCubeMap.class[im]);
+        }//FOR im
 
-      for (n_ob = 0; n_ob < boundingBox[ob[f][j]].length; n_ob++) {
-        // multiple objects in a scene
-        boundingBoxesChoice3JS.x[j] = [
-          Math.min(
-            boundingBoxesChoice3JS.x[j][0],
-            boundingBox[ob[f][j]][n_ob].x[0]
-          ),
-          Math.max(
-            boundingBoxesChoice3JS.x[j][1],
-            boundingBox[ob[f][j]][n_ob].x[1]
-          ),
-        ];
-        boundingBoxesChoice3JS.y[j] = [
-          Math.min(
-            boundingBoxesChoice3JS.y[j][0],
-            boundingBox[ob[f][j]][n_ob].y[0]
-          ),
-          Math.max(
-            boundingBoxesChoice3JS.y[j][1],
-            boundingBox[ob[f][j]][n_ob].y[1]
-          ),
-        ];
-      }
-
-      if (
-        typeof boundingBoxCube != 'undefined' &&
-        typeof boundingBoxCube[ob[f][j]] != 'undefined' &&
-        typeof boundingBoxCube[ob[f][j]][0] != 'undefined'
-      ) {
-        boundingBoxesChoice3JS.x[j] = [
-          Math.min(
-            boundingBox[ob[f][j]][0].x[0],
-            boundingBoxCube[ob[f][j]][0].x[0]
-          ),
-          Math.max(
-            boundingBox[ob[f][j]][0].x[1],
-            boundingBoxCube[ob[f][j]][0].x[1]
-          ),
-        ];
-        boundingBoxesChoice3JS.y[j] = [
-          Math.min(
-            boundingBox[ob[f][j]][0].y[0],
-            boundingBoxCube[ob[f][j]][0].y[0]
-          ),
-          Math.max(
-            boundingBox[ob[f][j]][0].y[1],
-            boundingBoxCube[ob[f][j]][0].y[1]
-          ),
-        ];
-      }
+      //   boundingBoxes.x[j] = [
+      //     Math.min(boundingBoxObject[ob[f][j]][0].x[0], boundingBoxCubeMap[ob[f][j]][0].x[0]),
+      //     Math.max(boundingBoxObject[ob[f][j]][0].x[1], boundingBoxCubeMap[ob[f][j]][0].x[1]),
+      //   ];
+      //   boundingBoxes.y[j] = [
+      //     Math.min(boundingBoxObject[ob[f][j]][0].y[0], boundingBoxCubeMap[ob[f][j]][0].y[0]),
+      //     Math.max(boundingBoxObject[ob[f][j]][0].y[1], boundingBoxCubeMap[ob[f][j]][0].y[1] ),
+      //   ];
+      }//IF
       updated3d = 1;
-    } //IF first screen
+    }//IF
 
     var camera = scene[taskscreen].getObjectByName('cam' + ob[f][j]);
 
@@ -348,14 +477,8 @@ function render3D(taskscreen, s, f, gr, fr, sc, ob, id, im) {
 
     //Post-render 2D filtering in pixel space
     var [objFilterSingleFrame, imgFilterSingleFrame] = updateFilterSingleFrame(
-      taskscreen,
-      ob[f][j],
-      id[f][j],
-      fr[f],
-      gr[f][j]
+      taskscreen, ob[f][j], id[f][j], fr[f], gr[f][j]
     );
-
-    // console.log(taskscreen,objFilterSingleFrame)
 
     VISIBLECANVAS.getContext('2d').filter = objFilterSingleFrame;
 
@@ -389,70 +512,54 @@ function render3D(taskscreen, s, f, gr, fr, sc, ob, id, im) {
     {
       VISIBLECANVAS.getContext('2d').drawImage(
         renderer.domElement,
-        Math.round(sx),
-        Math.round(sy),
-        Math.round(swidth),
-        Math.round(sheight),
-        0,
-        0,
-        Math.round(VISIBLECANVAS.width),
-        Math.round(VISIBLECANVAS.height)
+        Math.round(sx), Math.round(sy),
+        Math.round(swidth), Math.round(sheight),
+        0,0,Math.round(VISIBLECANVAS.width), Math.round(VISIBLECANVAS.height)
       );
-    } else {
+    }//IF SaveImages
+    else {
       VISIBLECANVAS.getContext('2d').drawImage(
         renderer.domElement,
-        Math.round(sx),
-        Math.round(sy),
-        Math.round(swidth),
-        Math.round(sheight),
-        left,
-        top,
-        Math.round(swidth_2d),
-        Math.round(sheight_2d)
+        Math.round(sx), Math.round(sy),
+        Math.round(swidth), Math.round(sheight),
+        left, top, Math.round(swidth_2d), Math.round(sheight_2d)
       );
-    }
+    }//ELSE
 
     // update bounding boxes if crop bounding box is smaller than the boundingbox
-    if (
-      s == 0 &&
-      swidth_2d * ENV.CanvasRatio <
-        boundingBoxesChoice3JS.x[j][1] - boundingBoxesChoice3JS.x[j][0]
-    ) {
-      boundingBoxesChoice3JS.x[j] = [
-        left * ENV.CanvasRatio,
-        (left + swidth_2d) * ENV.CanvasRatio,
-      ];
-      boundingBoxesChoice3JS.y[j] = [
-        top * ENV.CanvasRatio + CANVAS.offsettop,
-        (top + sheight_2d) * ENV.CanvasRatio + CANVAS.offsettop,
-      ];
-    }
-  } //FOR j display items
-} //FUNCTION render3D
+    let ind = boundingBoxes.x.length-1 //since not all j display items are necessarily visible, only a subset have bounding boxes
+    if ( swidth_2d * ENV.CanvasRatio < boundingBoxes.x[ind][1] - boundingBoxes.x[ind][0]) {
+      boundingBoxes.x[ind] = [ left * ENV.CanvasRatio, (left + swidth_2d) * ENV.CanvasRatio];
+      boundingBoxes.y[ind] = [ top * ENV.CanvasRatio + CANVAS.offsettop, (top + sheight_2d) * ENV.CanvasRatio + CANVAS.offsettop];
+    }//IF
+  }//FOR j display items
+  return boundingBoxes
+}//FUNCTION render3D
 
 //------- FUNCTION render2D ---------//
 async function render2D(taskscreen, s, f, gr, fr, sc, ob, id, im, canvasobj) {
-//===== DRAW IMAGE
-    if (typeof im != 'undefined' && typeof im[0] == 'object') {
-      for (var j = 0; j <= ob[f].length - 1; j++) {
-        var boundingBox = renderImage2D(im[j],taskscreen,
-                                        ob[f][j],id[f][j],fr[f],
-                                        gr[f][j],canvasobj); //render 2D image prior to next frame draw
-        if (s == 0 &&
-            typeof boundingBox[0] != 'undefined' &&
-            boundingBox[0].length > 0
-        ) {
-          boundingBoxesChoice2D.x[j] = boundingBox[0];
-          boundingBoxesChoice2D.y[j] = boundingBox[1];
-        } //IF
-        updated2d = 1;
-      } //FOR j display items
-    } //IF image available
+let boundingBoxes = {x: [], y: [], grid: [], ID: [], class: [], asset: []}
+if (typeof im != 'undefined' && typeof im[0] == 'object') {
+  for (var j = 0; j <= ob[f].length - 1; j++) {
+    var boundingBox = renderImage2D(im[j],taskscreen,
+                                    ob[f][j],id[f][j],fr[f],
+                                    gr[f][j],canvasobj); //render 2D image prior to next frame draw
+    if (typeof boundingBox[0] != 'undefined' && boundingBox[0].length > 0
+    ) {
+        boundingBoxes.x[j] = boundingBox[0];
+        boundingBoxes.y[j] = boundingBox[1];
+        boundingBoxes.grid[j] = gr[f][j];
+        boundingBoxes.ID[j] = 'image2d';
+        boundingBoxes.asset[j] = 'image';
+        boundingBoxes.class[j] = j
+    }//IF
+    updated2d = 1;
+  }//FOR j display items
+}//IF image available
+return boundingBoxes
 }//FUNCTION render2D
 
-function renderImage2D(
-  im, sc, ob, id, fr, gr, canvasobj
-) {
+function renderImage2D( im, sc, ob, id, fr, gr, canvasobj) {
   // var sz = chooseArrayElement(IMAGES[sc][ob].IMAGES.sizeTHREEJS * ENV.THREEJStoInches, id, 0);
   var sz = chooseArrayElement(IMAGES[sc][ob].IMAGES.sizeInches, id, 0);
   var wdpixels = (sz * ENV.ViewportPPI) / ENV.CanvasRatio;
@@ -476,7 +583,7 @@ function renderImage2D(
   ybound[1] = ybound[1] + CANVAS.offsettop;
 
   return [xbound, ybound];
-} //FUNCTION renderImage2D
+}//FUNCTION renderImage2D
 //XX hidetestdistractors needs to go somewhere
 
 
@@ -500,18 +607,10 @@ function expandImage2DFrames(taskscreen)
         imgIdx = IMAGES[taskscreen][classlabel].IMAGES.imageidx[i];
       }
 
-      let durationMS = chooseArrayElement(
-        IMAGES[taskscreen][classlabel].durationMS,
-        i,
-        0
-      );
+      let durationMS = chooseArrayElement(IMAGES[taskscreen][classlabel].durationMS,i,0);
 
-      IMAGES[taskscreen][classlabel].IMAGES.imageidx[i] = interpParam_frames(
-        imgIdx,
-        "binary",
-        durationMS,
-        framerate
-      );
+      IMAGES[taskscreen][classlabel].IMAGES.imageidx[i] = 
+        interpParam_frames(imgIdx,"binary",durationMS,framerate);
 
       for (let j = 0;
         j < IMAGES[taskscreen][classlabel].IMAGES.imageidx[i].length; j++)
@@ -520,7 +619,7 @@ function expandImage2DFrames(taskscreen)
             IMAGES[taskscreen][classlabel].IMAGES.imageidx[i][j] = Math.round(IMAGES[taskscreen][classlabel].IMAGES.imageidx[i][j]
           );
         } //IF
-      } // FOR j img indices, round
+      }// FOR j img indices, round
 
       if (!IMAGES[taskscreen][classlabel].IMAGES.imageidx[i].every( (val, i, arr) => val === arr[0] ) )
       {
@@ -529,8 +628,8 @@ function expandImage2DFrames(taskscreen)
       else {
         FLAGS.movieper[taskscreen][classlabel][i] = 0
       }
-    } //FOR i images
-  } //FOR classlabel
+    }//FOR i images
+  }//FOR classlabel
 }//FUNCTION expandImage2DFrames
 
 
@@ -538,53 +637,61 @@ function expandImage2DFrames(taskscreen)
 function renderShape2D(sc, gr, canvasobj,cl) {
   switch (sc) {
     case 'Blank':
-      renderBlank(canvasobj, TASK.BackgroundColor2D);
+      renderBlank(canvasobj, TASK.BackgroundColor2D);//XX
       break;
     case 'Touchfix':
       if (TASK.SameDifferent <= 0) {
-        bufferFixationUsingDot(ENV.FixationColor,gr,ENV.FixationRadius,canvasobj);
-      } //IF !same-different
+        return renderDotOnCanvas(ENV.FixationColor,gr,ENV.FixationRadius,canvasobj);
+      }//IF !same-different
       else if (TASK.SameDifferent > 0) {
-        bufferFixationUsingTriangle(ENV.ChoiceColor,gr,ENV.FixationRadius,canvasobj);
-      } //IF same-different
+        return renderTriangleOnCanvas(ENV.ChoiceColor,gr,2*ENV.FixationRadius,canvasobj);
+      }//IF same-different
       break;
     case 'FixationDot':
       if (ENV.FixationDotRadius > 0) {
-        renderSquareOnCanvas(ENV.FixationDotColor,gr,ENV.FixationSquareWidth,canvasobj);
+        return renderSquareOnCanvas(ENV.FixationDotColor,gr,ENV.FixationSquareWidth,canvasobj);
       }
       if ( ENV.FixationWindowRadius > 0 && FLAGS.savedata == 0 && FLAGS.underlayGridPoints == 1)
       {
-        renderFixationWindow(ENV.XGridCenter, ENV.YGridCenter, gr, ENV.FixationWindowRadius, ENV.CanvasRatio,canvasobj);
+        return renderFixationWindow(ENV.XGridCenter, ENV.YGridCenter, gr, ENV.FixationWindowRadius, ENV.CanvasRatio,canvasobj);
       } //IF !savedata, overlay fixation window
       break;
     case 'PhotodiodeSquare':
       if (Math.round(frame.current / 2) == frame.current / 2) {
         if (Math.round(cl/2) == cl/2){
-          renderSquareOnCanvas('white', gr, ENV.PhotodiodeSquareWidth, canvasobj);
+          funcreturn = renderSquareOnCanvas('white', gr, ENV.PhotodiodeSquareWidth, canvasobj);
         }
         else{
-          renderSquareOnCanvas('#CCCCCC', gr, ENV.PhotodiodeSquareWidth, canvasobj);          
+          funcreturn = renderSquareOnCanvas('#CCCCCC', gr, ENV.PhotodiodeSquareWidth, canvasobj);          
         }
-      } //IF even frame, draw white square
+      }//IF even frame, draw white square
       else {
         if (Math.round(cl/2) == cl/2){
-          renderSquareOnCanvas('black', gr, ENV.PhotodiodeSquareWidth, canvasobj);
+          funcreturn = renderSquareOnCanvas('black', gr, ENV.PhotodiodeSquareWidth, canvasobj);
         }
         else{
-          renderSquareOnCanvas('#333333', gr, ENV.PhotodiodeSquareWidth, canvasobj);
+          funcreturn = renderSquareOnCanvas('#333333', gr, ENV.PhotodiodeSquareWidth, canvasobj);
         }
       } //ELSE go back to blank
+      funcreturn.ID[0] = 'photodiodesquare'
+      funcreturn.class[0] = -1
+      funcreturn.grid[0] = -1
+      return funcreturn
     case 'Choice':
       return bufferChoiceUsingCircleSquare(ENV.ChoiceColor,ENV.ChoiceRadius,gr,canvasobj);
     case 'Reward':
-      renderReward(canvasobj);
-      break;
+      funcreturn = renderSquareOnCanvas('green', ENV.RewardSquareXY, ENV.RewardSquareWidth, canvasobj);
+      funcreturn.class[0] = -1 //not a target
+      funcreturn.grid[0] = -1
+      return funcreturn
     case 'Punish':
-      renderPunish(canvasobj);
-      break;
+      funcreturn = renderSquareOnCanvas('#3c3c3c', ENV.PunishSquareXY, ENV.PunishSquareWidth, canvasobj);
+      funcreturn.class[0] = -1 //not a target
+      funcreturn.grid[0] = -1
+      return funcreturn
     default:
-  } //SWITCH taskscreen
-} //FUNCTION renderShape2D
+  }//SWITCH taskscreen
+}//FUNCTION renderShape2D
 
 //------- FUNCTION transferToModelCanvas ---------//
 function transferToModelCanvas(taskscreen, mkm){
@@ -601,20 +708,15 @@ function transferToModelCanvas(taskscreen, mkm){
         ViewportPPI: ENV.ViewportPPI,
         ScreenRatio: ENV.ScreenRatio,
         offsettop: CANVAS.offsettop,
-        boundingBoxes3D: boundingBoxesChoice3D,
-        boundingBoxes2D: boundingBoxesChoice2D,
+        boundingBoxes3D: boundingBoxesChoice3D, //XX
+        boundingBoxes2D: boundingBoxesChoice2D, //XX
       };
 
       ctx.drawImage(
         VISIBLECANVAS,
-        mkmBoundingBox.sx,
-        mkmBoundingBox.sy,
-        mkmBoundingBox.sWidth,
-        mkmBoundingBox.sHeight,
-        0,
-        0,
-        224,
-        224
+        mkmBoundingBox.sx, mkmBoundingBox.sy,
+        mkmBoundingBox.sWidth, mkmBoundingBox.sHeight,
+        0,0,224,224
       );
       let featureVec = mkm.featureExtractor.execute(
         mkm.normalizePixelValues(mkm.cvs),
@@ -657,24 +759,18 @@ function transferToModelCanvas(taskscreen, mkm){
         ViewportPPI: ENV.ViewportPPI,
         ScreenRatio: ENV.ScreenRatio,
         offsettop: CANVAS.offsettop,
-        boundingBoxes3D: boundingBoxesChoice3D,
-        boundingBoxes2D: boundingBoxesChoice2D,
+        boundingBoxes3D: boundingBoxesChoice3D, //XX
+        boundingBoxes2D: boundingBoxesChoice2D, //XX
       };
 
       ctx.drawImage(
         VISIBLECANVAS,
-        mkmBoundingBox.sx,
-        mkmBoundingBox.sy,
-        mkmBoundingBox.sWidth,
-        mkmBoundingBox.sHeight,
-        0,
-        0,
-        224,
-        224
+        mkmBoundingBox.sx, mkmBoundingBox.sy,
+        mkmBoundingBox.sWidth, mkmBoundingBox.sHeight,
+        0, 0, 224, 224
       );
       let featureVec = mkm.featureExtractor.execute(
-        mkm.normalizePixelValues(mkm.cvs),
-        mkm.ouputNode
+        mkm.normalizePixelValues(mkm.cvs),mkm.ouputNode
       );
       featureVec = featureVec.reshape(mkm.inputShape);
 
@@ -723,8 +819,8 @@ function transferToModelCanvas(taskscreen, mkm){
         ViewportPPI: ENV.ViewportPPI,
         ScreenRatio: ENV.ScreenRatio,
         offsettop: CANVAS.offsettop,
-        boundingBoxes3D: boundingBoxesChoice3D,
-        boundingBoxes2D: boundingBoxesChoice2D,
+        boundingBoxes3D: boundingBoxesChoice3D, //XX
+        boundingBoxes2D: boundingBoxesChoice2D, //XX
       };
 
       // let mkmBoundingBox = mkm.getMkModelBoundingBox(params);
@@ -735,8 +831,7 @@ function transferToModelCanvas(taskscreen, mkm){
       let img = IMAGES['Sample'][label];
       let fov = (cam.fov * Math.PI) / 180;
       let heightThreeJS =
-        2 *
-        Math.tan(fov / 2) *
+        2 * Math.tan(fov / 2) *
         (cam.position.z + img.IMAGES.sizeTHREEJS / 2);
       let srcHeight =
         (img.IMAGES.sizeTHREEJS / heightThreeJS) *
@@ -801,14 +896,9 @@ function transferToModelCanvas(taskscreen, mkm){
 }//FUNCTION renderForModel
 
 //========== BUFFER CHOICE CANVAS ==========//
-function bufferChoiceUsingCircleSquare(
-  choice_color,
-  choice_radius,
-  choice_grid_indices,
-  canvasobj
-) {
+function bufferChoiceUsingCircleSquare(choice_color,choice_radius,choice_grid_indices,canvasobj) {
   // Option: gray out before buffering test: (for overriding previous trial's test screen if current trial test screen has transparent elements?)
-  var boundingBoxes = { x: [], y: [] };
+  let boundingBoxes = { x: [], y: [], grid: [], ID: [], class:[], asset: []};
   // Draw test object(s):
   for (var i = 0; i <= choice_grid_indices.length - 1; i++) {
     // If HideTestDistractors, simply do not draw the image
@@ -816,43 +906,44 @@ function bufferChoiceUsingCircleSquare(
       if (correct_index != i) {
         boundingBoxes.x.push([NaN, NaN]);
         boundingBoxes.y.push([NaN, NaN]);
+        boundingBoxes.grid.push(-1)
+        boundingBoxes.ID.push('')
+        boundingBoxes.asset.push('')
         continue;
       }
     }
     if (i == 0) {
-      var funcreturn = renderDotOnCanvas(
-        choice_color,
-        choice_grid_indices[i],
-        choice_radius,
-        canvasobj
-      );
+      var funcreturn = renderDotOnCanvas(choice_color,choice_grid_indices[i],choice_radius,canvasobj);
+      boundingBoxes.class.push(0)
     } //same = circle
     else if (i == 1) {
-      var funcreturn = renderSquareOnCanvas(
-        choice_color,
-        choice_grid_indices[i],
-        2 * choice_radius,
-        canvasobj
-      );
+      var funcreturn = renderSquareOnCanvas(choice_color,choice_grid_indices[i],2 * choice_radius,canvasobj);
+      boundingBoxes.class.push(1)
     } //different = square
-    boundingBoxes.x.push(funcreturn[0]);
-    boundingBoxes.y.push(funcreturn[1]);
-  } //FOR i choices
+    boundingBoxes.x.push(funcreturn.x[0]);
+    boundingBoxes.y.push(funcreturn.y[0]);
+    boundingBoxes.grid.push(funcreturn.grid[0])
+    boundingBoxes.ID.push(funcreturn.ID[0])
+    boundingBoxes.asset.push('shape')
+  }//FOR i choices
   return boundingBoxes;
-} //FUNCTION bufferChoiceUsingCircleSquare
+}//FUNCTION bufferChoiceUsingCircleSquare
 
 // Dot render using gridindex
-function renderDotOnCanvas(color, gridindex, dot_pixelradius, canvasobj) {
+function renderDotOnCanvas(color, gridindex, dot_pixelradius, canvasobj){
   var context = canvasobj.getContext('2d');
+  let boundingBoxes = { x: [], y: [], grid:[], ID: [], class: [], asset: [] };
 
   // Draw fixation dot
   if (Array.isArray(gridindex)) {
     var xcent = gridindex[0] / ENV.CanvasRatio;
     var ycent = gridindex[1] / ENV.CanvasRatio;
+    boundingBoxes.grid.push(-1)
   } //IF x,y coord provided
   else {
     var xcent = ENV.XGridCenter[gridindex] / ENV.CanvasRatio;
     var ycent = ENV.YGridCenter[gridindex] / ENV.CanvasRatio;
+    boundingBoxes.grid.push(gridindex)
   } //IF gridindex provided
   var rad = dot_pixelradius / ENV.CanvasRatio;
   context.beginPath();
@@ -862,36 +953,39 @@ function renderDotOnCanvas(color, gridindex, dot_pixelradius, canvasobj) {
 
   // Define (rectangular) boundaries of fixation
   // Bounding boxes of dot on canvas
-  xbound = [(xcent - rad) * ENV.CanvasRatio, (xcent + rad) * ENV.CanvasRatio];
-  ybound = [(ycent - rad) * ENV.CanvasRatio, (ycent + rad) * ENV.CanvasRatio];
+  boundingBoxes.x.push( [(xcent - rad) * ENV.CanvasRatio, (xcent + rad) * ENV.CanvasRatio] );
+  boundingBoxes.y.push( [(ycent - rad) * ENV.CanvasRatio, (ycent + rad) * ENV.CanvasRatio] );
 
-  xbound[0] = xbound[0] + CANVAS.offsetleft;
-  xbound[1] = xbound[1] + CANVAS.offsetleft;
-  ybound[0] = ybound[0] + CANVAS.offsettop;
-  ybound[1] = ybound[1] + CANVAS.offsettop;
-  return [xbound, ybound];
-} //FUNCTION renderDotOnCanvas
+  boundingBoxes.x[0][0] = boundingBoxes.x[0][0] + CANVAS.offsetleft;
+  boundingBoxes.x[0][1] = boundingBoxes.x[0][1] + CANVAS.offsetleft;
+  boundingBoxes.y[0][0] = boundingBoxes.y[0][0] + CANVAS.offsettop;
+  boundingBoxes.y[0][1] = boundingBoxes.y[0][1] + CANVAS.offsettop;
+
+  boundingBoxes.ID.push('circle')
+  boundingBoxes.class.push(0)
+  boundingBoxes.asset.push('shape')
+  return boundingBoxes
+}//FUNCTION renderDotOnCanvas
 
 function getFixationWindowBoundingBox(gridindex, rad) {
+  let boundingBoxes = { x: [], y: []};
   var xcent = ENV.XGridCenter[gridindex];
   var ycent = ENV.YGridCenter[gridindex];
 
   // Bounding boxes of dot on canvas
-  xbound = [xcent - rad, xcent + rad];
-  ybound = [ycent - rad, ycent + rad];
+  boundingBoxes.x = [xcent - rad, xcent + rad];
+  boundingBoxes.y = [ycent - rad, ycent + rad];
 
-  xbound[0] = xbound[0] + CANVAS.offsetleft;
-  xbound[1] = xbound[1] + CANVAS.offsetleft;
-  ybound[0] = ybound[0] + CANVAS.offsettop;
-  ybound[1] = ybound[1] + CANVAS.offsettop;
-
-  return [xbound, ybound];
-} //FUNCTION getFixationWindowBoundingBox
+  boundingBoxes.x[0] = boundingBoxes.x[0] + CANVAS.offsetleft;
+  boundingBoxes.x[1] = boundingBoxes.x[1] + CANVAS.offsetleft;
+  boundingBoxes.y[0] = boundingBoxes.y[0] + CANVAS.offsettop;
+  boundingBoxes.y[1] = boundingBoxes.y[1] + CANVAS.offsettop;
+  return boundingBoxes
+}//FUNCTION getFixationWindowBoundingBox
 
 function renderSquareOnCanvas(color, gridIdx, square_pixelwidth, canvasobj) {
-  // Draw Square
   const ctx = canvasobj.getContext('2d');
-
+  let boundingBoxes = { x: [], y: [], grid: [], ID: [] , class: [], asset: []};
   let xCenter;
   let yCenter;
 
@@ -899,49 +993,45 @@ function renderSquareOnCanvas(color, gridIdx, square_pixelwidth, canvasobj) {
     // IF x, y coord provided
     xCenter = gridIdx[0] / ENV.CanvasRatio;
     yCenter = gridIdx[1] / ENV.CanvasRatio;
+    boundingBoxes.grid.push(-1)
   } else {
     // IF gridIdx provided
     xCenter = ENV.XGridCenter[gridIdx] / ENV.CanvasRatio;
     yCenter = ENV.YGridCenter[gridIdx] / ENV.CanvasRatio;
-  }
+    boundingBoxes.grid.push(gridIdx)
+  }//ELSE use grid coords
 
   const displayWidth = square_pixelwidth / ENV.CanvasRatio;
 
   ctx.fillStyle = color;
-  ctx.fillRect(
-    xCenter - displayWidth / 2,
-    yCenter - displayWidth / 2,
-    displayWidth,
-    displayWidth
-  );
+  ctx.fillRect(xCenter - displayWidth / 2, yCenter - displayWidth / 2, displayWidth,displayWidth);
 
   // Define (rectangular) boundaries of fixation
   // Bounding boxes of dot on canvas
 
-  const xBound = [
+  boundingBoxes.x.push([
     (xCenter - displayWidth / 2) * ENV.CanvasRatio,
     (xCenter + displayWidth / 2) * ENV.CanvasRatio,
-  ];
-  const yBound = [
+  ]);
+  boundingBoxes.y.push([
     (yCenter - displayWidth / 2) * ENV.CanvasRatio,
     (yCenter + displayWidth / 2) * ENV.CanvasRatio,
-  ];
+  ]);
 
-  xBound[0] = xBound[0] + CANVAS.offsetleft;
-  xBound[1] = xBound[1] + CANVAS.offsetleft;
-  yBound[0] = yBound[0] + CANVAS.offsettop;
-  yBound[1] = yBound[1] + CANVAS.offsettop;
-  return [xBound, yBound];
+  boundingBoxes.x[0][0] = boundingBoxes.x[0][0] + CANVAS.offsetleft;
+  boundingBoxes.x[0][1] = boundingBoxes.x[0][1] + CANVAS.offsetleft;
+  boundingBoxes.y[0][0] = boundingBoxes.y[0][0] + CANVAS.offsettop;
+  boundingBoxes.y[0][1] = boundingBoxes.y[0][1] + CANVAS.offsettop;
+
+  boundingBoxes.ID.push('square')
+  boundingBoxes.class.push(0)
+  boundingBoxes.asset.push('shape')
+  return boundingBoxes
 } //FUNCTION renderSquareOnCanvas
 
-function renderTriangleOnCanvas(
-  color,
-  gridindex,
-  square_pixelwidth,
-  canvasobj
-) {
-  // Draw Triangle
+function renderTriangleOnCanvas(color,gridindex,square_pixelwidth,canvasobj) {
   var context = canvasobj.getContext('2d');
+  let boundingBoxes = { x: [], y: [], grid: [], ID: [], class: [], asset: []};
   var wd = square_pixelwidth / ENV.CanvasRatio;
   var xcent = ENV.XGridCenter[gridindex] / ENV.CanvasRatio;
   var ycent = ENV.YGridCenter[gridindex] / ENV.CanvasRatio;
@@ -958,41 +1048,43 @@ function renderTriangleOnCanvas(
 
   // Define (rectangular) boundaries of fixation
   // Bounding boxes of dot on canvas
-  xbound = [
+  boundingBoxes.x.push([
     (xcent - wd / 2) * ENV.CanvasRatio,
     (xcent + wd / 2) * ENV.CanvasRatio,
-  ];
-  ybound = [
+  ]);
+  boundingBoxes.y.push([
     (ycent - wd / 2) * ENV.CanvasRatio,
     (ycent + wd / 2) * ENV.CanvasRatio,
-  ];
+  ]);
 
-  xbound[0] = xbound[0] + CANVAS.offsetleft;
-  xbound[1] = xbound[1] + CANVAS.offsetleft;
-  ybound[0] = ybound[0] + CANVAS.offsettop;
-  ybound[1] = ybound[1] + CANVAS.offsettop;
-  return [xbound, ybound];
-} //FUNCTION renderTriangleOnCanvas
+  boundingBoxes.x[0][0] = boundingBoxes.x[0][0] + CANVAS.offsetleft;
+  boundingBoxes.x[0][1] = boundingBoxes.x[0][1] + CANVAS.offsetleft;
+  boundingBoxes.y[0][0] = boundingBoxes.y[0][0] + CANVAS.offsettop;
+  boundingBoxes.y[0][1] = boundingBoxes.y[0][1] + CANVAS.offsettop;
+
+  boundingBoxes.grid.push(gridindex)
+  boundingBoxes.ID.push('triangle')
+  boundingBoxes.class.push(0)
+  boundingBoxes.asset.push('shape')
+  return boundingBoxes
+}//FUNCTION renderTriangleOnCanvas
 
 function renderBlank(canvasobj, bkgdcolor) {
   var context = canvasobj.getContext('2d');
+  let boundingBoxes = { x: [], y: [] };
+  //XX return bb
   context.fillStyle = bkgdcolor;
   context.clearRect(0, 0, canvasobj.width, canvasobj.height);
 } //FUNCTION renderBlank
 
-function renderFixationWindow(
-  gridx,
-  gridy,
-  fixationgridindex,
-  fixationwindowradius,
-  canvasratio,
-  canvasobj
-) {
+function renderFixationWindow(gridx,gridy,fixationgridindex,fixationwindowradius,canvasratio,canvasobj) {
   //---- Fixation Window Bounding Box (yellow)
   var wd = (2 * fixationwindowradius) / canvasratio;
   var xcent = gridx[fixationgridindex] / canvasratio;
   var ycent = gridy[fixationgridindex] / canvasratio;
+
   const context = canvasobj.getContext('2d');
+  let boundingBoxes = { x: [], y: [] };
   context.strokeStyle = 'yellow';
   context.strokeRect(xcent - wd / 2, ycent - wd / 2, wd, wd);
 
@@ -1002,8 +1094,14 @@ function renderFixationWindow(
     (xcent + wd / 2) * canvasratio,
     (ycent + wd / 2) * canvasratio,
   ];
-  displayPhysicalSize(displaycoord, canvasobj);
-}
+  displayPhysicalSizeText(displaycoord, canvasobj);
+
+  boundingBoxes.x[0] = displaycoord[0] + CANVAS.offsetleft;
+  boundingBoxes.x[1] = displaycoord[2] + CANVAS.offsetleft;
+  boundingBoxes.y[0] = displaycoord[1] + CANVAS.offsettop;
+  boundingBoxes.y[1] = displaycoord[3] + CANVAS.offsettop;
+  return boundingBoxes
+}//FUNCTION renderFixationWindow
 
 function renderBlankWithGridMarkers(
   gridx,
@@ -1024,28 +1122,17 @@ function renderBlankWithGridMarkers(
   for (var i = 0; i <= gridx.length - 1; i++) {
     rad = 10;
     context.beginPath();
-    context.arc(
-      gridx[i] / ENV.CanvasRatio,
-      gridy[i] / ENV.CanvasRatio,
-      rad / ENV.CanvasRatio,
-      0 * Math.PI,
-      2 * Math.PI
-    );
+    context.arc(gridx[i] / ENV.CanvasRatio, gridy[i] / ENV.CanvasRatio, rad / ENV.CanvasRatio, 0 * Math.PI, 2 * Math.PI);
     context.fillStyle = 'red';
     context.fill();
 
-    var displaycoord = [
-      gridx[i] - rad,
-      gridy[i] - rad,
-      gridx[i] + rad,
-      gridy[i] + rad,
-    ];
+    var displaycoord = [gridx[i] - rad, gridy[i] - rad, gridx[i] + rad, gridy[i] + rad];
     var outofbounds = checkDisplayBounds(displaycoord);
     if (outofbounds == 1) {
       outofbounds_str =
         outofbounds_str + '<br>' + 'gridpoint' + i + ' is out of bounds';
     }
-    displayGridCoordinate(i, [gridx[i], gridy[i]], canvasobj);
+    displayGridCoordinateText(i, [gridx[i], gridy[i]], canvasobj);
   }
 
   //---- Fixation Image Bounding Box (white)
@@ -1066,7 +1153,7 @@ function renderBlankWithGridMarkers(
     outofbounds_str =
       outofbounds_str + '<br>' + 'Fixation dot is out of bounds';
   }
-  displayPhysicalSize(displaycoord, canvasobj);
+  displayPhysicalSizeText(displaycoord, canvasobj);
 
   //---- Choice Image Bounding Box(es) (red)
   if (TASK.SameDifferent > 0) {
@@ -1085,107 +1172,21 @@ function renderBlankWithGridMarkers(
       ];
       var outofbounds = checkDisplayBounds(displaycoord);
       if (outofbounds == 1) {
-        outofbounds_str =
-          outofbounds_str + '<br>' + 'Choice Image' + i + ' is out of bounds';
+        outofbounds_str = outofbounds_str + '<br>' + 'Choice Image' + i + ' is out of bounds';
       }
-      displayPhysicalSize(displaycoord, canvasobj);
-    }
-  } //IF same-different choice screen
+      displayPhysicalSizeText(displaycoord, canvasobj);
+    }//FOR i
+  }//IF same-different choice screen
 
   if (VISIBLECANVASWEBGL.width > 4096 || VISIBLECANVASWEBGL.height > 4096) {
-    outofbounds_str =
-      outofbounds_str +
+    outofbounds_str = outofbounds_str +
       'Canvas may be too large for webgl limit of 4096 pixels in either dimension -- 3d rendering may not be accurate! Consider using a smaller display size.';
-  }
+  }//IF canvas too large
 
-  if (outofbounds_str == '') {
-    outofbounds_str = 'All display elements are fully visible';
-  }
+  if (outofbounds_str == '') { outofbounds_str = 'All display elements are fully visible';}
 
   displayoutofboundsstr = outofbounds_str;
-} //FUNCTION renderBlankwithGridMarkers
-
-function renderReward(canvasobj) {
-  var context = canvasobj.getContext('2d');
-  context.fillStyle = 'green';
-  context.fillRect(
-    xcanvascenter / ENV.CanvasRatio - 200 / ENV.CanvasRatio,
-    ycanvascenter / ENV.CanvasRatio - 200 / ENV.CanvasRatio,
-    400 / ENV.CanvasRatio,
-    400 / ENV.CanvasRatio
-  );
-} //FUNCTION renderReward
-
-function renderPunish(canvasobj) {
-  var context = canvasobj.getContext('2d');
-  context.fillStyle = '#3c3c3c';
-  context.fillRect(
-    xcanvascenter / ENV.CanvasRatio - 200 / ENV.CanvasRatio,
-    ycanvascenter / ENV.CanvasRatio - 200 / ENV.CanvasRatio,
-    400 / ENV.CanvasRatio,
-    400 / ENV.CanvasRatio
-  );
-} //FUNCTION renderPunish
-
-async function bufferFixationUsingImage(
-  image,
-  gridindex,
-  sample_wdpixels,
-  sample_htpixels,
-  canvasobj
-) {
-  // 	var context=canvasobj.getContext('2d');
-  // 	context.clearRect(0,0,canvasobj.width,canvasobj.height);
-
-  boundingBoxesFixation['x'] = [];
-  boundingBoxesFixation['y'] = [];
-
-  if (typeof image != 'undefined') {
-    funcreturn = await renderImageOnCanvas(
-      image,
-      gridindex,
-      sample_wdpixels,
-      sample_htpixels,
-      canvasobj
-    );
-    boundingBoxesFixation.x.push(funcreturn[0]);
-    boundingBoxesFixation.y.push(funcreturn[1]);
-  } //IF image
-} //FUNCTION bufferFixationUsingImage
-
-async function bufferFixationUsingDot(
-  color,
-  gridindex,
-  dot_pixelradius,
-  canvasobj
-) {
-  boundingBoxesFixation['x'] = [];
-  boundingBoxesFixation['y'] = [];
-
-  funcreturn = renderDotOnCanvas(color, gridindex, dot_pixelradius, canvasobj);
-  boundingBoxesFixation.x.push(funcreturn[0]);
-  boundingBoxesFixation.y.push(funcreturn[1]);
-} //FUNCTION bufferFixationUsingDot
-
-async function bufferFixationUsingTriangle(
-  color,
-  gridindex,
-  dot_pixelradius,
-  canvasobj
-) {
-  boundingBoxesFixation['x'] = [];
-  boundingBoxesFixation['y'] = [];
-
-  funcreturn = renderTriangleOnCanvas(
-    color,
-    gridindex,
-    2 * dot_pixelradius,
-    canvasobj
-  );
-  boundingBoxesFixation.x[0] = funcreturn[0];
-  boundingBoxesFixation.y[0] = funcreturn[1];
-} //FUNCTION bufferFixationUsingTriangle
-
+}//FUNCTION renderBlankwithGridMarkers
 
 function makeSequencePost(durationMS,taskscreen,framerate){
   var fseq = range(0,Math.round(durationMS*framerate/1000) - 1, 1);
@@ -1196,7 +1197,7 @@ function makeSequencePost(durationMS,taskscreen,framerate){
     sseq[f] = taskscreen;
   }//FOR f frames
   return [tseq,sseq]
-} //FUNCTION makeSequencePost
+}//FUNCTION makeSequencePost
 
 function checkDisplayBounds(displayobject_coord) {
   var outofbounds = 0;
@@ -1209,13 +1210,14 @@ function checkDisplayBounds(displayobject_coord) {
     outofbounds = 1;
   }
   return outofbounds;
-}
+}//FUNCTION checkDisplayBounds
+
 function setupImageLoadingText() {
   var textobj = document.getElementById('imageloadingtext');
   textobj.style.top = CANVAS.offsettop + 'px';
   textobj.innerHTML = '';
   setupCanvasListeners(textobj);
-}
+}//FUNCTION setupImageLoadingText
 
 function updateImageLoadingAndDisplayText(str) {
   var textobj = document.getElementById('imageloadingtext');
@@ -1267,61 +1269,29 @@ function updateImageLoadingAndDisplayText(str) {
     'softwared actual - photodiode actual' +
     '<br>' +
     eyedataratestr;
-}
+}//FUNCTION updateImageLoadingAndDisplayText
 
-function displayPhysicalSize(displayobject_coord, canvasobj) {
+function displayPhysicalSizeText(displayobject_coord, canvasobj) {
   var visible_ctxt = canvasobj.getContext('2d');
   visible_ctxt.textBaseline = 'hanging';
   visible_ctxt.fillStyle = 'white';
   visible_ctxt.font = '16px Verdana';
   visible_ctxt.fillText(
-    Math.round(
-      (100 * (displayobject_coord[2] - displayobject_coord[0])) /
-        ENV.ViewportPPI
-    ) /
-      100 +
-      ' x ' +
-      Math.round(
-        (100 * (displayobject_coord[3] - displayobject_coord[1])) /
-          ENV.ViewportPPI
-      ) /
-        100 +
-      ' in',
+    Math.round( (100 * (displayobject_coord[2] - displayobject_coord[0])) / ENV.ViewportPPI ) / 100 + ' x '
+    + Math.round( (100 * (displayobject_coord[3] - displayobject_coord[1])) / ENV.ViewportPPI) / 100 + ' in',
     displayobject_coord[0] / ENV.CanvasRatio,
     (displayobject_coord[1] - 16) / ENV.CanvasRatio
   );
-}
+}//FUNCTION displayPhysicalSizeText
 
-function displayGridCoordinate(idx, xycoord, canvasobj) {
+function displayGridCoordinateText(idx, xycoord, canvasobj) {
   var visible_ctxt = canvasobj.getContext('2d');
   visible_ctxt.textAlign = 'center';
   visible_ctxt.textBaseline = 'middle';
   visible_ctxt.fillStyle = 'white';
   visible_ctxt.font = '20px Verdana';
-  visible_ctxt.fillText(
-    idx,
-    xycoord[0] / ENV.CanvasRatio,
-    xycoord[1] / ENV.CanvasRatio
-  );
-}
-
-function setViewport(gridindex, camera) {
-  //==== RENDERER 2D VIEWPORT
-  var scenecenterX = ENV.XGridCenter[gridindex];
-  var scenecenterY = ENV.YGridCenter[gridindex];
-
-  var sceneheight = renderer.getContext().canvas.height;
-  var scenewidth = sceneheight * camera.aspect; // camera.aspect = 1. THREEJS is rendered on a square viewport to ensure that the
-  //scene looks the same across different device orientations
-  //var scenewidth = renderer.getContext().canvas.width
-
-  var left = scenecenterX - scenewidth / 2;
-  var bottom = -sceneheight / 2 + (VISIBLECANVAS.clientHeight - scenecenterY);
-
-  renderer.setViewport(left, bottom, scenewidth, sceneheight);
-  renderer.setScissor(left, bottom, scenewidth, sceneheight);
-  renderer.setScissorTest(true);
-}
+  visible_ctxt.fillText(idx,xycoord[0] / ENV.CanvasRatio,xycoord[1] / ENV.CanvasRatio);
+}//FUNCTION displayGridCoordinateText
 
 async function saveScreenshot(canvasobj, currtrial,taskscreen,framenum,objectlabel, objectind)
 {
@@ -1437,13 +1407,7 @@ async function saveScreenshot(canvasobj, currtrial,taskscreen,framenum,objectlab
   } //IF 3D Objects
 } //FUNCTION saveScreenshot
 
-async function saveMeshGLB(
-  currtrial,
-  taskscreen,
-  framenum,
-  objectlabel,
-  objectind
-) {
+async function saveMeshGLB(currtrial,taskscreen,framenum,objectlabel,objectind){
   if (taskscreen == 'Sample') {
     var currtrial_samplepath = TASK.ImageBagsSample[objectlabel];
   } else if (taskscreen == 'Test') {
@@ -1508,40 +1472,7 @@ async function saveMeshGLB(
       }
     }
   }
-}
-
-// Estimate max software fps
-function estimatefps() {
-  var resolveFunc;
-  var errFunc;
-  p = new Promise(function (resolve, reject) {
-    resolveFunc = resolve;
-    errFunc = reject;
-  }).then();
-
-  var lasttime = null;
-  var elapsedSinceLastFrame = [];
-  var nframes = 0;
-  var dtScreen = 0;
-  async function dummyLoop(timestamp) {
-    if (!lasttime) lasttime = timestamp;
-    elapsedSinceLastFrame[nframes] = timestamp - lasttime;
-    lasttime = timestamp;
-    nframes = nframes + 1;
-    if (nframes < 20) {
-      window.requestAnimationFrame(dummyLoop);
-    } else {
-      for (var i = 10; i <= nframes - 1; i++) {
-        dtScreen = dtScreen + elapsedSinceLastFrame[i];
-      }
-      dtScreen = dtScreen / (nframes - 10);
-      resolveFunc(1000 / dtScreen);
-    }
-  } //dummyLoop
-
-  window.requestAnimationFrame(dummyLoop);
-  return p;
-} //estimatefps
+}//FUNCTION saveMeshGLB
 
 //================== CANVAS SETUP ==================//
 function refreshCanvasSettings(TASK) {
@@ -1997,7 +1928,7 @@ function updateHeadsUpDisplayDevices() {
     //before task params load
     textobj.innerHTML = port.statustext_connect + blescale.statustext_connect;
   }
-}
+}//FUNCTION updateHeadsUpDisplay
 
 function updateHeadsUpDisplayAutomator(
   currentautomatorstagename,
@@ -2035,7 +1966,7 @@ function updateHeadsUpDisplayAutomator(
     var textstr = '';
   }
   return textstr;
-} //FUNCTION update
+}//FUNCTION updateHeadsUpDisplayAutomator
 
 function defineImageGrid(ngridpoints, gridspacing, xoffset, yoffset) {
   var xgrid = [];
@@ -2048,41 +1979,31 @@ function defineImageGrid(ngridpoints, gridspacing, xoffset, yoffset) {
       xgrid[cnt] = i - 1 / 2;
       ygrid[cnt] = j - 1 / 2;
       cnt++;
-    }
-  }
+    }//FOR j
+  }//FOR i
 
   //center x & y grid within canvas
   var xcanvascent =
     ((document.body.clientWidth - CANVAS.offsetleft) *
-      ENV.CanvasRatio *
-      ENV.DevicePixelRatio) /
-    2;
+      ENV.CanvasRatio * ENV.DevicePixelRatio) / 2;
   xcanvascent = xcanvascent + xoffset;
   var dx = xcanvascent - (gridspacing * ngridpoints) / 2; //left side of grid
 
   var ycanvascent =
     ((document.body.clientHeight - CANVAS.offsettop) *
-      ENV.CanvasRatio *
-      ENV.DevicePixelRatio) /
-    2;
+      ENV.CanvasRatio * ENV.DevicePixelRatio) / 2;
   ycanvascent = ycanvascent + yoffset;
   var dy = ycanvascent - (gridspacing * ngridpoints) / 2; //top of grid
 
   for (var i = 0; i <= xgrid.length - 1; i++) {
     xgridcent[i] = Math.round(xgrid[i] * gridspacing + dx);
     ygridcent[i] = Math.round(ygrid[i] * gridspacing + dy);
-  }
+  }//FOR i gridpoints
 
   return [xcanvascent, ycanvascent, xgridcent, ygridcent];
-} //FUNCTION defineImageGrid
+}//FUNCTION defineImageGrid
 
-function updateFilterSingleFrame(
-  taskscreen,
-  classlabel,
-  index,
-  movieframe,
-  gridindex
-) {
+function updateFilterSingleFrame(taskscreen,classlabel,index,movieframe,gridindex) {
   // ======= OBJECT FILTERS
   var objFilterSingleFrame = {
     blur: 0,
@@ -2096,11 +2017,7 @@ function updateFilterSingleFrame(
     sepia: 0,
   };
   if (typeof IMAGES[taskscreen][classlabel].OBJECTFILTERS != 'undefined') {
-    var nextblur = chooseArrayElement(
-      IMAGES[taskscreen][classlabel].OBJECTFILTERS.blur,
-      index,
-      0
-    );
+    var nextblur = chooseArrayElement(IMAGES[taskscreen][classlabel].OBJECTFILTERS.blur,index,0);
     if (Number.isInteger(movieframe) && nextblur != undefined) {
       nextblur = chooseArrayElement(nextblur, movieframe, nextblur.length - 1);
     }
@@ -2108,133 +2025,69 @@ function updateFilterSingleFrame(
       objFilterSingleFrame.blur = nextblur;
     }
 
-    var nextbrightness = chooseArrayElement(
-      IMAGES[taskscreen][classlabel].OBJECTFILTERS.brightness,
-      index,
-      0
-    );
+    var nextbrightness = chooseArrayElement(IMAGES[taskscreen][classlabel].OBJECTFILTERS.brightness,index,0);
     if (Number.isInteger(movieframe) && nextbrightness != undefined) {
-      nextbrightness = chooseArrayElement(
-        nextbrightness,
-        movieframe,
-        nextbrightness.length - 1
-      );
+      nextbrightness = chooseArrayElement(nextbrightness,movieframe,nextbrightness.length - 1);
     }
 
     if (nextbrightness != '' && nextbrightness != undefined) {
       objFilterSingleFrame.brightness = nextbrightness;
     }
 
-    var nextcontrast = chooseArrayElement(
-      IMAGES[taskscreen][classlabel].OBJECTFILTERS.contrast,
-      index,
-      0
-    );
+    var nextcontrast = chooseArrayElement(IMAGES[taskscreen][classlabel].OBJECTFILTERS.contrast,index,0);
     if (Number.isInteger(movieframe) && nextcontrast != undefined) {
-      nextcontrast = chooseArrayElement(
-        nextcontrast,
-        movieframe,
-        nextcontrast.length - 1
-      );
+      nextcontrast = chooseArrayElement(nextcontrast,movieframe,nextcontrast.length - 1);
     }
 
     if (nextcontrast != '' && nextcontrast != undefined) {
       objFilterSingleFrame.contrast = nextcontrast;
     }
 
-    var nextgrayscale = chooseArrayElement(
-      IMAGES[taskscreen][classlabel].OBJECTFILTERS.grayscale,
-      index,
-      0
-    );
+    var nextgrayscale = chooseArrayElement(IMAGES[taskscreen][classlabel].OBJECTFILTERS.grayscale,index,0);
     if (Number.isInteger(movieframe) && nextgrayscale != undefined) {
-      nextgrayscale = chooseArrayElement(
-        nextgrayscale,
-        movieframe,
-        nextgrayscale.length - 1
-      );
+      nextgrayscale = chooseArrayElement(nextgrayscale,movieframe,nextgrayscale.length - 1);
     }
 
     if (nextgrayscale != '' && nextgrayscale != undefined) {
       objFilterSingleFrame.grayscale = nextgrayscale;
     }
 
-    var nexthuerotate = chooseArrayElement(
-      IMAGES[taskscreen][classlabel].OBJECTFILTERS.huerotate,
-      index,
-      0
-    );
+    var nexthuerotate = chooseArrayElement(IMAGES[taskscreen][classlabel].OBJECTFILTERS.huerotate,index,0);
     if (Number.isInteger(movieframe) && nexthuerotate != undefined) {
-      nexthuerotate = chooseArrayElement(
-        nexthuerotate,
-        movieframe,
-        nexthuerotate.length - 1
-      );
+      nexthuerotate = chooseArrayElement(nexthuerotate,movieframe,nexthuerotate.length - 1);
     }
 
     if (nexthuerotate != '' && nexthuerotate != undefined) {
       objFilterSingleFrame.huerotate = nexthuerotate;
     }
 
-    var nextinvert = chooseArrayElement(
-      IMAGES[taskscreen][classlabel].OBJECTFILTERS.invert,
-      index,
-      0
-    );
+    var nextinvert = chooseArrayElement(IMAGES[taskscreen][classlabel].OBJECTFILTERS.invert,index,0);
     if (Number.isInteger(movieframe) && nextinvert != undefined) {
-      nextinvert = chooseArrayElement(
-        nextinvert,
-        movieframe,
-        nextinvert.length - 1
-      );
+      nextinvert = chooseArrayElement(nextinvert,movieframe,nextinvert.length - 1);
     }
     if (nextinvert != '' && nextinvert != undefined) {
       objFilterSingleFrame.invert = nextinvert;
     }
 
-    var nextopacity = chooseArrayElement(
-      IMAGES[taskscreen][classlabel].OBJECTFILTERS.opacity,
-      index,
-      0
-    );
+    var nextopacity = chooseArrayElement(IMAGES[taskscreen][classlabel].OBJECTFILTERS.opacity,index,0);
     if (Number.isInteger(movieframe) && nextopacity != undefined) {
-      nextopacity = chooseArrayElement(
-        nextopacity,
-        movieframe,
-        nextopacity.length - 1
-      );
+      nextopacity = chooseArrayElement(nextopacity,movieframe,nextopacity.length - 1);
     }
     if (nextopacity != '' && nextopacity != undefined) {
       objFilterSingleFrame.opacity = nextopacity;
     }
-    var nextsaturate = chooseArrayElement(
-      IMAGES[taskscreen][classlabel].OBJECTFILTERS.saturate,
-      index,
-      0
-    );
+    var nextsaturate = chooseArrayElement(IMAGES[taskscreen][classlabel].OBJECTFILTERS.saturate,index,0);
     if (Number.isInteger(movieframe) && nextsaturate != undefined) {
-      nextsaturate = chooseArrayElement(
-        nextsaturate,
-        movieframe,
-        nextsaturate.length - 1
-      );
+      nextsaturate = chooseArrayElement(nextsaturate,movieframe,nextsaturate.length - 1);
     }
 
     if (nextsaturate != '' && nextsaturate != undefined) {
       objFilterSingleFrame.saturate = nextsaturate;
     }
 
-    var nextsepia = chooseArrayElement(
-      IMAGES[taskscreen][classlabel].OBJECTFILTERS.sepia,
-      index,
-      0
-    );
+    var nextsepia = chooseArrayElement(IMAGES[taskscreen][classlabel].OBJECTFILTERS.sepia,index,0);
     if (Number.isInteger(movieframe) && nextsepia != undefined) {
-      nextsepia = chooseArrayElement(
-        nextsepia,
-        movieframe,
-        nextsepia.length - 1
-      );
+      nextsepia = chooseArrayElement(nextsepia,movieframe,nextsepia.length - 1);
     }
 
     if (nextsepia != '' && nextsepia != undefined) {
@@ -2242,33 +2095,15 @@ function updateFilterSingleFrame(
     }
   } //IF OBJECTFILTERS defined
   var objFilterstr =
-    'blur(' +
-    objFilterSingleFrame.blur +
-    'px) ' +
-    'brightness(' +
-    objFilterSingleFrame.brightness +
-    '%) ' +
-    'contrast(' +
-    objFilterSingleFrame.contrast +
-    '%) ' +
-    'grayscale(' +
-    objFilterSingleFrame.grayscale +
-    '%) ' +
-    'hue-rotate(' +
-    objFilterSingleFrame.huerotate +
-    'deg) ' +
-    'invert(' +
-    objFilterSingleFrame.invert +
-    '%) ' +
-    'opacity(' +
-    objFilterSingleFrame.opacity +
-    '%) ' +
-    'saturate(' +
-    objFilterSingleFrame.saturate +
-    '%) ' +
-    'sepia(' +
-    objFilterSingleFrame.sepia +
-    '%)';
+    'blur(' + objFilterSingleFrame.blur + 'px) ' +
+    'brightness(' + objFilterSingleFrame.brightness + '%) ' +
+    'contrast(' + objFilterSingleFrame.contrast + '%) ' +
+    'grayscale(' + objFilterSingleFrame.grayscale + '%) ' +
+    'hue-rotate(' + objFilterSingleFrame.huerotate + 'deg) ' +
+    'invert(' + objFilterSingleFrame.invert + '%) ' + 
+    'opacity(' + objFilterSingleFrame.opacity + '%) ' +
+    'saturate(' + objFilterSingleFrame.saturate + '%) ' +
+    'sepia(' + objFilterSingleFrame.sepia + '%)';
 
   //===== 2D IMAGE FILTERS
   var imgFilterSingleFrame = {
@@ -2284,11 +2119,7 @@ function updateFilterSingleFrame(
   };
 
   if (typeof IMAGES[taskscreen][classlabel].IMAGEFILTERS != 'undefined') {
-    var nextblur = chooseArrayElement(
-      IMAGES[taskscreen][classlabel].IMAGEFILTERS.blur,
-      index,
-      0
-    );
+    var nextblur = chooseArrayElement(IMAGES[taskscreen][classlabel].IMAGEFILTERS.blur, index, 0);
     if (Number.isInteger(movieframe) && nextblur != undefined) {
       nextblur = chooseArrayElement(nextblur, movieframe, nextblur.length - 1);
     }
@@ -2296,133 +2127,69 @@ function updateFilterSingleFrame(
       imgFilterSingleFrame.blur = nextblur;
     }
 
-    var nextbrightness = chooseArrayElement(
-      IMAGES[taskscreen][classlabel].IMAGEFILTERS.brightness,
-      index,
-      0
-    );
+    var nextbrightness = chooseArrayElement(IMAGES[taskscreen][classlabel].IMAGEFILTERS.brightness,index,0);
     if (Number.isInteger(movieframe) && nextbrightness != undefined) {
-      nextbrightness = chooseArrayElement(
-        nextbrightness,
-        movieframe,
-        nextbrightness.length - 1
-      );
+      nextbrightness = chooseArrayElement(nextbrightness,movieframe,nextbrightness.length - 1);
     }
 
     if (nextbrightness != '' && nextbrightness != undefined) {
       imgFilterSingleFrame.brightness = nextbrightness;
     }
 
-    var nextcontrast = chooseArrayElement(
-      IMAGES[taskscreen][classlabel].IMAGEFILTERS.contrast,
-      index,
-      0
-    );
+    var nextcontrast = chooseArrayElement(IMAGES[taskscreen][classlabel].IMAGEFILTERS.contrast,index,0);
     if (Number.isInteger(movieframe) && nextcontrast != undefined) {
-      nextcontrast = chooseArrayElement(
-        nextcontrast,
-        movieframe,
-        nextcontrast.length - 1
-      );
+      nextcontrast = chooseArrayElement(nextcontrast,movieframe,nextcontrast.length - 1);
     }
 
     if (nextcontrast != '' && nextcontrast != undefined) {
       imgFilterSingleFrame.contrast = nextcontrast;
     }
 
-    var nextgrayscale = chooseArrayElement(
-      IMAGES[taskscreen][classlabel].IMAGEFILTERS.grayscale,
-      index,
-      0
-    );
+    var nextgrayscale = chooseArrayElement(IMAGES[taskscreen][classlabel].IMAGEFILTERS.grayscale,index,0);
     if (Number.isInteger(movieframe) && nextgrayscale != undefined) {
-      nextgrayscale = chooseArrayElement(
-        nextgrayscale,
-        movieframe,
-        nextgrayscale.length - 1
-      );
+      nextgrayscale = chooseArrayElement(nextgrayscale,movieframe,nextgrayscale.length - 1);
     }
 
     if (nextgrayscale != '' && nextgrayscale != undefined) {
       imgFilterSingleFrame.grayscale = nextgrayscale;
     }
 
-    var nexthuerotate = chooseArrayElement(
-      IMAGES[taskscreen][classlabel].IMAGEFILTERS.huerotate,
-      index,
-      0
-    );
+    var nexthuerotate = chooseArrayElement(IMAGES[taskscreen][classlabel].IMAGEFILTERS.huerotate,index,0);
     if (Number.isInteger(movieframe) && nexthuerotate != undefined) {
-      nexthuerotate = chooseArrayElement(
-        nexthuerotate,
-        movieframe,
-        nexthuerotate.length - 1
-      );
+      nexthuerotate = chooseArrayElement(nexthuerotate,movieframe,nexthuerotate.length - 1);
     }
 
     if (nexthuerotate != '' && nexthuerotate != undefined) {
       imgFilterSingleFrame.huerotate = nexthuerotate;
     }
 
-    var nextinvert = chooseArrayElement(
-      IMAGES[taskscreen][classlabel].IMAGEFILTERS.invert,
-      index,
-      0
-    );
+    var nextinvert = chooseArrayElement(IMAGES[taskscreen][classlabel].IMAGEFILTERS.invert,index,0);
     if (Number.isInteger(movieframe) && nextinvert != undefined) {
-      nextinvert = chooseArrayElement(
-        nextinvert,
-        movieframe,
-        nextinvert.length - 1
-      );
+      nextinvert = chooseArrayElement(nextinvert,movieframe,nextinvert.length - 1);
     }
     if (nextinvert != '' && nextinvert != undefined) {
       imgFilterSingleFrame.invert = nextinvert;
     }
 
-    var nextopacity = chooseArrayElement(
-      IMAGES[taskscreen][classlabel].IMAGEFILTERS.opacity,
-      index,
-      0
-    );
+    var nextopacity = chooseArrayElement(IMAGES[taskscreen][classlabel].IMAGEFILTERS.opacity,index,0);
     if (Number.isInteger(movieframe) && nextopacity != undefined) {
-      nextopacity = chooseArrayElement(
-        nextopacity,
-        movieframe,
-        nextopacity.length - 1
-      );
+      nextopacity = chooseArrayElement(nextopacity,movieframe,nextopacity.length - 1);
     }
     if (nextopacity != '' && nextopacity != undefined) {
       imgFilterSingleFrame.opacity = nextopacity;
     }
-    var nextsaturate = chooseArrayElement(
-      IMAGES[taskscreen][classlabel].IMAGEFILTERS.saturate,
-      index,
-      0
-    );
+    var nextsaturate = chooseArrayElement(IMAGES[taskscreen][classlabel].IMAGEFILTERS.saturate,index,0);
     if (Number.isInteger(movieframe) && nextsaturate != undefined) {
-      nextsaturate = chooseArrayElement(
-        nextsaturate,
-        movieframe,
-        nextsaturate.length - 1
-      );
+      nextsaturate = chooseArrayElement(nextsaturate,movieframe,nextsaturate.length - 1);
     }
 
     if (nextsaturate != '' && nextsaturate != undefined) {
       imgFilterSingleFrame.saturate = nextsaturate;
     }
 
-    var nextsepia = chooseArrayElement(
-      IMAGES[taskscreen][classlabel].IMAGEFILTERS.sepia,
-      index,
-      0
-    );
+    var nextsepia = chooseArrayElement(IMAGES[taskscreen][classlabel].IMAGEFILTERS.sepia,index,0);
     if (Number.isInteger(movieframe) && nextsepia != undefined) {
-      nextsepia = chooseArrayElement(
-        nextsepia,
-        movieframe,
-        nextsepia.length - 1
-      );
+      nextsepia = chooseArrayElement(nextsepia,movieframe,nextsepia.length - 1);
     }
 
     if (nextsepia != '' && nextsepia != undefined) {
@@ -2430,36 +2197,63 @@ function updateFilterSingleFrame(
     }
   } //IF IMAGEFILTERS defined
   var imgFilterstr =
-    'blur(' +
-    imgFilterSingleFrame.blur +
-    'px) ' +
-    'brightness(' +
-    imgFilterSingleFrame.brightness +
-    '%) ' +
-    'contrast(' +
-    imgFilterSingleFrame.contrast +
-    '%) ' +
-    'grayscale(' +
-    imgFilterSingleFrame.grayscale +
-    '%) ' +
-    'hue-rotate(' +
-    imgFilterSingleFrame.huerotate +
-    'deg) ' +
-    'invert(' +
-    imgFilterSingleFrame.invert +
-    '%) ' +
-    'opacity(' +
-    imgFilterSingleFrame.opacity +
-    '%) ' +
-    'saturate(' +
-    imgFilterSingleFrame.saturate +
-    '%) ' +
-    'sepia(' +
-    imgFilterSingleFrame.sepia +
-    '%)';
+    'blur(' +imgFilterSingleFrame.blur + 'px) ' +
+    'brightness(' + imgFilterSingleFrame.brightness + '%) ' +
+    'contrast(' + imgFilterSingleFrame.contrast + '%) ' +
+    'grayscale(' + imgFilterSingleFrame.grayscale + '%) ' +
+    'hue-rotate(' + imgFilterSingleFrame.huerotate + 'deg) ' +
+    'invert(' + imgFilterSingleFrame.invert + '%) ' +
+    'opacity(' + imgFilterSingleFrame.opacity + '%) ' +
+    'saturate(' + imgFilterSingleFrame.saturate + '%) ' +
+    'sepia(' + imgFilterSingleFrame.sepia + '%)';
 
   return [objFilterstr, imgFilterstr];
-}
+}//FUNCTION updateFilterSingleFrame
+
+function estimatefps() {
+  // Estimate max software fps
+  var resolveFunc;
+  var errFunc;
+  p = new Promise(function (resolve, reject) {
+    resolveFunc = resolve;
+    errFunc = reject;
+  }).then();
+
+  var lasttime = null;
+  var elapsedSinceLastFrame = [];
+  var nframes = 0;
+  var dtScreen = 0;
+  async function dummyLoop(timestamp) {
+    if (!lasttime) lasttime = timestamp;
+    elapsedSinceLastFrame[nframes] = timestamp - lasttime;
+    lasttime = timestamp;
+    nframes = nframes + 1;
+    if (nframes < 20) {
+      window.requestAnimationFrame(dummyLoop);
+    } else {
+      for (var i = 10; i <= nframes - 1; i++) {
+        dtScreen = dtScreen + elapsedSinceLastFrame[i];
+      }
+      dtScreen = dtScreen / (nframes - 10);
+      resolveFunc(1000 / dtScreen);
+    }
+  } //dummyLoop
+
+  window.requestAnimationFrame(dummyLoop);
+  return p;
+}//FUNCTION estimatefps
+
+function findDPI(counter = 0) {
+  return findFirstPositive(
+    (x) => (++counter, matchMedia(`(max-resolution: ${x}dpi)`).matches)
+  );
+}//FUNCTION findDPI
+  
+function findFirstPositive(fn) {
+  let start = 1;
+  while (0 >= fn(start)) start <<= 1;
+  return binSearch(fn, start >>> 1, start) | 0;
+}//FUNCTION findFirstPositive
 
 function binSearch(fn, min, max) {
   if (max < min) return -1;
@@ -2472,16 +2266,4 @@ function binSearch(fn, min, max) {
     return binSearch(fn, min, mid - 1);
   }
   return binSearch(fn, mid + 1, max);
-}
-
-function findFirstPositive(fn) {
-  let start = 1;
-  while (0 >= fn(start)) start <<= 1;
-  return binSearch(fn, start >>> 1, start) | 0;
-}
-
-function findDPI(counter = 0) {
-  return findFirstPositive(
-    (x) => (++counter, matchMedia(`(max-resolution: ${x}dpi)`).matches)
-  );
-}
+}//FUNCTION binSearch

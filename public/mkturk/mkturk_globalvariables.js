@@ -117,7 +117,6 @@ ENV.Eye = {};
 ENV.Eye.TrackEye = 0;
 ENV.Eye.EventType = 'eyestart';
 ENV.Eye.timeOfLastGlanceInBB = -1;
-ENV.Eye.BlinkGracePeriod = 200;
 
 //Calibration
 ENV.Eye.calibration = 0;
@@ -136,6 +135,11 @@ ENV.PhotodiodeSquareSizeInches = 1;
 ENV.PhotodiodeSquareX = 0;
 ENV.PhotodiodeSquareY = 0;
 
+ENV.RewardSquareSizeInches = 0 //will be set to one-third size of visiblecanvas
+ENV.PunishSquareSizeInches = 0 //will be set to full size of visiblecanvas
+ENV.RewardSquareXY = [];
+ENV.PunishSquareXY = [];
+
 //================ OTHER GLOBALS (NOT SAVED) ================//
 var FLAGS = {}; // Global that keeps track of the task's requests to the Dropbox/server/disk/whatever; buffering requests; etc.
 // The scientist does not care about tracking this variable into the behavioral files.
@@ -151,10 +155,11 @@ FLAGS.savedata = 0;
 FLAGS.stage = 0;
 FLAGS.imagesPresent = 0;
 FLAGS.stickyresponse = 0;
+FLAGS.bbTarget = { taskscreen: [], indscreen: [], grid: [], x: [], y: [], ID: [], class: [], asset: [] }
+FLAGS.bbDisplay = { taskscreen: [], indscreen: [], grid: [], x: [], y: [], ID: [], class: [], asset: [] } //accumulate all bounding boxes for this frame
 
 FLAGS.waitingforTouches = 0;
 FLAGS.touchduration = -1;
-FLAGS.punishOutsideTouch = 0;
 FLAGS.acquiredTouch = 0;
 FLAGS.touchGeneratorCreated = 0;
 FLAGS.runPump = 0;
