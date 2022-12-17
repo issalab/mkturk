@@ -401,70 +401,121 @@ TSequenceDesired (bigquery): part of displayData --> [agent, timestamp, trialnum
 Weight (json): [trial, timestamp, weight]
 
 
+<br>
+
 ## KEYBOARD SHORTCUTS
 ALT/OPTION + r --> manually deliver a single reward pulse (reward sound will be played & reward indicator LED will light up)
+
 ALT/OPTION + 1 --> manually flush pump for 1 minute (2 x 30second pulses)
+
 ALT/OPTION + 2 --> manually flush pump for 1 minute (4 x 30second pulses)
+
 ALT/OPTION + 3 --> manually flush pump for 1 minute (6 x 30second pulses)
+
 ALT/OPTION + 4 --> manually flush pump for 1 minute (8 x 30second pulses)
 
+<br>
+
 ## ARDUINO V0.3 -- mkturk
-Digital Pins
+### Digital Pins
 0 - RX
+
 1 - TX
+
 2 - eye led
+
 3 - trial code led
+
 4 - pump (pin 2 in v0.2)
+
 5 - sample command led
+
 6 - rfid led
+
 7 - pump led
+
 8,9 - eye serial
+
 10,11 - rfid serial
+
 12 - unused
+
 ~13 - pump pwm
 
-Analog Pins
+### Analog Pins
 A0 - unused
+
 A1 - unused
+
 A2 - sample command
+
 A3 - trial code
+
 A4 - unused
+
 A5 - unused
 
-Lines
+### Lines
 D8,D9 (D2 led) - eye - softwareserial2
+
 D10,D11 (D6 led) - rfid - softwareserial1
+
 A2,A3 (D5 led) - sample command & trial code - IN1
+
 A0,A1 (D3 led) - unused - IN2
+
 A4,A5 - unused - IN3
 
+<br>
 
 ## ARDUINO V0.3 -- mkphotodiode
-Digital Pins
+### Digital Pins
 0 - RX
+
 1 - TX
+
 2 - unused led
+
 3 - unused led
+
 4 - unused
+
 5 - sample command led
+
 6 - unused led
+
 7 - unused led
+
 8,9 - unused
+
 10,11 - unused
+
 12 - unused
+
 ~13 - unused
 
-Analog Pins
+
+### Analog Pins
 A0 - unused
+
 A1 - unused
+
 A2 - unused
+
 A3 - unused
+
 A4 - Photodiode Receive
+
 A5 - Sample Command Receive
 
-Lines
+
+### Lines
 D8,D9 (D2 led) - unused - softwareserial2
+
 D10,D11 (D6 led) - unused - softwareserial1
+
 A2,A3 (D5 led) - unused - IN1
+
 A0,A1 (D3 led) - unused - IN2
+
 A4,A5 - photodiode, sample command - IN3

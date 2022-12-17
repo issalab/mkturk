@@ -36,7 +36,8 @@ mkeye.colors = { grid: [],
    choice: 'rgb(100,100,100)',
    realtime: 'rgb(50,50,200)',
    realtime_manual: 'rgb(120,120,255)',
-   realtime_bb: 'rgb(0,0,0)'
+   realtime_bb_disp: 'rgb(0,0,0)',
+   realtime_bb_targ: 'rgb(255,0,0)',
 }//colors
 mkeye.scatters = [];
 mkeye.line = [];

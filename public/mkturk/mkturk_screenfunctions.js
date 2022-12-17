@@ -406,6 +406,7 @@ function broadcastBoundingBoxes(boundingBoxes,areTarg){
       effectorstate: FLAGS.effectorState.state,
       chosenbox: FLAGS.effectorState.chosenbox,
       choice: FLAGS.effectorState.choice,
+      holdduration: FLAGS.effectorState.holdduration,
       boundingBoxes: boundingBoxesRtdb,
       meta: areTarg,
       timestamp: new Date().toJSON(),

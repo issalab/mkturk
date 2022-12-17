@@ -15,7 +15,6 @@ function hold_promise(touchduration, outsideGracePeriod) {
     var return_event = { type: '', cxyt: [] };
     while (true) {
       touchevent = yield touchevent;
-      console.log(FLAGS.effectorState)
 
       let boundingBoxes = FLAGS.bbTarget //fetch latest target bounding box
       if (ENV.Eye.TrackEye > 0) {
@@ -34,6 +33,9 @@ function hold_promise(touchduration, outsideGracePeriod) {
           ENV.Eye.EventType = 'eyestart'; //Reset eye state
         }
         console.log('exit @ line 59 ' + return_event.type)
+        FLAGS.effectorState.holdduration = new Date() - FLAGS.effectorState.holdstart
+        FLAGS.effectorState.holdstart = -1
+        console.log('exiting: holdstart = ' + FLAGS.effectorState.holdstart)
         break; //EXIT LOOP
       }//IF end of touch or eye fixation
       else {
@@ -81,7 +83,18 @@ function hold_promise(touchduration, outsideGracePeriod) {
         //   timestamp: new Date().toJSON(),
         // };
 
-        FLAGS.effectorState = {x: x, y: y, touchevent: touchevent.type, state: '', choice: choice, chosenbox: chosenbox, timestamp: new Date().toJSON()}
+        FLAGS.effectorState.x = x
+        FLAGS.effectorState.y = y
+        FLAGS.effectorState.touchevent = touchevent.type
+        FLAGS.effectorState.choice = choice
+        FLAGS.effectorState.chosenbox = chosenbox
+        FLAGS.effectorState.timestamp = new Date().toJSON()
+        FLAGS.effectorState.state = ''
+        if (FLAGS.effectorState.holdstart > 0){
+          FLAGS.effectorState.holdduration = new Date() - FLAGS.effectorState.holdstart
+        }
+        else{ FLAGS.effectorState.holdduration = 0}//reset
+        console.log(FLAGS.effectorState.holdduration + '  ' + FLAGS.effectorState.holdstart)
 
         if (!isNaN(x) && !isNaN(y)) {
           if (!ENV.Eye.TrackEye) {
@@ -120,8 +133,8 @@ function hold_promise(touchduration, outsideGracePeriod) {
           if (choice != -1) { renderDotOnCanvas('red', xyplot, 2, EYETRACKERCANVAS); }
           else { renderDotOnCanvas('yellow', xyplot, 2, EYETRACKERCANVAS); }
         }//IF practice mode, overlay dots
-        console.log('choice ' + choice + ' touchevent ' + touchevent.type
-                + ' acquired=' + FLAGS.acquiredTouch)
+        // console.log('choice ' + choice + ' touchevent ' + touchevent.type
+        //         + ' acquired=' + FLAGS.acquiredTouch)
       }//IF waiting for touches, get cxyt data && whether in box
       //================== (END) 1-GET XYT & CHOSEN BOX ==================//
 
@@ -131,8 +144,9 @@ function hold_promise(touchduration, outsideGracePeriod) {
       //================== 2-INIATE HOLD ==================//
       if ( !FLAGS.acquiredTouch && touchevent.type != 'touchend' && touchevent.type != 'mouseup' &&
           ( (TASK.DragtoRespond == 0 && touchevent.type != 'touchmove' && touchevent.type != 'mousemove') //click in
-              || TASK.DragtoRespond == 1 //drag in
+            || TASK.DragtoRespond == 1 //drag in
       ) ){
+        console.log('entered initiate hold acquiredtouch=' + FLAGS.acquiredTouch)
           //IF clicked outside box
           if (choice == -1) {
             if ( performance.now() - tStartGenerator > outsideGracePeriod) {
@@ -150,6 +164,8 @@ function hold_promise(touchduration, outsideGracePeriod) {
           else if (choice >= 0) {
             FLAGS.acquiredTouch = 1;
             console.log('Acquired touch -- STEP 2')
+            FLAGS.effectorState.holdstart = Date.now()
+            console.log('~~~~!!!' + FLAGS.effectorState.holdstart)
 
             //EYE ENTERED BOX
             if (ENV.Eye.TrackEye > 0) {
@@ -190,11 +206,11 @@ function hold_promise(touchduration, outsideGracePeriod) {
         else if ( ( ENV.Eye.TrackEye > 0 || TASK.DragtoRespond>0) &&
           Date.now() - ENV.CurrentDate.valueOf() - ENV.Eye.timeOfLastGlanceInBB <= TASK.BlinkGracePeriod
         ){
-          console.log('outside but blink');
+          // console.log('outside but blink');
           FLAGS.effectorState.state = FLAGS.effectorState.state + '_remain outside--> blinkgrace'
         }//ELSE IF during eye blink grace period, just wait
         else if ( performance.now() - tStartGenerator < outsideGracePeriod){
-          console.log('outside but still within grace period')
+          // console.log('outside but still within grace period')
           FLAGS.effectorState.state = FLAGS.effectorState.state + '_remain outside--> grace'
         }
         else if ( choice == -1 &&
@@ -247,6 +263,9 @@ function hold_promise(touchduration, outsideGracePeriod) {
     console.log('line 240: calling resolveFunc' + return_event)
     resolveFunc(return_event);
   }//Generator
+  FLAGS.effectorState.holdduration = 0
+  FLAGS.effectorState.holdstart = -1
+  console.log('starting generator: ' + FLAGS.effectorState.holdstart)
   waitforEvent = waitforeventGenerator(); // start async function
   FLAGS.touchGeneratorCreated = 1;
   CURRTRIAL.cxyt = [];

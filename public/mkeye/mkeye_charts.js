@@ -78,12 +78,12 @@ class RealtimeScatter{
     this.canvasname = canvasname
     this.lasttimestamp = new Date()
     this.currtrial = null
-    this.maxpoints = 350;
+    this.maxpoints = 20;
   }//constructor
 
   init(){
     const data = {datasets: []}
-    for (let i=0; i<=3-1; i++){
+    for (let i=0; i<=4-1; i++){
       if (i==0){
         data.datasets.push({
           type: 'scatter',
@@ -108,12 +108,22 @@ class RealtimeScatter{
         data.datasets.push({
           type: 'line',
           showLine: true,
-          label: 'boundingBox',
+          label: 'boundingBoxDisplay',
           data: [],
-          borderColor: mkeye.colors.realtime_bb,
+          borderColor: mkeye.colors.realtime_bb_disp,
+          order: 4
+        })
+      }//ELSE IF boundingBoxDisplay
+      else if (i==3){
+        data.datasets.push({
+          type: 'line',
+          showLine: true,
+          label: 'boundingBoxTarget',
+          data: [],
+          borderColor: mkeye.colors.realtime_bb_targ,
           order: 3
         })
-      }//ELSE IF boundingBox
+      }//ELSE IF boundingBoxTarget
     }//FOR i eyetraces
     const config = {
       // type: 'scatter',
@@ -164,32 +174,81 @@ class RealtimeScatter{
   }//FUNCTION customRadius(context)
 
   update(newdata){
+
+//newdata (sent by mkturk displayTrial):
+//  effector
+//    x, y, touchevent, effectorstate, chosenbox, choice
+//  boundingBoxes
+//    x,y
+//    taskscreen,indscreen,grid
+//    ID, class, asset
+//  meta (0=display elements, 1=target windows)
+//    timestamp    
+
     if (mkeye.live.trial != this.currtrial || this.chart.data.datasets[0].data.length > this.maxpoints ){
       this.chart.data.datasets[0].data = []
       this.chart.data.datasets[1].data = []
-    }//Need to clear datapoints
+    }//IF new trial OR too many points, Need to clear datapoints
 
-    let x0 = mkeye.data.CANVAS.offsetleft
-    let y0 = mkeye.data.ENV.ViewportPixels[1]
-    if (newdata.meta == 2){
+    let x0 = 0 //XXmkeye.data.CANVAS.offsetleft
+    let y0 = 0 //XXmkeye.data.ENV.ViewportPixels[1]
+    if (newdata.meta == 0){
       this.chart.data.datasets[2].data = [] //empty old boxes
 
       let xy = []
       for (let i=0; i<=newdata.boundingBoxes.length-1; i++){
         let bb = newdata.boundingBoxes[i]
-        xy.push( { x: bb['x_0']+x0, y: -bb['y_0']+y0 } )
-        xy.push( { x: bb['x_1']+x0, y: -bb['y_0']+y0 } )
-        xy.push( { x: bb['x_1']+x0, y: -bb['y_1']+y0 } )
-        xy.push( { x: bb['x_0']+x0, y: -bb['y_1']+y0 } )
-        xy.push( { x: bb['x_0']+x0, y: -bb['y_0']+y0 } )
+        xy.push( { x: bb['x_0']+x0, y: bb['y_0']+y0 } )
+        xy.push( { x: bb['x_1']+x0, y: bb['y_0']+y0 } )
+        xy.push( { x: bb['x_1']+x0, y: bb['y_1']+y0 } )
+        xy.push( { x: bb['x_0']+x0, y: bb['y_1']+y0 } )
+        xy.push( { x: bb['x_0']+x0, y: bb['y_0']+y0 } )
         xy.push( { x: null, y: null } )
       }//FOR i boundingBoxes
       this.chart.data.datasets[2].data.push(...xy);
-    }//IF new fixation hold with new targets
+    }//IF new boundingBoxesDisplay
+    else if (newdata.meta == 1){
+      this.chart.data.datasets[3].data = [] //empty old boxes
+
+      let xy = []
+      for (let i=0; i<=newdata.boundingBoxes.length-1; i++){
+        let bb = newdata.boundingBoxes[i]
+        xy.push( { x: bb['x_0']+x0, y: bb['y_0']+y0 } )
+        xy.push( { x: bb['x_1']+x0, y: bb['y_0']+y0 } )
+        xy.push( { x: bb['x_1']+x0, y: bb['y_1']+y0 } )
+        xy.push( { x: bb['x_0']+x0, y: bb['y_1']+y0 } )
+        xy.push( { x: bb['x_0']+x0, y: bb['y_0']+y0 } )
+        xy.push( { x: null, y: null } )
+      }//FOR i boundingBoxes
+      this.chart.data.datasets[3].data.push(...xy);
+
+      //Text updates
+      let effectorTextSelector = document.querySelector('#effectortext');
+      let fontstr
+      if (newdata.choice<0){fontstr = '<font color=black>'}//black if outside a target
+      else{ fontstr = '<font color=red>'}//red text if in a target
+      effectorTextSelector.innerHTML =
+          fontstr+'[ ' + newdata.choice + ', ' + newdata.chosenbox + ', ' +
+          + Math.round(newdata.x) + ', ' + Math.round(newdata.y) + ', ' +
+          newdata.holdduration + 'ms ], ' + '</font>' + 
+          newdata.touchevent + ': ' + newdata.effectorstate 
+
+      let targetTextSelector = document.querySelector('#targettext');
+      let indtarg = newdata.chosenbox
+      if (indtarg >=0){
+        targetTextSelector.innerHTML = 
+          fontstr + newdata.boundingBoxes[indtarg].ID +  '</font>' +
+          ' @ win=' + newdata.boundingBoxes[indtarg].asset + ', ' +
+          newdata.boundingBoxes[indtarg].taskscreen + '@ grid=' + newdata.boundingBoxes[indtarg].grid      
+      }//IF in a valid target
+      else{ 
+        targetTextSelector.innerHTML = 'Outside of target'
+      }//ELSE outside target
+    }//IF new boundingBoxesTarget
 
     //--- mkturk trace
     let x_mk = newdata.x + x0
-    let y_mk = -newdata.y + y0
+    let y_mk = newdata.y + y0
 
     //move to boundary if off screen
     if (x_mk <= 0){ x_mk = 3 };
@@ -200,21 +259,21 @@ class RealtimeScatter{
     this.chart.data.datasets[0].data.push({x: x_mk, y: y_mk});
 
     //--- manual calib trace
-    if (typeof(mkeye.calib.xparam[0]) != 'undefined' && Math.random()<=0.25){
+    if (typeof(mkeye.calib.xparam[0]) != 'undefined' && Math.random()<=0.8){
       let xy
       if (mkeye.stats.effector == 'eye'){
         xy = applyLinearTransform(
           newdata.x + x0 - mkeye.calib.inverse_mkturk[2][0], //X shifted back prior to inverse
-          -newdata.y + y0 - mkeye.calib.inverse_mkturk[2][1], //Y shifted back prior to inverse
+          newdata.y + y0 - mkeye.calib.inverse_mkturk[2][1], //Y shifted back prior to inverse
           mkeye.calib.inverse_mkturk[0],
           mkeye.calib.inverse_mkturk[1]
         );//Backward: screen coords --> raw coords
-        if (Math.random()<=0.25){
+        if (Math.random()<=0.5){
           console.log('xy_raw: ' + xy[0] + ', ' + xy[1])
         }
       }//IF eye, undo mkturk calibration to go back to raw eye coordinates
       else if (mkeye.stats.effector == 'touch'){
-        xy = [newdata.x + x0, -newdata.y + y0]   
+        xy = [newdata.x + x0, newdata.y + y0]   
       }//ELSE IF touch, just apply forward manual transform
       
       let xy_screen = applyLinearTransform(xy[0],xy[1],mkeye.calib.xparam, mkeye.calib.yparam)//Forward: raw coords --> screen coords
@@ -233,7 +292,7 @@ class RealtimeScatter{
     //get lag
     let t0 = new Date(newdata.timestamp)
 
-    if (Math.random() <= 0.02){
+    if (Math.random() <= 0.05){
       console.log('lag: ' + ( new Date() - t0 ) + ' ms,   ' +
       'SR: ' + Math.round(1000/( t0 - this.lasttimestamp ) ) + ' Hz')
     }
