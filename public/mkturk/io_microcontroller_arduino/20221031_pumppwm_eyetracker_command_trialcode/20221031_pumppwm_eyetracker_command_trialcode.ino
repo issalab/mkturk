@@ -187,7 +187,7 @@ void turnOnOffPump() {
     }
     startTime = millis();
     pumpDur = atoi(receivedPumpChars);
-    analogWrite(pumpPin, 90);    
+    analogWrite(pumpPin, 82);    
 //    digitalWrite(pumpPin, HIGH);
     digitalWrite(pumpLEDPin, HIGH);
     newPumpCmd = false;

@@ -31,8 +31,8 @@ char sampleCommandEndMarker = '%';
 const byte numCharsTag = 12;
 char receivedRFIDChars[numCharsTag+1]; // variable to store the data from the serial port
 boolean newRFIDTag = false;
-SoftwareSerial mySerial(10, 11);
-int RFIDResetPin = 11;
+SoftwareSerial mySerial(11, 10);
+int RFIDResetPin = 10;
 const int RFIDLEDPIN=6;
 
 char startMarker = '{';
@@ -51,9 +51,6 @@ void setup() {
 
   pinMode(RFIDLEDPIN, OUTPUT);
 
-  while (!Serial) {
-    ;
-  }
   Serial.begin(57600);
   Serial.println("<Arduino is ready> Sketch begins \r\n>");
   Serial.flush();
@@ -63,18 +60,22 @@ void setup() {
   digitalWrite(RFIDResetPin, HIGH);
   mySerial.begin(9600);
 
-  mySerialEYE.begin(57600);
+//  mySerialEYE.begin(57600);
 }
 
 void loop() {
   // receive pump || rfid data || eye tracker data
-  recvEyeTracker();
-  recvWithStartEndMarkers();
+//  Serial.print("here");
+//  Serial.print("herfdsfsdfase");
+//  delay(100);
+  
+//  recvEyeTracker();
+//  recvWithStartEndMarkers();
   readRFIDTag();
   
   // act on pump || rfid
-  turnOnPump();
-  turnOnOffExternalDevice();
+//  turnOnPump();
+//  turnOnOffExternalDevice();
   transmitTag();
   resetReader();
 }

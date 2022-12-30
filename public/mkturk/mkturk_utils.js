@@ -410,10 +410,6 @@ async function index_reloadparameters(){
 
   ENV.RewardDuration = TASK.RewardDuration/1000
 
-  if (ENV.Eye.TrackEye != 0) {
-    TASK.DragtoRespond = 1; // drag into box
-  }//IF eyetracker, allow dragging
-
   //load previous calibration if available
   if (ENV.Eye.TrackEye > 0) {
     // IF trackeye
@@ -924,7 +920,7 @@ function index_housekeeping_eye(){
 
     if (FLAGS.savedata == 1 && ENV.Eye.calibration == 1) {
       // IF train eye calibration
-      if (CURRTRIAL.fixationtouchevent == 'theld') {
+      if (CURRTRIAL.fixationtouchevent.includes('held')) {
         ENV.Eye.NCalibPointsTrain++;
       }
 
@@ -955,7 +951,7 @@ function index_housekeeping_eye(){
       }//IF enough points for calibration
     }//IF ENV.Eye.calibration==1
     else if (FLAGS.savedata == 1 && ENV.Eye.calibration == 0) {
-      if (CURRTRIAL.fixationtouchevent == 'theld') {
+      if (CURRTRIAL.fixationtouchevent.includes('held')) {
         ENV.Eye.NCalibPointsTest++;
         var mse = evaluateCalibration(); //GOF test
         ENV.Eye.CalibTestMSE = mse[0];

@@ -177,7 +177,7 @@ class RealtimeScatter{
 
 //newdata (sent by mkturk displayTrial):
 //  effector
-//    x, y, touchevent, effectorstate, chosenbox, choice
+//    x, y, touchevent, state, chosenbox, choice
 //  boundingBoxes
 //    x,y
 //    taskscreen,indscreen,grid
@@ -231,7 +231,7 @@ class RealtimeScatter{
           fontstr+'[ ' + newdata.choice + ', ' + newdata.chosenbox + ', ' +
           + Math.round(newdata.x) + ', ' + Math.round(newdata.y) + ', ' +
           newdata.holdduration + 'ms ], ' + '</font>' + 
-          newdata.touchevent + ': ' + newdata.effectorstate 
+          newdata.touchevent + ': ' + newdata.state 
 
       let targetTextSelector = document.querySelector('#targettext');
       let indtarg = newdata.chosenbox

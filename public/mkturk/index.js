@@ -213,22 +213,26 @@ index_init();
       audiocontext.suspend();
 
       //========= AWAIT HOLD FIXATION TOUCH =========//
-      let touchhold_return;
+      let race_return;
       if (ENV.StressTest == 1) {
-        touchhold_return = { type: 'theld' };
+        race_return = { type: 'held' };
         let x = boundingBoxesFixation.x[0][0] +
                 Math.round( Math.random() * (boundingBoxesFixation.x[0][1] - boundingBoxesFixation.x[0][0]) );
         let y = boundingBoxesFixation.y[0][0] +
                 Math.round( Math.random() * (boundingBoxesFixation.y[0][1] - boundingBoxesFixation.y[0][0]) );
 
-        touchhold_return.cxyt = [ 0, x, y, Date.now() - ENV.CurrentDate.valueOf() ];
+        race_return.cxyt = [ 0, x, y, Date.now() - ENV.CurrentDate.valueOf() ];
         FLAGS.waitingforTouches--;
       }//IF StressTest, automate fixation
       else {
-        FLAGS.acquiredTouch = 0;
-        let p1 = hold_promise(TASK.FixationDuration, TASK.FixationOutsideGracePeriod );
+        let p1 = hold_promise_simple(TASK.FixationDuration, TASK.FixationOutsideGracePeriod,1);
         let p2 = choiceTimeOut(TASK.FixationTimeOut);
-        touchhold_return = await Promise.race([p1, p2]);
+
+        race_return = await Promise.race([p1.p, p2]);
+        p1.cancel()
+        if (race_return.type.includes('held')){
+          FLAGS.waitingforTouches--
+        }//IF held
       }//ELSE await fixation hold
 
       if (FLAGS.movieplaying == 1) {
@@ -238,23 +242,23 @@ index_init();
       }//IF movie still playing after acquire fixation, stop movie
 
       try {
-        CURRTRIAL.fixationtouchevent = touchhold_return.type;
-        CURRTRIAL.fixationxyt = [ touchhold_return.cxyt[1], touchhold_return.cxyt[2], touchhold_return.cxyt[3] ];
+        CURRTRIAL.fixationtouchevent = race_return.type;
+        CURRTRIAL.fixationxyt = [ race_return.cxyt[1], race_return.cxyt[2], race_return.cxyt[3] ];
       } catch (e) {
-        console.error('touchhold_return did not return properly:', e);
-        CURRTRIAL.fixationtouchevent = 'tbroken';
+        console.error('race_return did not return properly:', e);
+        CURRTRIAL.fixationtouchevent = 'broke';
         CURRTRIAL.fixationxyt = [-1, -1, -1];
       }
       logEVENTS('FixationTouchEvent',CURRTRIAL.fixationtouchevent,'trialseries');
       logEVENTS('FixationXYT', CURRTRIAL.fixationxyt, 'trialseries');
 
       //IF held fixaton & fixation task, count as correct
-      if (TASK.RewardStage == 0 && CURRTRIAL.fixationtouchevent == 'theld' && FLAGS.waitingforTouches == 0){
+      if (TASK.RewardStage == 0 && CURRTRIAL.fixationtouchevent.includes('held') && FLAGS.waitingforTouches == 0){
           CURRTRIAL.response = 1;
           CURRTRIAL.correctitem = 1;
           logEVENTS('Response', CURRTRIAL.response, 'trialseries');
       }//IF held && RewardStage==0, then reward
-      else if ( TASK.RewardStage == 0 && CURRTRIAL.fixationtouchevent == 'tbroken'){
+      else if ( TASK.RewardStage == 0 && CURRTRIAL.fixationtouchevent.includes('broke') ){
         CURRTRIAL.response = 0;
         CURRTRIAL.correctitem = 1;
         FLAGS.waitingforTouches = 0; //exit loop
@@ -337,11 +341,7 @@ index_init();
       CURRTRIAL.samplefixationtouchevent = '';
       CURRTRIAL.samplefixationxyt = [];
 
-      FLAGS.waitingforTouches = 1;
-      FLAGS.acquiredTouch = 1;
-      if (ENV.Eye.TrackEye) { ENV.Eye.EventType = 'eyemove'; }
-
-      let p1 = hold_promise(0, TASK.SampleOutsideGracePeriod);
+      let p1 = hold_promise_simple(Infinity, TASK.SampleOutsideGracePeriod,0);
       let p2 = displayTrial(
         CURRTRIAL.tsequencedesired,
         CURRTRIAL.sequencegridindex,
@@ -353,17 +353,16 @@ index_init();
         CURRTRIAL.images,
         mkm,FLAGS.savedata
       );
-console.log('sample promise START --------->')
+      console.log('sample promise START --------->')
       let race_return = [];
       if (ENV.StressTest <= 0){
-        race_return = await Promise.race([p1, p2]);
+        race_return = await Promise.race([p1.p, p2]);
       }
       else{
         race_return = await p2;
       }//ELSE STRESSTEST
-      FLAGS.acquiredTouch = 0;
-      FLAGS.waitingforTouches = 0;
-console.log('sample promise END --------->')
+      p1.cancel()
+      console.log('sample promise END --------->')
 
       //Determine number of clips fixated
       CURRTRIAL.nclipshown = frame.shown.lastIndexOf(1) !== undefined ? CURRTRIAL.sequenceclip[frame.shown.lastIndexOf(1)] : 0;
@@ -377,26 +376,9 @@ console.log('sample promise END --------->')
         await moviefinish_promise();
       }//IF movie still playing after broke fixation, stop Sample movie
 
-      if (ENV.Eye.TrackEye > 0) {
-        ENV.Eye.EventType = 'eyestart'; // Reset eye state
-      }//IF trackeye, reset eye state
-
       if (typeof race_return.type == 'undefined') {
-        CURRTRIAL.samplefixationtouchevent = 'theld';
-        //Median x,y = final position estimate
-        let xs = []; let ys = [];
-        if (CURRTRIAL.cxyt.length > 0) {
-          for (var q = 0; q <= CURRTRIAL.cxyt.length - 1; q++) {
-            xs.push(CURRTRIAL.cxyt[q][1]);
-            ys.push(CURRTRIAL.cxyt[q][2]);
-          } //FOR q samples
-        }//IF xy data
-        if (xs.length > 0){
-          CURRTRIAL.samplefixationxyt = [ math.median(xs), math.median(ys), Date.now() - ENV.CurrentDate.valueOf() ];
-        }
-        else{
-          CURRTRIAL.samplefixationxyt = [ -1, -1, Date.now() - ENV.CurrentDate.valueOf() ];
-        }
+        CURRTRIAL.samplefixationtouchevent = 'held';
+        CURRTRIAL.samplefixationxyt = [ FLAGS.effectorState.xmedian, FLAGS.effectorState.ymedian, FLAGS.effectorState.timestamp];
       }//IF held fixation during Sample
       else {
         CURRTRIAL.samplefixationtouchevent = race_return.type;
@@ -420,9 +402,7 @@ console.log('sample promise END --------->')
       //CHOICE    CHOICE    CHOICE    CHOICE    CHOICE    CHOICE    CHOICE    //
       //CHOICE    CHOICE    CHOICE    CHOICE    CHOICE    CHOICE    CHOICE    //
       //========= AWAIT TOUCH CHOICE =========//
-      FLAGS.waitingforTouches = 1;
-
-      race_return = { type: 'theld' };
+      race_return = { type: 'held' };
       let currchoice;
       if (ENV.StressTest == 1){
        //XX let nchoices = boundingBoxesChoice3D.x.length;
@@ -542,7 +522,7 @@ console.log('sample promise END --------->')
 
           if (TASK.NRSVP>0){
             CURRTRIAL.correctitem = 1;
-            race_return = { type: 'theld' };
+            race_return = { type: 'held' };
             currchoice = 1;
             x=-1; y=-1;
           }//IF RSVP, skip Choice
@@ -570,13 +550,12 @@ console.log('sample promise END --------->')
         }//ELSE TASK.Species != 'model'
 
         race_return.cxyt = [ currchoice, x, y, Date.now() - ENV.CurrentDate.valueOf(),];
-        FLAGS.waitingforTouches--;
       }//IF STRESSTEST
       else { // ELSE !ENV.StressTest
         if (TASK.NRSVP > 0) {
           CURRTRIAL.correctitem = 1;
           race_return = { type: CURRTRIAL.samplefixationtouchevent };
-          if ( CURRTRIAL.samplefixationtouchevent == 'theld' || CURRTRIAL.nclipshown >= ENV.NRSVPMin) {
+          if ( CURRTRIAL.samplefixationtouchevent.includes('held') || CURRTRIAL.nclipshown >= ENV.NRSVPMin) {
             currchoice = 1;
           }//held samplefixation
           else {
@@ -584,12 +563,12 @@ console.log('sample promise END --------->')
           }//broke samplefixation
 
           race_return.cxyt = [ currchoice, -1, -1, CURRTRIAL.samplefixationxyt[2] ];
-          FLAGS.waitingforTouches--;
         }//IF RSVP, skip choice
         else {
-          let p1 = hold_promise(0, TASK.ChoiceOutsideGracePeriod);
+          let p1 = hold_promise_simple(TASK.FixationDuration, TASK.ChoiceOutsideGracePeriod,1);
           let p2 = choiceTimeOut(TASK.ChoiceTimeOut);
-          race_return = await Promise.race([p1, p2]);
+          race_return = await Promise.race([p1.p, p2]);
+          p1.cancel();
         }//ELSE !RSVP, require choice
       }//ELSE !STRESSTEST
 
@@ -602,7 +581,7 @@ console.log('sample promise END --------->')
       logEVENTS('Response', CURRTRIAL.response, 'trialseries');
 
       // Keep track of repeated responses to one side
-      if ( TASK.NRSVP <= 0 && CURRTRIAL.num > 0 && FLAGS.savedata && CURRTRIAL.responsetouchevent == 'theld') {
+      if ( TASK.NRSVP <= 0 && CURRTRIAL.num > 0 && FLAGS.savedata && CURRTRIAL.responsetouchevent.includes('held')) {
         if ( CURRTRIAL.response == trialhistory.response[trialhistory.correct.length - 1] ) {
           FLAGS.stickyresponse++;
         } else {

@@ -115,8 +115,6 @@ ENV.Eye = {};
 
 //Eye states
 ENV.Eye.TrackEye = 0;
-ENV.Eye.EventType = 'eyestart';
-ENV.Eye.timeOfLastGlanceInBB = -1;
 
 //Calibration
 ENV.Eye.calibration = 0;
@@ -157,11 +155,15 @@ FLAGS.imagesPresent = 0;
 FLAGS.stickyresponse = 0;
 FLAGS.bbTarget = { taskscreen: [], indscreen: [], grid: [], x: [], y: [], ID: [], class: [], asset: [] }
 FLAGS.bbDisplay = { taskscreen: [], indscreen: [], grid: [], x: [], y: [], ID: [], class: [], asset: [] } //accumulate all bounding boxes for this frame
-FLAGS.effectorState = {x: 0, y: 0, touchevent: '', state: '', chosenbox: -1, choice: -1, holdstart: -1, holdduration: 0, timestamp: new Date().toJSON()}
+FLAGS.effectorState = {x: 0, y: 0, xmedian: 0, ymedian: 0,
+                        chosenbox: -1, choice: -1,
+                        holdstart: -1, holdduration: 0,
+                        touchevent: '', state: '',
+                        timestamp: Date.now() - ENV.CurrentDate.valueOf()
+                      }//FLAGS.effectorState
+
 
 FLAGS.waitingforTouches = 0;
-FLAGS.touchduration = -1;
-FLAGS.acquiredTouch = 0;
 FLAGS.touchGeneratorCreated = 0;
 FLAGS.runPump = 0;
 FLAGS.firestorecreatedoc = 0;
@@ -255,7 +257,8 @@ CURRTRIAL.reset = function () {
   this.tsequencedesired = [];
   this.tsequenceactualclip = [];
   this.tsequencedesiredclip = [];
-  this.xyt = [];
+  this.xhold = [];
+  this.yhold = [];
 
   this.sample_scenebag_label = [];
   this.sample_scenebag_index = [];

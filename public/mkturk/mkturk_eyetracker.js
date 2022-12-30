@@ -17,7 +17,7 @@ function runcalibration() {
 
   for (let i = 0, len = EVENTS['trialseries']['FixationGridIndex'].length; i < len; i++)
   {
-    if (EVENTS['trialseries']['FixationTouchEvent'][i] == 'theld') {
+    if (EVENTS['trialseries']['FixationTouchEvent'][i].includes('held')) {
       //ACTUAL TARGET LOCATIONS
       xactual.push(ENV.XGridCenter[EVENTS['trialseries']['FixationGridIndex'][i]]);
       yactual.push(ENV.YGridCenter[EVENTS['trialseries']['FixationGridIndex'][i]] + CANVAS.offsettop);
@@ -94,7 +94,7 @@ function evaluateCalibration() {
   // xPredTarg = [ [], [] ]; // xPredTarg.fill([],0,ENV.XGridCenter.length);
   // yPredTarg = [ [], [] ]; // yPredTarg.fill([],0,ENV.YGridCenter.length);
   for (let i = 0; i < EVENTS['trialseries']['FixationGridIndex'].length; i++) {
-    if (EVENTS['trialseries']['FixationTouchEvent'][i] == 'theld') {
+    if (EVENTS['trialseries']['FixationTouchEvent'][i].includes('held')) {
       grididx = EVENTS['trialseries']['FixationGridIndex'][i]
 
       //ACTUAL

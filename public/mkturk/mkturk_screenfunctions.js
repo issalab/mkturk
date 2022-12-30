@@ -245,7 +245,7 @@ function displayTrial(ti, gr, cl, fr, sc, ob, id, ims, mkm, trig) {
         if (typeof waitforMovieStart != 'undefined') {
           waitforMovieStart.next();
         }
-      } //IF movieplaying
+      }//IF movieplaying
 
       //----- Save Out Images
       if ( (taskscreen0 == 'Sample' || taskscreen0 == 'Test') & TASK.Agent == 'SaveImages'
@@ -403,14 +403,14 @@ function broadcastBoundingBoxes(boundingBoxes,areTarg){
       x: FLAGS.effectorState.x,
       y: FLAGS.effectorState.y,
       touchevent: FLAGS.effectorState.touchevent,
-      effectorstate: FLAGS.effectorState.state,
+      state: FLAGS.effectorState.state,
       chosenbox: FLAGS.effectorState.chosenbox,
       choice: FLAGS.effectorState.choice,
       holdduration: FLAGS.effectorState.holdduration,
       boundingBoxes: boundingBoxesRtdb,
       meta: areTarg,
       timestamp: new Date().toJSON(),
-    });
+    });//RTDB.set
   }//IF realtime database
   else{
     console.log('no RTDB connection for this Agent')
@@ -532,13 +532,19 @@ function render3D(taskscreen, s, f, gr, fr, sc, ob, id, im) {
       );
     }//ELSE
 
+    try{
+
     // update bounding boxes if crop bounding box is smaller than the boundingbox
     let ind = boundingBoxes.x.length-1 //since not all j display items are necessarily visible, only a subset have bounding boxes
     if ( swidth_2d * ENV.CanvasRatio < boundingBoxes.x[ind][1] - boundingBoxes.x[ind][0]) {
       boundingBoxes.x[ind] = [ left * ENV.CanvasRatio, (left + swidth_2d) * ENV.CanvasRatio];
       boundingBoxes.y[ind] = [ top * ENV.CanvasRatio + CANVAS.offsettop, (top + sheight_2d) * ENV.CanvasRatio + CANVAS.offsettop];
     }//IF
-  }//FOR j display items
+  }
+  catch(error){
+    console.log('the infrequent bb error')
+  }
+}//FOR j display items
   return boundingBoxes
 }//FUNCTION render3D
 

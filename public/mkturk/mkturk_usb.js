@@ -324,7 +324,7 @@ serial.Port.prototype.onReceive = (data) => {
           x_val: xy[0],
           y_val: xy[1],
           time: Date.now(),
-          type: 'undefined',
+          type: 'eye',
         };
         waitforEvent.next(event_xytt); //send to hold_promise generator          
       }//IF TrackEye

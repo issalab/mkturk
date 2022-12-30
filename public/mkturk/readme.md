@@ -114,8 +114,6 @@ Target (default = gridwindow): Type of target bounding box to use during Fixatio
 
 FixationWindowSizeInches (default = 0 inches): Width of box within which subject has to activate targets during all screens (Fixation, Sample, Test, Choice). TASK.FixationWindowSizeInches needs to be set to >0 if TASK.Target = 'window'.
 
-DragtoRespond (default = 0 --> clicks indicates response): Flag that specifies whether a continuous move (drag) into a choice box is allowed (DragtoRespond=1) versus a discrete click in the box (DragtoRespond=0). Defaults to 0 (click to respond) if not provided, but if eyetracker is present will automatically be set to 1.
-
 NStickyResponse (default = 0 --> subject can repeatedly choose any given response option): Number of times subject can choose the same location on the screen before force them out of it by placing the correct answer somewhere else (i.e. if they have response bias, then on the next trial, the correct choice is drawn somewhere away from that bias). Currently not implemented for same-different task or SR2
 
 BlinkGracePeriod (default = 200 milliseconds): Amount of time subject can (briefly) vacate target once they were in without being punished for breaking fixation. Only applies to fixations during Fixation screen & Sample/Test screen after OutsideGracePeriod has expired.
@@ -190,6 +188,8 @@ ___________________________________________________________________________
 *DEPRECATED TASK PARAMETERS*
 ___________________________________________________________________________
 ConsecutiveHitsITI (deprecated 12/08/22, influenced resetting of consective hits by putting a time criteria, seems unnecessary): Maximum time in milliseconds allowed to elapse from the previous trial for the current trial to count toward reward accumulation for a string of correct responses. For example, if ConsecutiveHitsITI=8000, then subject has 8 seconds to complete the next trial successfully and the consecutivehits counter will be incremented. Otherwise, the number of consecutivehits will get set to 0
+
+DragtoRespond (deprecated 12/30/22, was used to allow dragging into target which is necessary if eyetracking. However, new hold_promise_simple allows dragging in general to unify touch/mouse with eyetracking. This variable may be brought back in the future if dragging is to be disallowed for touchscreen): (default = 0 --> clicks indicates response): Flag that specifies whether a continuous move (drag) into a choice box is allowed (DragtoRespond=1) versus a discrete click in the box (DragtoRespond=0). Defaults to 0 (click to respond) if not provided, but if eyetracker is present will automatically be set to 1.
 
 Homecage (deprecated 12/07/22, purely metadata, no influence on mkturk task): Where task was performed. 0=lab 1=subject's home
 
@@ -350,7 +350,7 @@ ReinforcementTime: Start time of reinforcement (reward/punish) delivery
 
 Response: Index of the chosen item on each trial. For M2S and SR2, response is measured for touches on the test screen. For same-different task, this is collected at the choice screen.
 
-ResponseTouchEvent: The type of touch event that was registered for that trial (e.g., touchheld, touchbroken, TimeOut)
+ResponseTouchEvent: The type of touch event that was registered for that trial (e.g., held, broke, TimeOut)
 
 ResponseXYT: records the coordinates and time of touching the choice item. X,Y=horizontal,vertical position of response touch in pixels T=time of touch measured using Date.now()
 
