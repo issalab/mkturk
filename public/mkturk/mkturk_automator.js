@@ -168,7 +168,7 @@ async function automateTask(automatorData, trialhistory) {
 
     FLAGS.need2saveParameters = 1;
     FLAGS.need2loadParameters = 1;
-  } //IF stage transition
+  }//IF stage transition
 
   FLAGS.automatortext = updateHeadsUpDisplayAutomator(
     ENV.CurrentAutomatorStageName,

@@ -252,10 +252,6 @@ function touchend_listener(event) {
   }
 } //touchend_listener
 
-function headsuptext_listener(event) {
-  FLAGS.need2saveParameters = 1;
-  return;
-}
 async function donePracticingTask_listener(event) {
   event.preventDefault();
   console.log('START SAVING DATA');

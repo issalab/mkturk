@@ -35,82 +35,56 @@ async function saveBehaviorDatatoFirestore(TASK, ENV, CANVAS) {
 } //FUNCTION saveBehaviorDatatoFirestore
 //================== CREATE FIRESTORE DOCS (end) ====================//
 
-function pingFirestore() {
-  if (
-    FLAGS.firestorelastsavedtrial != CURRTRIAL.num &&
-    typeof firestoreTimer != 'undefined'
-  ) {
-    updateEventDataonFirestore(EVENTS);
-  } //if timer expired & new data added
-  else {
-    firestoreTimer = setTimeout(function () {
-      clearTimeout(firestoreTimer);
-      pingFirestore();
-    }, 10000);
-  } //else check again in 10 seconds
-} //FUNCTION pingFirestore
-
 //================== UPDATE FIRESTORE WITH EVENT DATA ====================//
 async function updateEventDataonFirestore(EVENTS) {
   if (FLAGS.createnewfirestore == 1) {
-    //wait for saveBehaviorDatatoFirestore() since new params loaded
-    clearTimeout(firestoreTimer); //to start a new timer
-    pingFirestore();
-    return;
-  }
+    return; //wait for saveBehaviorDatatoFirestore() since new params loaded
+  }//IF need to create new doc
 
   // Get a new write batch
   var batch = db.batch();
 
-  var taskRef = db
-    .collection(FIRESTORECOLLECTION.DATA)
-    .doc(ENV.FirestoreDocRoot + '_task');
+  var taskRef = db.collection(FIRESTORECOLLECTION.DATA).doc(ENV.FirestoreDocRoot + '_task');
 
-  if (
-    Object.keys(EVENTS['trialseries']).includes('ReinforcementTime') &&
-    Array.isArray(EVENTS['trialseries']['ReinforcementTime'])
-  ) {
-    // clean and replace empty cells in a sparse array with -1;
-    // May solve https://github.com/issalab/mkturk/issues/31
-    EVENTS['trialseries']['ReinforcementTime'] = Array.from(
-      EVENTS['trialseries']['ReinforcementTime'],
-      (elem) => elem || -1
-    );
-  }
+  //Clean up null values that get written if value is not returned before next trial
+  let eventkeys = ['ReinforcementTime', 'SampleCommandReturnTime','SampleCommandOffReturnTime']
+  for (let i=0; i<=eventkeys.length-1; i++){
+    if (
+      Object.keys(EVENTS['trialseries']).includes(eventkeys[i]) &&
+      Array.isArray(EVENTS['trialseries'][eventkeys[i]])
+    ) {
+      // clean and replace empty cells in a sparse array with -1;
+      // May solve https://github.com/issalab/mkturk/issues/31
+      EVENTS['trialseries'][eventkeys[i]] = Array.from(
+        EVENTS['trialseries'][eventkeys[i]], (elem) => elem || -1 );
+    }//IF event key is present
+  }//FOR i event variables that may need cleaning up of null values
 
   try{
     batch.update(taskRef, EVENTS.trialseries);  
   }
   catch{
-    console.log('firestore batch.update EVENTS.TRIALSERIES line 85 failed ' + EVENTS.trialseries) 
+    console.log('firestore batch.update EVENTS.TRIALSERIES failed ' + EVENTS.trialseries)
   }
   try{
     batch.update(taskRef, { Battery: EVENTS['timeseries']['Battery'] });   
   }
   catch{
-    console.log('firestrore batch.update BATTERY line 88 failed ' + EVENTS.timeseries.Battery)
+    console.log('firestore batch.update EVENTS.TIMESERIES.BATTERY failed ' + EVENTS.timeseries.Battery)
   }
 
   // Commit the batch
   var currtrial = CURRTRIAL.num;
-  await batch
-    .commit()
-    .then(() => {
+  await batch.commit().then(() => {
       FLAGS.firestorelastsavedtrial = currtrial;
-      console.log(
-        `FIRESTORE: Trial ${FLAGS.firestorelastsavedtrial}--Update Task Doc`
-      );
-      clearTimeout(firestoreTimer);
-      pingFirestore();
+      console.log(`FIRESTORE: Trial ${FLAGS.firestorelastsavedtrial}--Update Task Doc`);
     })
     .catch((error) => {
       console.error(
         `FIRESTORE: !Trial ${FLAGS.firestorelastsavedtrial}--Error updating database task doc: ${error}`
       );
-      clearTimeout(firestoreTimer);
-      pingFirestore();
     });
-} //FUNCTION updateEventDataonFirestore
+}//FUNCTION updateEventDataonFirestore
 //================== UPDATE FIRESTORE WITH EVENT DATA (end) ====================//
 
 async function loadAgentRFIDfromFirestore(subject, species) {

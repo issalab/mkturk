@@ -22,13 +22,6 @@ function index_init(){
   document.querySelector('button[id=reloadpage]').addEventListener('click',() => {window.location.reload();},false);
   //---- (END) for Safari
 
-  var textobj = document.getElementById('headsuptext');
-  textobj.addEventListener('pointerup', headsuptext_listener, false);
-
-  //---- for Safari
-  textobj.addEventListener('click', headsuptext_listener, false);
-  //---- (END) for Safari
-
   document.addEventListener('keyup', manualPumpKeyboardCallback, false);
 
   //============= Initialize Audio & Battery Objects ==================//
@@ -1033,8 +1026,10 @@ function index_housekeeping_cloudstorage(){
       // Firestore Database: Save data asynchronously to database
       if (FLAGS.createnewfirestore == 1) {
         saveBehaviorDatatoFirestore(TASK, ENV, CANVAS); //write once
-        pingFirestore(); //every 10 seconds, will check for data updates to upload to firestore
-      }//IF new firestore, kick off firestore database writes
+      }//IF new firestore, create firestore doc
+      else{
+        updateEventDataonFirestore(EVENTS); //event data updates to upload to firestore
+      }//ELSE update EVENT data of firestore doc
 
       //BIGQUERY Eye/Touch
       if (ENV.Eye.TrackEye > 0) {

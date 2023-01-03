@@ -51,6 +51,8 @@ NRSVP (default = 0 --> no RSVP task): Number of sample scene images to show in a
 
 SameDifferent (default = 0 --> no choice screen, only test): SameDifferent > 0 indicates a Same-Different task so that last screen is a new choice screen with same (circle) and different (square) buttons. Test image extinguishes after scenedurationMS milliseconds, followed by TestOFF pause, followed by choice screen. If KeepTestON=1, then test image is on for scenedurationMS milliseconds and then remains on for choice screen
 
+VisualSearch (default = 0 --> randomly choose from test bag): VisualSearch > 0 will select test image with same index as sample image. This means that each sample image is paired with a correct test image which allows the user to dictate the location of the appropriate choice in an image-by-image manner as required for a search task. To create a Visual Search task, want to specify only one sample bag and one test bag and should set TASK.KeepSampleON = 1 so that have distractors. Otherwise test will only show one item and response is easy (correct as long as touch that item). To punish touching outside of the one item, set TASK.ChoiceOutsideGracePeriod=0. You can also set TASK.ChoiceTimeOut to be short to encourage a speeded response.
+
 
 ___________________________________________________________________________
 *ADD SAMPLE & TEST SCREENS*
@@ -100,7 +102,7 @@ NStimuliPerBagBlock (default = 0 --> draw from all sample bags on each trial): i
 ___________________________________________________________________________
 *RESPONSE OPTIONS*
 ___________________________________________________________________________
-Target (default = gridwindow): Type of target bounding box to use during Fixation, Sample, and Response (Test/Choice) Screens. This can be:
+Target (default = object): Type of target bounding box to use during Fixation, Sample, and Response (Test/Choice) Screens. This can be:
   
     (1) 'gridwindow' -- a static square fixation window around a gridpoint, requires TASK.FixationWindowSizeInches,
   

@@ -378,6 +378,7 @@ async function loadParametersfromFirebase(paramfile_path) {
     if (typeof TASK.RewardStage == 'undefined'){TASK.RewardStage = 0;}
     if (typeof TASK.NRSVP == 'undefined'){TASK.NRSVP = 0;}
     if (typeof TASK.SameDifferent == 'undefined'){TASK.SameDifferent = 0;}
+    if (typeof TASK.VisualSearch == 'undefined'){TASK.VisualSearch = 0;}
 
     // SAMPLE SCREEN
     if (typeof TASK.SampleGridIndex == 'undefined'){TASK.SampleGridIndex = 0;}
@@ -412,7 +413,7 @@ async function loadParametersfromFirebase(paramfile_path) {
     if (typeof TASK.NStimuliPerBagBlock == 'undefined'){ TASK.NStimuliPerBagBlock = 0; }
 
     // RESPONSE
-    if (typeof TASK.Target == 'undefined'){TASK.Target = 'gridwindow';}
+    if (typeof TASK.Target == 'undefined'){TASK.Target = 'object';}
     if (typeof TASK.FixationWindowSizeInches == 'undefined'){TASK.FixationWindowSizeInches = 0;}
     if (typeof TASK.NStickyResponse == 'undefined'){TASK.NStickyResponse = 0;}
     if (typeof TASK.BlinkGracePeriod == 'undefined'){TASK.BlinkGracePeriod = 200;}
