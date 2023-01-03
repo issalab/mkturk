@@ -13,13 +13,17 @@ function hold_promise_simple(touchduration, outsideGracePeriod, broadcast_over_r
 			if (finished) { return; }
 
 			// Cancel-path scenario
+      console.log('cancel (reject) promise since not finished yet')
 			reject();
 		};//CANCEL
   }).then(function (resolveval) {
     FLAGS.touchGeneratorCreated = 0;
     finished = true
     return resolveval;
+  }).catch(e => {
+    console.log('canceled promise throws error as return value of reject():' + e);
   });
+;
   function* waitforeventGenerator() {
     var touchevent;
     var return_event = { type: '', cxyt: [] };
@@ -60,6 +64,11 @@ function hold_promise_simple(touchduration, outsideGracePeriod, broadcast_over_r
           boxClass = boundingBoxes.class[q];
         }//IF in bounding box
       }//FOR q boxes
+
+      if (typeof(boundingBoxes.taskscreen[0]) == 'undefined'){
+        boxID = -1
+        boxClass = 99
+      }//IF no defined targets, default to inside
     //==== (END) 0b - EVENT BOX ================//
 
     //==== 1a - INITIATED ================//
@@ -154,7 +163,7 @@ function hold_promise_simple(touchduration, outsideGracePeriod, broadcast_over_r
           touchevent.type + ' ' + return_event.type + '__' +
           'choice: ' + boxID + ',' + boxClass + '__' +
           '(' + Math.round(x) + ',' + Math.round(y) + ', ' + holdduration + 'ms)' 
-      console.log(holdGeneratorStatus)
+      // console.log(holdGeneratorStatus)        
 
       if (broadcast_over_rtdb){
         broadcastBoundingBoxes(FLAGS.bbDisplay, 0)

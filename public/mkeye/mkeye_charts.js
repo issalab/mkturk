@@ -196,6 +196,7 @@ class RealtimeScatter{
       this.chart.data.datasets[2].data = [] //empty old boxes
 
       let xy = []
+      let rewardOrPunish = 0
       for (let i=0; i<=newdata.boundingBoxes.length-1; i++){
         let bb = newdata.boundingBoxes[i]
         xy.push( { x: bb['x_0']+x0, y: bb['y_0']+y0 } )
@@ -204,8 +205,33 @@ class RealtimeScatter{
         xy.push( { x: bb['x_0']+x0, y: bb['y_1']+y0 } )
         xy.push( { x: bb['x_0']+x0, y: bb['y_0']+y0 } )
         xy.push( { x: null, y: null } )
+
+        if (newdata.boundingBoxes[i].taskscreen == 'Reward' || 
+            newdata.boundingBoxes[i].taskscreen == 'Punish'){
+          rewardOrPunish = 1
+        }
       }//FOR i boundingBoxes
       this.chart.data.datasets[2].data.push(...xy);
+
+      //Text updates
+      if (rewardOrPunish){
+        let effectorTextSelector = document.querySelector('#effectortext');
+        let fontstr
+        if (newdata.boundingBoxes[0].taskscreen == 'Reward'){fontstr = '<font color=green>'}
+        else if (newdata.boundingBoxes[0].taskscreen == 'Punish'){fontstr = '<font color=red>'}
+        else{ fontstr = '<font color=black>'}
+        effectorTextSelector.innerHTML =
+            fontstr+'[ ' + newdata.choice + ', ' + newdata.chosenbox + ', ' +
+            + Math.round(newdata.x) + ', ' + Math.round(newdata.y) + ', ' +
+            newdata.holdduration + 'ms ], ' + '</font>' + 
+            newdata.touchevent + ': ' + newdata.state
+  
+        let targetTextSelector = document.querySelector('#targettext');
+        targetTextSelector.innerHTML = 
+            newdata.boundingBoxes[0].ID  +
+            ' @ win=' + newdata.boundingBoxes[0].asset + ', ' +
+            fontstr + newdata.boundingBoxes[0].taskscreen +  '</font>' + '@ grid=' + newdata.boundingBoxes[0].grid
+      }//IF rewardOrPunish 
     }//IF new boundingBoxesDisplay
     else if (newdata.meta == 1){
       this.chart.data.datasets[3].data = [] //empty old boxes

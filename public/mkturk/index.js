@@ -639,6 +639,7 @@ index_init();
       for (let i = 0; i < CURRTRIAL.nreward; i++) {
         frame.reset(CANVAS.tsequencepost)
         playSound(2);
+
         renderShape2D(CANVAS.sequencepost[0], -1, VISIBLECANVAS);
         let lenTsequencePost = CANVAS.tsequencepost.length;
         let p1 = displayTrial(
@@ -656,8 +657,9 @@ index_init();
         CURRTRIAL.reinforcementtime = Date.now() - ENV.CurrentDate.valueOf();
         logEVENTS('ReinforcementTime',CURRTRIAL.reinforcementtime,'trialseries');
 
+        let p0 = hold_promise_simple(Infinity, Infinity,0);//to broadcast x,y coord
         if (ble.connected == false && port.connected == false) {
-          await Promise.all([p1]);
+          await Promise.all([p0, p1]);
         }//IF no hardware delivery
         else if (ble.connected == true) {
           let p2 = writepumpdurationtoBLE( Math.round(ENV.RewardDuration * 1000) );
@@ -665,8 +667,9 @@ index_init();
         }//ELSE IF bluetooth hardware
         else if (port.connected == true) {
           port.writepumpdurationtoUSB( Math.round(ENV.RewardDuration * 1000) );
-          await Promise.all([p1]);
+          await Promise.all([p0, p1]);
         }//ELSE IF USB
+        p0.cancel()
       }//FOR i rewards
     }//ELSE IF Reward, then reward (blank, reward, blank)
     else if (!CURRTRIAL.correct) {
@@ -705,7 +708,9 @@ index_init();
       CURRTRIAL.reinforcementtime = Date.now() - ENV.CurrentDate.valueOf();
       logEVENTS('ReinforcementTime',CURRTRIAL.reinforcementtime,'trialseries');
 
-      await Promise.all([p1, p2]);
+      let p0 = hold_promise_simple(Infinity, Infinity,0);//to broadcast x,y coord
+      await Promise.all([p0, p1, p2]);
+      p0.cancel()
     }//ELSE IF PUNISH, then timeout (Blank, Punish, Blank)
 
     // Log trial end time
