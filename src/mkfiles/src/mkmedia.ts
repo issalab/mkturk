@@ -486,7 +486,7 @@ export class Mkeditor {
     this.fileDupBtn.addEventListener('click', (ev: Event) => {
       ev.preventDefault();
       this.fileDupModal;
-      this.fileDupModal.showModal();
+      (this.fileDupModal as any).showModal();
       let activeFileName = this.activeFile.id as FileRef;
       fileName.value = 'Copy of ' + activeFileName.name;
       fileName.focus();
@@ -494,7 +494,7 @@ export class Mkeditor {
     });
 
     this.fileDupModal.querySelector('.close')?.addEventListener('click', () => {
-      this.fileDupModal.close();
+      (this.fileDupModal as any).close();
     });
 
     this.fileDupModal.querySelector('.save')?.addEventListener('click', () => {
@@ -534,7 +534,7 @@ export class Mkeditor {
       //   alert('Document Dup Failed');
       // });
 
-      this.fileDupModal.close();
+      (this.fileDupModal as any).close();
     });
   }
 
@@ -992,7 +992,7 @@ export class Mkeditor {
 
     this.svSceneBtn.addEventListener('click', (ev: Event) => {
       ev.preventDefault();
-      modal.showModal();
+      (modal as any).showModal();
       let activeFileName = this.activeFile.id as FileRef;
       let now = new Date();
       modalFilename.value =
@@ -1002,7 +1002,7 @@ export class Mkeditor {
     });
 
     modal.querySelector('.cl')?.addEventListener('click', () => {
-      modal.close();
+      (modal as any).close();
     });
 
     modal.querySelector('.sv')?.addEventListener('click', () => {
@@ -1042,7 +1042,7 @@ export class Mkeditor {
         });
 
       uploadBytes(sceneSrcDestRef, sceneSrcFile, md);
-      modal.close();
+      (modal as any).close();
 
       // destRef?.put(file, md).then(async (sns) => {
       //   alert('Generated param file was saved');
