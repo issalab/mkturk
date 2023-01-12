@@ -352,8 +352,6 @@ var sounds = {
   serial: [0, 1, 2, 3, 4],
   buffer: [],
 };
-var boundingBoxesFixation = { x: [], y: [] }; //where the fixation touch targets are on the canvas
-var boundingBoxesSampleFixation = { x: [], y: [] };
 var waitforClick; //variable to hold generator
 var waitforEvent; //variable to hold generator
 var touchTimer; //variable to hold timer

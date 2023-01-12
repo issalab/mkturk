@@ -216,10 +216,10 @@ index_init();
       let race_return;
       if (ENV.StressTest == 1) {
         race_return = { type: 'held' };
-        let x = boundingBoxesFixation.x[0][0] +
-                Math.round( Math.random() * (boundingBoxesFixation.x[0][1] - boundingBoxesFixation.x[0][0]) );
-        let y = boundingBoxesFixation.y[0][0] +
-                Math.round( Math.random() * (boundingBoxesFixation.y[0][1] - boundingBoxesFixation.y[0][0]) );
+        let x = FLAGS.bbTarget.x[0][0] +
+                Math.round( Math.random() * (FLAGS.bbTarget.x[0][1] - FLAGS.bbTarget.x[0][0]) );
+        let y = FLAGS.bbTarget.y[0][0] +
+                Math.round( Math.random() * (FLAGS.bbTarget.y[0][1] - FLAGS.bbTarget.y[0][0]) );
 
         race_return.cxyt = [ 0, x, y, Date.now() - ENV.CurrentDate.valueOf() ];
         FLAGS.waitingforTouches--;
@@ -406,6 +406,7 @@ index_init();
       let currchoice;
       if (ENV.StressTest == 1){
        //XX let nchoices = boundingBoxesChoice3D.x.length;
+        let nchoices = math.setDistinct(FLAGS.bbTarget.class).length
         let distractor_array;
         let x;
         let y;
@@ -542,10 +543,15 @@ index_init();
               currchoice = distractor_array[0];
             }//simulate incorrect
 //XX x,y
-            x = boundingBoxesChoice3D.x[currchoice][0] +
-                Math.round( Math.random() * (boundingBoxesChoice3D.x[currchoice][1] - boundingBoxesChoice3D.x[currchoice][0]) );
-            y = boundingBoxesChoice3D.y[currchoice][0] +
-                Math.round( Math.random() * (boundingBoxesChoice3D.y[currchoice][1] - boundingBoxesChoice3D.y[currchoice][0]) );
+            for (let q=0; q<=FLAGS.bbTarget.class.length-1; q++){
+              if (FLAGS.bbTarget.class[q] == currchoice){
+                x = FLAGS.bbTarget.x[q][0] +
+                    Math.round( Math.random() * (FLAGS.bbTarget.x[q][1] - FLAGS.bbTarget.x[q][0]) );
+                y = FLAGS.bbTarget.y[q][0] +
+                    Math.round( Math.random() * (FLAGS.bbTarget.y[q][1] - FLAGS.bbTarget.y[q][0]) );
+                break;
+              }//IF matches class
+            }//FOR q target boxes
           }//ELSE !RSVP
         }//ELSE TASK.Species != 'model'
 

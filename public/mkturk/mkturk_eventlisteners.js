@@ -57,11 +57,13 @@ function hold_promise_simple(touchduration, outsideGracePeriod, broadcast_over_r
     //==== 0b - EVENT BOX ================//
       let boxID = -1;
       let boxClass = -1;
+      let taskscreen = -1
       for (var q = 0; q <= boundingBoxes.x.length - 1; q++) {
         if ( x >= boundingBoxes.x[q][0] && x <= boundingBoxes.x[q][1] &&
               y >= boundingBoxes.y[q][0] && y <= boundingBoxes.y[q][1]) {
           boxID = q
           boxClass = boundingBoxes.class[q];
+          taskscreen = boundingBoxes.taskscreen[q];
         }//IF in bounding box
       }//FOR q boxes
 
@@ -74,12 +76,22 @@ function hold_promise_simple(touchduration, outsideGracePeriod, broadcast_over_r
     //==== 1a - INITIATED ================//
       let holdstart = FLAGS.effectorState.holdstart
       if ( holdstart <= 0 && touchevent.type != 'touchend' && touchevent.type != 'mouseup'){
-        if (boxClass >= 0){
-          holdstart = Date.now() - ENV.CurrentDate.valueOf();
-          CURRTRIAL.xhold = []
-          CURRTRIAL.yhold = []
-          console.log('INITIATED IN BOX, holddur=0ms')
-        }//IF went into box or clicked in box
+        if (taskscreen == 'Touchfix' && touchevent.type != 'eye'){
+          if (boxClass >= 0 && (touchevent.type == 'touchstart' || touchevent.type == 'mousedown') ){
+            holdstart = Date.now() - ENV.CurrentDate.valueOf();
+            CURRTRIAL.xhold = []
+            CURRTRIAL.yhold = []
+            console.log('INITIATED IN BOX, holddur=0ms')
+          }//IF clicked in box
+        }//ONLY IF fixation screen && mouse || touch, then have to click to initiate trial
+        else{
+          if (boxClass >= 0){
+            holdstart = Date.now() - ENV.CurrentDate.valueOf();
+            CURRTRIAL.xhold = []
+            CURRTRIAL.yhold = []
+            console.log('INITIATED IN BOX, holddur=0ms')
+          }//IF went into box or clicked in box  
+        }//ELSE in all other cases, can drag to activate target
       }//IF hadn't moved into box or clicked in box yet
     //==== (END) 1a - INITIATED ================//
 
@@ -88,7 +100,7 @@ function hold_promise_simple(touchduration, outsideGracePeriod, broadcast_over_r
           touchevent.type == 'touchmove' || touchevent.type == 'mousemove' ||
           touchevent.type == 'eyemove') {
         if (boxClass >= 0) {
-          if ( (Date.now()- ENV.CurrentDate.valueOf()) - holdstart >= touchduration){
+          if ( holdstart >=0 && (Date.now()- ENV.CurrentDate.valueOf()) - holdstart >= touchduration){
             return_event.type = 'held'
           }//IF held long enough
           else {
@@ -114,7 +126,7 @@ function hold_promise_simple(touchduration, outsideGracePeriod, broadcast_over_r
     //==== 1c - RELEASED ================//
       if (touchevent.type == 'touchend' || touchevent.type == 'mouseup') {
         if (boxClass >= 0){
-          if ((Date.now()- ENV.CurrentDate.valueOf()) - holdstart >= touchduration){
+          if (holdstart >= 0 && (Date.now()- ENV.CurrentDate.valueOf()) - holdstart >= touchduration){
             return_event.type = 'held'
           }//IF held long enough
           else {
@@ -159,7 +171,13 @@ function hold_promise_simple(touchduration, outsideGracePeriod, broadcast_over_r
     //==== (END) 2a - STORE VALS ==================//
 
     //==== 2b - LOG STATE, PLOT COORDS ==================//
-      let holdGeneratorStatus = 
+    if (!isNaN(x) && !isNaN(y)) {
+      if (touchevent.type != 'eye') {
+        logEVENTS('TouchData', [x, y, boxClass],'timeseries');
+      }//IF !eye event
+    }//IF x,y
+
+    let holdGeneratorStatus = 
           touchevent.type + ' ' + return_event.type + '__' +
           'choice: ' + boxID + ',' + boxClass + '__' +
           '(' + Math.round(x) + ',' + Math.round(y) + ', ' + holdduration + 'ms)' 

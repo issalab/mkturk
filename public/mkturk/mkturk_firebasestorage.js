@@ -385,8 +385,18 @@ async function loadParametersfromFirebase(paramfile_path) {
     if (typeof TASK.SamplePRE == 'undefined'){TASK.SamplePRE = 0;}
     if (typeof TASK.SampleOFF == 'undefined'){TASK.SampleOFF = 0;}
     if (typeof TASK.SampleOutsideGracePeriod == 'undefined'){TASK.SampleOutsideGracePeriod = 0}
+    if (typeof TASK.ImageBagsSample == 'undefined'){
+      TASK.ImageBagsSample = [
+        "/mkturkfiles/scenebags/objectome3d/camel/20200709_camel_token.js",
+        "/mkturkfiles/scenebags/objectome3d/wrench/20200709_wrench_token.js"
+    ]}
 
     // TEST SCREEN
+    if (typeof TASK.ImageBagsTest == 'undefined'){
+      TASK.ImageBagsTest = [
+        "/mkturkfiles/scenebags/objectome3d/camel/20200709_camel_token.js",
+        "/mkturkfiles/scenebags/objectome3d/wrench/20200709_wrench_token.js"
+    ]}
     if (typeof TASK.TestGridIndex == 'undefined'){ 
       if (TASK.ImageBagsTest.length == 1){
         TASK.TestGridIndex = [0]        
@@ -453,7 +463,7 @@ async function loadParametersfromFirebase(paramfile_path) {
 
     return 0; //need2loadParameters
   } catch (error) {
-    // 		console.error('loadParametersfromFirebase() error: ' + error)
+    console.error('loadParametersfromFirebase() error: ' + error)
     return 1; //need2loadParameters
   }
 }

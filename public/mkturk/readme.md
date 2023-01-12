@@ -17,10 +17,6 @@ ___________________________________________________________________________
 
 **FixationSizeInches:** Size of blue fixation dot or image (i.e., FixationUsesSample=1) in physical inches on the screen
 
-**ImageBagsSample:** List of (list of) paths, where entries at the top level are directories / imagepaths for the sample images of one group; e.g. [['/bear_images', '/dog_images'], '/face_images'] is a {bear, dog} versus face task
-
-**ImageBagsTest:** List of (list of) paths, where entries at the top level are directories / imagepaths for the test images of one group; e.g. [['/buttons/bear_icon.png, '/buttons/dog_icon.png'], ['/buttons/face_icon1.png, '/buttons/face_icon2.png']]. **!IMPORTANT! Number of Test Bags must match number of Sample Bags**
-
 **RewardDuration:** Duration of reward pulse in milliseconds. Green square and correct sound are presented for audiovisual feedback during this time.
 
 **PunishTimeOut:** Time out in milliseconds for incorrect responses. Black square and incorrect sound may be presented for feedback during this time.
@@ -51,7 +47,7 @@ NRSVP (default = 0 --> no RSVP task): Number of sample scene images to show in a
 
 SameDifferent (default = 0 --> no choice screen, only test): SameDifferent > 0 indicates a Same-Different task so that last screen is a new choice screen with same (circle) and different (square) buttons. Test image extinguishes after scenedurationMS milliseconds, followed by TestOFF pause, followed by choice screen. If KeepTestON=1, then test image is on for scenedurationMS milliseconds and then remains on for choice screen
 
-VisualSearch (default = 0 --> randomly choose from test bag): VisualSearch > 0 will select test image with same index as sample image. This means that each sample image is paired with a correct test image which allows the user to dictate the location of the appropriate choice in an image-by-image manner as required for a search task. To create a Visual Search task, want to specify only one sample bag and one test bag and should set TASK.KeepSampleON = 1 so that have distractors. Otherwise test will only show one item and response is easy (correct as long as touch that item). To punish touching outside of the one item, set TASK.ChoiceOutsideGracePeriod=0. You can also set TASK.ChoiceTimeOut to be short to encourage a speeded response.
+VisualSearch (default = 0 --> randomly choose from test bag): VisualSearch > 0 will select test image with same index as sample image. This means that each sample image is paired with a correct test image which allows the user to dictate the location of the appropriate choice in an image-by-image manner as required for a search task. To create a Visual Search task, want to specify only one sample bag and one test bag and should set TASK.KeepSampleON = 1 so that have distractors and set sample bag duration to 0 so that don't separately show distractors (mkturk handles sample duration 0 interpreting it as skip sample display). Otherwise, without 0 duration sample, will reveal location of distractors, and without keeping sampleON, test will only show one item and response is easy (correct as long as touch that item). To punish touching outside of the one item, set TASK.ChoiceOutsideGracePeriod=0. You can also set TASK.ChoiceTimeOut to be short to encourage a speeded response.
 
 
 ___________________________________________________________________________
@@ -59,11 +55,23 @@ ___________________________________________________________________________
 ___________________________________________________________________________
 SampleGridIndex (default = same as FixationGridIndex): Index on grid where sample image appears. SampleGridIndex=4 centers the image on a 3x3 grid, where ngridpoints=3. If SampleGridIndex<0, then sample scene appears at a randomly selected grid location unless FixationGridIndex is also <0, in which case, the sample grid index will be set to be the same as the randomly generated fixation grid index (i.e., sample scene's location is yoked to where the fixation was for that trial).
 
+ImageBagsSample (default = [
+        "/mkturkfiles/scenebags/objectome3d/camel/20200709_camel_token.js",
+        "/mkturkfiles/scenebags/objectome3d/wrench/20200709_wrench_token.js"
+    ]):
+    List of (list of) paths, where entries at the top level are directories / imagepaths for the sample images of one group; e.g. [['/bear_images', '/dog_images'], '/face_images'] is a {bear, dog} versus face task
+
 SamplePRE (default = 0 milliseconds): Duration in milliseconds that a gray screen is presented before the first sample image.
 
 SampleOFF (default = 0 milliseconds): Duration in milliseconds that a gray screen is presented after the sample image before the response screen. This implements the delay in a DMS task. SampleOFF=0, leads to no delay
 
 TestGridIndex (default = [0,1] --> default to 2-way task using first two gridpoints): Index on grid where test images appear. Length of TestGridIndex corresponds to number of possible choices subject will see (n-way task). There could be m test classes but of those a subset of n = TestGridIndex.length will be shown on a given trial, where m test classes >= n test choices. One of these will be the correct class and the remaining n-1 will be distractors.
+
+ImageBagsTest (default = [
+        "/mkturkfiles/scenebags/objectome3d/camel/20200709_camel_token.js",
+        "/mkturkfiles/scenebags/objectome3d/wrench/20200709_wrench_token.js"
+    ]):
+    List of (list of) paths, where entries at the top level are directories / imagepaths for the test images of one group; e.g. [['/buttons/bear_icon.png, '/buttons/dog_icon.png'], ['/buttons/face_icon1.png, '/buttons/face_icon2.png']]. **!IMPORTANT! Number of Test Bags must match number of Sample Bags**
 
 ObjectGridIndex (default = [] --> Test classes are not tied to a particular screen (response) location which is the Match-to-Sample setting): TASK.ObjectGridIndex is used to convert to a Stimulus-Response (SR) task. If this variable is set, then each object is tied to a particular location on the grid. TASK.ObjectGridIndex.length must equal TASK.ImageBagsTest.length for appropriate assignment of each object label to a grid location.
 
@@ -104,13 +112,13 @@ ___________________________________________________________________________
 ___________________________________________________________________________
 Target (default = object): Type of target bounding box to use during Fixation, Sample, and Response (Test/Choice) Screens. This can be:
   
-    (1) 'gridwindow' -- a static square fixation window around a gridpoint, requires TASK.FixationWindowSizeInches,
+    (1) 'gridwindow' -- static location, static size -- a static square fixation window around a gridpoint, requires TASK.FixationWindowSizeInches,
   
-    (2) 'objectwindow' -- a dynamic square fixation window around object center, requires TASK.FixationWindowSizeInches, 
+    (2) 'objectwindow' -- dynamic location, static size -- a dynamic square fixation window around object center, requires TASK.FixationWindowSizeInches, 
   
-    (3) 'object' -- window follows object position and aspect ratio/size. It's the object bounding box whether the object is the blue fixation dot or the foreground objects in a scene render, OR 
+    (3) 'object' -- dynamic location, dynamic size -- window follows object position and aspect ratio/size. It's the object bounding box whether the object is the blue fixation dot or the foreground objects in a scene render, OR 
   
-    (4) 'scene' -- the overall scene bounding box which would encompass both object and background.
+    (4) 'scene' -- dynamic location, dynamic size -- the overall scene bounding box which would encompass both object and background.
   
     Note that 'objectwindow', 'object', and 'scene' are dynamic bounding boxes where each frame render will compute a bounding box whereas 'gridwindow' is a static bounding box applied to a grid position independent of rendered assets (shape, image, object, cubemap). For now, the TASK.Target parameter is task-wide, could always be done specific to each screen (e.g., Fixation vs. Sample) to provide more flexibility in the future.
 
