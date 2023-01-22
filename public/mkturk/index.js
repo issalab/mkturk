@@ -740,7 +740,7 @@ index_init();
     index_housekeeping_effector_data();
     index_housekeeping_cloudstorage();
     if ( TASK.Agent != "SaveImages" ){ await checkParameterFileStatusFirebase();}  
-    index_housekeeping_exits();
+    let endloop = index_housekeeping_exits();
 
     // Run automator only after everything is saved
     if (TASK.Automator != 0) {
@@ -763,6 +763,8 @@ index_init();
       await sleep(remainingInterTrialInterval);
     }
     console.log('END OF TRIAL ', CURRTRIAL.num);
+    if (endloop == 1){ return }//IF end task
+
     CURRTRIAL.num++;
     EVENTS.trialnum = CURRTRIAL.num;
   }//WHILE(true): Main Task Loop

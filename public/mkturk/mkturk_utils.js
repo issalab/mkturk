@@ -227,8 +227,7 @@ async function index_init_params_screen_automator(){
     ENV.ScreenPhysicalPixels = screenSpecs.screenPhysicalPixels;
     ENV.ScreenRatio = screenSpecs.screenRatio;
     ENV.PhysicalPPI = screenSpecs.ppi;
-    ENV.FrameRateMovie =
-      screenSpecs.frameRateMovie === -1 ? 60 : screenSpecs.frameRateMovie;
+    ENV.FrameRateMovie = screenSpecs.frameRateMovie === -1 ? 60 : screenSpecs.frameRateMovie;
     
     if (window.innerWidth < window.innerHeight) {
       ENV.ScreenSizeInches =
@@ -255,8 +254,7 @@ async function index_init_params_screen_automator(){
       ENV.ScreenPhysicalPixels = screenSpecs.screenPhysicalPixels;
       ENV.ScreenRatio = screenSpecs.screenRatio;
       ENV.PhysicalPPI = screenSpecs.ppi;
-      ENV.FrameRateMovie =
-        screenSpecs.frameRateMovie === -1 ? 60 : screenSpecs.frameRateMovie;
+      ENV.FrameRateMovie = screenSpecs.frameRateMovie === -1 ? 60 : screenSpecs.frameRateMovie;
       if (window.innerWidth < window.innerHeight) {
         ENV.ScreenSizeInches = [ ENV.ScreenSizeInches[1], ENV.ScreenSizeInches[0], ENV.ScreenSizeInches[2],];
 
@@ -774,22 +772,22 @@ async function index_checkrfid(){
 
 async function index_send_filecode(){
   //Get file's time
-  var ind_start = ENV.DataFileName.lastIndexOf('T');
-  var ind_end = ENV.DataFileName.indexOf('_');
-  var filetime = ENV.DataFileName.substring(ind_start + 1, ind_end);
-  var seconds_digits = [ Number(filetime[filetime.length-2]), Number(filetime[filetime.length-1]) ];
+  let ind_start = ENV.DataFileName.lastIndexOf('T');
+  let ind_end = ENV.DataFileName.indexOf('_');
+  let filetime = ENV.DataFileName.substring(ind_start + 1, ind_end);
+  let time_digits = [ 
+    Number(filetime[0]), Number(filetime[1]), //hours
+    Number(filetime[3]), Number(filetime[4]), //minutes
+    Number(filetime[filetime.length-2]), Number(filetime[filetime.length-1]) //seconds
+];
 
-  //1st digit
-  port.writeSampleCommandTriggertoUSB('1');
-  await sleep(10*(seconds_digits[0]+1));
-  port.writeSampleCommandTriggertoUSB('0');
+  for (let i=0; i<=time_digits.length-1; i++){
+    port.writeSampleCommandTriggertoUSB('1');
+    await sleep(10*(time_digits[i]+1));
+    port.writeSampleCommandTriggertoUSB('0');
+    await sleep(25);//milliseconds  
+  }//FOR i digits
 
-  await sleep(25);//milliseconds
-
-  //2nd digit
-  port.writeSampleCommandTriggertoUSB('1');
-  await sleep(10*(seconds_digits[1]+1));
-  port.writeSampleCommandTriggertoUSB('0');
   FLAGS.filecodeSent = 1;
   return 1
 }//FUNCTION index_send_filecode()
@@ -1002,7 +1000,7 @@ function index_housekeeping_effector_data(){
           y.push( -EVENTS[eventtype][eventname][i][3] + ENV.ViewportPixels[1] )
           // q.push(EVENTS[eventtype][eventname][i][4])
         }//IF Touch
-      }//IF within 1000ms of currtrial
+      }//IF within ENV.EffectorSaveJSONDataRelativetoFixationDotDisplayMS of currtrial
     }//FOR i times sampled
 console.log('N=' + t.length + '  t_effector ' + [...t] )
     EVENTS['timeseries']['EffectorData'].t[CURRTRIAL.num] = new Int16Array(t)
@@ -1070,28 +1068,30 @@ function index_housekeeping_exits(){
     if (TASK.NRSVP > 1){
       if (CURRTRIAL.num >= Math.ceil(TQS.samplebag_indices.length/TASK.NRSVP)) { 
         console.log('MKTURK EXITING -- all images shown once for SaveImages')
-        return
+        return 1
       }
     }//IF NRSVP>1
     else{
       if (CURRTRIAL.num >= TQS.samplebag_indices.length - 1) { 
         console.log('MKTURK EXITING -- all images shown once for SaveImages')
-        return;
+        return 1
       }
-    }
+    }//ELSE
   }//IF saving all images and ran through them once
 
 
   if ( TASK.Species == 'model' && CURRTRIAL.num >= TQS.samplebag_indices.length - 1)
   {
     console.log('MKTURK EXITING -- all images shown once for Model')
-    return;
-  }
+    return 1
+  }//IF model
 
   if (TASK.CalibrateEye > 0 && ENV.Eye.calibration == 0){
     console.log('MKTURK EXITING -- Done calibrating eye')
-    return
+    return 1
   }
+
+  return 0
 }//FUNCTION index_housekeeping_exits()
 
 (function (window) {

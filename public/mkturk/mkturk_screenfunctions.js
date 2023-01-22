@@ -226,7 +226,7 @@ function displayTrial(ti, gr, cl, fr, sc, ob, id, ims, mkm, trig) {
 
     //OVERLAY Photodiode Square
       if (typeof(trig) != "undefined" && trig==1 && TASK.Photodiode > 0 ) {
-        renderShape2D('PhotodiodeSquare', [ENV.PhotodiodeSquareX, ENV.PhotodiodeSquareY],VISIBLECANVAS,cl[f]);
+        renderShape2D('PhotodiodeSquare', [ENV.PhotodiodeSquareX, ENV.PhotodiodeSquareY],VISIBLECANVAS,taskscreen);
       } //IF port.connected
 
       //----- Choose Target Bounding Box for that screen
@@ -646,7 +646,7 @@ function expandImage2DFrames(taskscreen)
 
 
 //------- FUNCTION renderShape2D ---------//
-function renderShape2D(sc, gr, canvasobj,cl) {
+function renderShape2D(sc, gr, canvasobj,taskscreen) {
   switch (sc) {
     case 'Blank':
       renderBlank(canvasobj, TASK.BackgroundColor2D);//XX
@@ -670,20 +670,20 @@ function renderShape2D(sc, gr, canvasobj,cl) {
       break;
     case 'PhotodiodeSquare':
       if (Math.round(frame.current / 2) == frame.current / 2) {
-        if (Math.round(cl/2) == cl/2){
+        if (!taskscreen.includes('Blank')){
           funcreturn = renderSquareOnCanvas('white', gr, ENV.PhotodiodeSquareWidth, canvasobj);
         }
         else{
           funcreturn = renderSquareOnCanvas('#CCCCCC', gr, ENV.PhotodiodeSquareWidth, canvasobj);          
-        }
+        }//ELSE 0.8
       }//IF even frame, draw white square
       else {
-        if (Math.round(cl/2) == cl/2){
+        if (!taskscreen.includes('Blank')){
           funcreturn = renderSquareOnCanvas('black', gr, ENV.PhotodiodeSquareWidth, canvasobj);
         }
         else{
           funcreturn = renderSquareOnCanvas('#333333', gr, ENV.PhotodiodeSquareWidth, canvasobj);
-        }
+        }//ELSE 0.2
       } //ELSE go back to blank
       funcreturn.ID[0] = 'photodiodesquare'
       funcreturn.class[0] = -1

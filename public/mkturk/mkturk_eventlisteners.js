@@ -98,7 +98,7 @@ function hold_promise_simple(touchduration, outsideGracePeriod, broadcast_over_r
     //==== 1b - CLICKED/DRAGGED ================//
       if ( touchevent.type == 'touchstart' || touchevent.type == 'mousedown' ||
           touchevent.type == 'touchmove' || touchevent.type == 'mousemove' ||
-          touchevent.type == 'eyemove') {
+          touchevent.type == 'eye') {
         if (boxClass >= 0) {
           if ( holdstart >=0 && (Date.now()- ENV.CurrentDate.valueOf()) - holdstart >= touchduration){
             return_event.type = 'held'

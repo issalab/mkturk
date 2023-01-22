@@ -158,7 +158,7 @@ BackgroundColor2D (default = #7F7F7F --> gray background): specify the backgroun
 
 HeadsupDisplayFraction (default = 0 --> top of screen not used to display stats): Vertical fraction of screen to use for displaying task stats and device outputs such as RFID detection. If not specified, default is 0%. Headsup Display uses a black background.
 
-Photodiode (default = 1 --> flash alternating square): Photodiode == 1 leads to display of alternating white/black square in bottom right corner of canvas. If there are multiple clips, then every other clip is coded using light gray/dark gray (e.g., clip 1 will be white/black alternation in frame flips while clip 2 will be light gray/dark gray alternation in frame flips). If TASK.Photodiode is not specified, then will not display the flickering photodiode square.
+Photodiode (default = 1 --> flash alternating square): Photodiode == 1 leads to display of alternating white/black square in bottom right corner of canvas. For the Blank taskscreens intervening between sample/test/choice renders (i.e., TASK.SamplePRE or TASK.SampleOFF or TASK.TestOff > 0), light gray/dark gray is used (e.g., light gray/dark gray, 0.2 & 0.8 or 51 & 204, alternation in frame flips where the first frame is light and the second is dark). When taskscreen is not Blank, the square will alternate between full white and full black (0.0 & 1.0 or 0 & 255; first frame is white).
 
 THREEJScameraFOV (default = 45 degrees): Sets the default size of the viewing angle of the camera in degrees which is how big the canvas corresponds to in 3js units which ultimately is how much of the screen in inches the scene will occupy (note that we always use a square for the retina, aspectratio=1 in setupCanvas hardcoded). If not specified, then cameraFOV=45 is used. Combined with THREEJScameraZDist, this sets the size of the canvas at the z=0 plane in the viewing frustrum which is ultimately what is projected onto the camera's retina (which will be the physical screen). This 2D projection size determines the size of retina so that when camera FOV or ZDist are changed in the scene file from this default, the retina (ie, 2D projection onto a physical array which in our case is the device screen) is still this default size but now has a different projection (if you move closer in zdist, things will get larger on your fixed size retina). See this pull request for further description and diagram: https://github.com/issalab/mkturk/pull/38
 
@@ -258,7 +258,7 @@ DeviceTouchscreen: 0 (not available) or 1 (available), indicates if touchscreen 
 
 DeviceType:desktop or mobile
 
-EffectorSaveJSONDataRelativetoFixationDotDisplayMS: dt in milliseconds relative to fixation appearance when to save eye data into json. if dt<0, this means eye data immediately before fixation appears will be included in the json datafile. Note, for parallel saving to bigquery, we keep up 1000ms before fixation, but for json data file may want to keep less to save space.
+EffectorSaveJSONDataRelativetoFixationDotDisplayMS: dt in milliseconds relative to fixation appearance when to save eye data into json. if dt<0, this means eye data immediately before fixation appears will be included in the json datafile. Note, for parallel saving to bigquery, we currently keep up 500ms before fixation, but for json data file may want to keep less to save space.
 
 Eye.CalibXTransform: Stores the parameters from the linear regression fit of eye tracker's x,y --> screen x (eg x_screen = a*x + b*y + c)
 
@@ -394,7 +394,14 @@ Battery (json): [trial, timestamp, level, discharge_time]
 
 BLEBattery (not saved)
 
-EffectorData (json): {t,x,y}[trial#][sample#] (touch OR eye data are funneled to this variable for storage into main data file in addition to saving of Touch/Eye to bigquery)
+EffectorXY (json): {t,x,y,w,a,q}[trial#][sample#] (touch OR eye data timeseeries are funneled to this variable for storage into main data file in addition to saving of Touch/Eye to bigquery). Values ENV.EffectorSaveJSONDataRelativetoFixationDotDisplayMS milliseconds before trial start are stored. Currently, 500ms before trialstart are stored in addition to during trial timeseries.
+    t: time from trial start in milliseconds
+    x: horizontal position in pixels re: origin of whole screen
+    y: vertical position in pixels re: origing of whole screen
+    w: width of effector
+    a: aspect ratio of effector
+    q: signal quality factor
+
 
 EyeData (bigquery): [ agent, trialnum, timestamp, numeyes, x, y, width, aspectratio, null,null,null,null]
 
