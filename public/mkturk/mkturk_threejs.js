@@ -289,29 +289,29 @@ async function addToScene(taskscreen) {
 
       let objects = OBJECTS[taskscreen][classlabel].meshes[obj].scene;
       let materialparam = IMAGES[taskscreen][classlabel].OBJECTS[obj].material;
+      let addtexture = IMAGES[taskscreen][classlabel].OBJECTS[obj].texture ? IMAGES[taskscreen][classlabel].OBJECTS[obj].texture : "true"
 
       let meshpartnames = [];
       objects.traverse((child) => {
         if (child.name != "Scene") {
-          meshpartnames.push(child.name); // store in case of morph later
+          meshpartnames.push(child.name); //store in case of morph later
         }
 
         // set texture
-        if (child.material) {
-          if (child.name == "Base") {
-            let material = new THREE.MeshPhysicalMaterial(materialparam);
-            material.map = child.material.map;
-            child.material = material;
-            child.material.needsUpdate = true;
-          }// IF 'Base' Mesh
-
+        if (addtexture == "false" || child.name == "Base"){
+          let material = new THREE.MeshPhysicalMaterial(materialparam);
+          child.material = material;
+          if (child.material){ material.map = child.material.map;}
+          child.material.needsUpdate = true;  
+          child.material.transparent = true;  
+        }//IF 'Base' Mesh or texture is off, use default material
+        else if (addtexture == "true" && child.material) {
           if (child.name == "Eyeriris" || child.name == "Eyeliris") {
             child.renderOrder = 1;
           }
-
           child.material.transparent = true;
-        }// IF child.material
-      });// objects.traverse (material)
+        }//IF child.material
+      });//objects.traverse (material)
 
       let bbox = new THREE.Box3();
       bbox.setFromObject(objects);
@@ -637,9 +637,7 @@ async function addToScene(taskscreen) {
       }//ELSE
 
       transparentFace = new THREE.MeshBasicMaterial({
-        transparent: true,
-        opacity: 0,
-        side: THREE.BackSide,
+        transparent: true, opacity: 0, side: THREE.BackSide,
       });
 
       let backgroundCube = new THREE.Mesh(boxGeometry, materialArray);
@@ -999,11 +997,8 @@ function updateSingleFrame3D(taskscreen,classlabels,index,movieframe,gridindex,c
       var nextvisible = 0;
     }
 
-    if (nextvisible == 1) {
-      backgroundCube.visible = true;
-    } else {
-      backgroundCube.visible = false;
-    }
+    if (nextvisible == 1) { backgroundCube.visible = true; }
+    else { backgroundCube.visible = false; }
     boundingBoxCubeMap = updateImageSingleFrame(taskscreen, backgroundCube, cubeTexture, nextimsize, camera, scenecenterX, scenecenterY);
 
     if (Number.isInteger(movieframe)){
