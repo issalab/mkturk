@@ -738,7 +738,7 @@ async function addToScene(taskscreen) {
   }//FOR gridIdx
 }//FUNCTION addToScene(taskscreen)
 
-function updateSingleFrame3D(taskscreen,classlabels,index,movieframe,gridindex,cubeTexture)
+function updateSingleFrame3D(taskscreen,classlabels,index,movieframe,gridindex,cubeTexture,show_objs,show_im)
 {
   //==== TURN OFF ALL ITEMS
   for (let sceneElem in scene[taskscreen]["children"]) {
@@ -754,6 +754,7 @@ function updateSingleFrame3D(taskscreen,classlabels,index,movieframe,gridindex,c
   var allBoundingBoxesObjects = { x: [], y:[], ID: [], class: [] };
   var crop = [];
   var allBoundingBoxesCubeMap = { x: [], y:[], ID: [], class: [] };
+
   if (typeof classlabels == "number") {
     classlabels = [classlabels];
   }
@@ -889,10 +890,15 @@ function updateSingleFrame3D(taskscreen,classlabels,index,movieframe,gridindex,c
 
       nextobjSize = nextobjSize;
       //OBJECT VISIBILITY
-      var nextvisible = chooseArrayElement(IMAGES[taskscreen][classlabel].OBJECTS[obj].visible,index,0);
-      if (Number.isInteger(movieframe)) {
-        nextvisible = chooseArrayElement(nextvisible,movieframe,nextvisible.length - 1);
-      }//IF get movieframe
+      if (show_objs == 0){
+        nextvisible = 0;
+      }
+      else{
+        var nextvisible = chooseArrayElement(IMAGES[taskscreen][classlabel].OBJECTS[obj].visible,index,0);
+        if (Number.isInteger(movieframe)) {
+          nextvisible = chooseArrayElement(nextvisible,movieframe,nextvisible.length - 1);
+        }//IF get movieframe
+      }
 
       //OPACITY
       var nexttransparent = chooseArrayElement(IMAGES[taskscreen][classlabel].OBJECTS[obj].material.opacity,index,0);
@@ -988,12 +994,13 @@ function updateSingleFrame3D(taskscreen,classlabels,index,movieframe,gridindex,c
     var backgroundCube = scene[taskscreen].getObjectByName("backgroundCube" + classlabel);
     //BACKGROUND VISIBILITY
 
-    if (cubeTexture != undefined) {
+    if (show_im == 1 && cubeTexture != undefined) {
       var nextvisible = chooseArrayElement(IMAGES[taskscreen][classlabel].IMAGES.visible,index,0);
       if (Number.isInteger(movieframe)) {
         nextvisible = chooseArrayElement(nextvisible,movieframe,nextvisible.length - 1);
       }//IF get movieframe
-    } else {
+    }
+    else {
       var nextvisible = 0;
     }
 
@@ -1008,7 +1015,7 @@ function updateSingleFrame3D(taskscreen,classlabels,index,movieframe,gridindex,c
       IMAGES[taskscreen][classlabel].IMAGES.boundingBoxCube2DPixels[index] = boundingBoxCubeMap;
     }//ELSE
 
-    if (typeof boundingBoxCubeMap != 'undefined' && typeof boundingBoxCubeMap.x != 'undefined'){
+    if (nextvisible !== 0 && typeof boundingBoxCubeMap != 'undefined' && typeof boundingBoxCubeMap.x != 'undefined'){
       allBoundingBoxesCubeMap.x.push(boundingBoxCubeMap.x)
       allBoundingBoxesCubeMap.y.push(boundingBoxCubeMap.y)
       allBoundingBoxesCubeMap.ID.push('backgroundimage3d')

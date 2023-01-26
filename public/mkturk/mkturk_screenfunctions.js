@@ -49,7 +49,9 @@ function displayTrial_prime(ti, gr, cl, fr, sc, ob, id, ims, mkm) {
           else if (FLAGS.usecanvas2D == 1){
     //RENDER 2D Sample/Test Image
             render2D(taskscreen, s, f, gr, fr, sc, ob, id, im, VISIBLECANVAS);  
-          } //ELSEIF 2D canvas
+            const defaultFilter = 'blur(0px) brightness(100%) contrast(100%) grayscale(0%) hue-rotate(0deg) invert(0%) opacity(100%) saturate(100%) sepia(0%)';
+            VISIBLECANVAS.getContext('2d').filter = defaultFilter; //restore 2D filter
+          }//ELSEIF 2D canvas
         }//IF sample || test
         else {
         } //ELSE hide 3D when plotting 2D elements like buttons and not keeping (overlaying) sample/test
@@ -136,7 +138,7 @@ function displayTrial(ti, gr, cl, fr, sc, ob, id, ims, mkm, trig) {
 
           if (FLAGS.usecanvas2D == 0){
     //RENDER 3D (transfers to 2D & filters)
-            bbTarget = render3D(taskscreen, s, f, gr, fr, sc, ob, id, im);
+            let bbTarget = render3D(taskscreen, s, f, gr, fr, sc, ob, id, im);
             for (let j=0; j <= bbTarget.x.length-1; j++){
               FLAGS.bbDisplay.taskscreen.push(taskscreen)
               FLAGS.bbDisplay.indscreen.push(s)
@@ -152,7 +154,7 @@ function displayTrial(ti, gr, cl, fr, sc, ob, id, ims, mkm, trig) {
           }//IF 3D canvas
           else if (FLAGS.usecanvas2D == 1){
     //RENDER 2D Sample/Test Image
-            bbTarget = render2D(taskscreen, s, f, gr, fr, sc, ob, id, im, VISIBLECANVAS);
+            let bbTarget = render2D(taskscreen, s, f, gr, fr, sc, ob, id, im, VISIBLECANVAS);
             updated3d = 0;
             for (let j=0; j <= bbTarget.x.length-1; j++){
               FLAGS.bbDisplay.taskscreen.push(taskscreen)
@@ -164,6 +166,8 @@ function displayTrial(ti, gr, cl, fr, sc, ob, id, ims, mkm, trig) {
               FLAGS.bbDisplay.x.push(bbTarget.x[j])
               FLAGS.bbDisplay.y.push(bbTarget.y[j])
             }//FOR j rendered items
+            const defaultFilter = 'blur(0px) brightness(100%) contrast(100%) grayscale(0%) hue-rotate(0deg) invert(0%) opacity(100%) saturate(100%) sepia(0%)';
+            VISIBLECANVAS.getContext('2d').filter = defaultFilter; //restore 2D filter
           }//ELSEIF 2D canvas
         }//IF sample || test
         else {
@@ -187,7 +191,7 @@ function displayTrial(ti, gr, cl, fr, sc, ob, id, ims, mkm, trig) {
 
     //RENDER 2D SHAPE (Choice/Reward/Punish)    
         if ( taskscreen == 'Choice' || taskscreen == 'Reward' || taskscreen == 'Punish') {
-          bbTarget = renderShape2D(taskscreen, gr[f], VISIBLECANVAS);
+          let bbTarget = renderShape2D(taskscreen, gr[f], VISIBLECANVAS);
           for (let j=0; j <= bbTarget.x.length-1; j++){
             FLAGS.bbDisplay.taskscreen.push(taskscreen)
             FLAGS.bbDisplay.indscreen.push(s)
@@ -203,7 +207,7 @@ function displayTrial(ti, gr, cl, fr, sc, ob, id, ims, mkm, trig) {
 
     //Blue Fixation Circle
         if ( taskscreen == 'Touchfix' ){
-          bbTarget = renderShape2D(taskscreen, gr[f], VISIBLECANVAS);
+          let bbTarget = renderShape2D(taskscreen, gr[f], VISIBLECANVAS);
           for (let j=0; j <= bbTarget.x.length-1; j++){
             FLAGS.bbDisplay.taskscreen.push(taskscreen)
             FLAGS.bbDisplay.indscreen.push(s)
@@ -423,136 +427,164 @@ function render3D(taskscreen, s, f, gr, fr, sc, ob, id, im) {
   renderer.autoClear = false;
   let boundingBoxes = {x:[],y:[],grid:[],ID:[],class:[], asset:[]}
   for (var j = 0; j < ob[f].length; j++) {
-    renderer.clear();
-    var [boundingBoxObject, boundingBoxCubeMap, crop] = updateSingleFrame3D(
-      taskscreen,
-      ob[f][j],
-      id[f][j],
-      fr[f],
-      gr[f][j],
-      im[j]
-    );
+    var [filter_objs, filter_img, objFilterSingleFrame, imgFilterSingleFrame] = updateFilterSingleFrame(taskscreen, ob[f][j], id[f][j], fr[f], gr[f][j]);
 
-    if (typeof boundingBoxObject.x != 'undefined'){
-      for (n_ob = 0; n_ob < boundingBoxObject.x.length; n_ob++) {
-        boundingBoxes.x.push(boundingBoxObject.x[n_ob]);
-        boundingBoxes.y.push(boundingBoxObject.y[n_ob]);
-        boundingBoxes.grid.push(gr[f][j]);
-        boundingBoxes.ID.push(boundingBoxObject.ID[n_ob] + '_scene' + boundingBoxObject.class[n_ob]);
-        boundingBoxes.asset.push('object');
-        // boundingBoxes.class.push(boundingBoxObject.class[n_ob]); //id # of that scene file
-        boundingBoxes.class.push(j) //index to choice in n-way rather than class #
-  
-      //   // multiple objects in a scene
-      //   boundingBoxes.x[j] = [
-      //     Math.min(boundingBoxes.x[j][0], boundingBoxObject[ob[f][j]][n_ob].x[0]),
-      //     Math.max(boundingBoxes.x[j][1], boundingBoxObject[ob[f][j]][n_ob].x[1]),
-      //   ];
-      //   boundingBoxes.y[j] = [
-      //     Math.min(boundingBoxes.y[j][0],boundingBoxObject[ob[f][j]][n_ob].y[0]),
-      //     Math.max(boundingBoxes.y[j][1],boundingBoxObject[ob[f][j]][n_ob].y[1]),
-      //   ];
-      }//FOR n_ob
-      
-      if (typeof boundingBoxCubeMap.x != 'undefined') {
-        for (let im=0; im<=boundingBoxCubeMap.x.length-1; im++){
-          boundingBoxes.x.push(boundingBoxCubeMap.x[im]);
-          boundingBoxes.y.push(boundingBoxCubeMap.y[im]);
+    let render_separately = false
+    if (filter_objs || filter_img){
+      render_separately = true
+    }//IF foreground objects or background image is being filtered
+
+    for (var k=0; k<=2; k++){
+      renderer.clear();
+      if (render_separately == false && k==0){
+        //render composite foreground + background
+        var [boundingBoxObject, boundingBoxCubeMap, crop] =
+              updateSingleFrame3D(taskscreen, ob[f][j], id[f][j], fr[f], gr[f][j], im[j], 1, 1);
+      }//IF jointly show foreground+background
+      else if (render_separately == true && k==1){
+        //show background image first to filter separately
+        var [boundingBoxObject, boundingBoxCubeMap, crop] =
+              updateSingleFrame3D(taskscreen, ob[f][j], id[f][j], fr[f], gr[f][j], im[j],0,1);
+      }//ELSE IF separately show bkgd
+      else if (render_separately == true && k==2){
+        //show foreground objects last to filter separately
+        var [boundingBoxObject, boundingBoxCubeMap, crop] =
+              updateSingleFrame3D(taskscreen, ob[f][j], id[f][j], fr[f], gr[f][j], im[j],1,0);
+      }//ELSE IF separately show foreground
+      else {
+        continue;
+      }
+
+      if (typeof boundingBoxObject.x != 'undefined'){
+        for (n_ob = 0; n_ob < boundingBoxObject.x.length; n_ob++) {
+          boundingBoxes.x.push(boundingBoxObject.x[n_ob]);
+          boundingBoxes.y.push(boundingBoxObject.y[n_ob]);
           boundingBoxes.grid.push(gr[f][j]);
-          boundingBoxes.ID.push(boundingBoxCubeMap.ID[im]);
-          boundingBoxes.asset.push('cubemap');
-          boundingBoxes.class.push(boundingBoxCubeMap.class[im]);
-        }//FOR im
+          boundingBoxes.ID.push(boundingBoxObject.ID[n_ob] + '_scene' + boundingBoxObject.class[n_ob]);
+          boundingBoxes.asset.push('object');
+          // boundingBoxes.class.push(boundingBoxObject.class[n_ob]); //id # of that scene file
+          boundingBoxes.class.push(j) //index to choice in n-way rather than class #
+    
+        //   // multiple objects in a scene
+        //   boundingBoxes.x[j] = [
+        //     Math.min(boundingBoxes.x[j][0], boundingBoxObject[ob[f][j]][n_ob].x[0]),
+        //     Math.max(boundingBoxes.x[j][1], boundingBoxObject[ob[f][j]][n_ob].x[1]),
+        //   ];
+        //   boundingBoxes.y[j] = [
+        //     Math.min(boundingBoxes.y[j][0],boundingBoxObject[ob[f][j]][n_ob].y[0]),
+        //     Math.max(boundingBoxes.y[j][1],boundingBoxObject[ob[f][j]][n_ob].y[1]),
+        //   ];
+        }//FOR n_ob
+        
+        if (typeof boundingBoxCubeMap.x != 'undefined') {
+          for (let im=0; im<=boundingBoxCubeMap.x.length-1; im++){
+            boundingBoxes.x.push(boundingBoxCubeMap.x[im]);
+            boundingBoxes.y.push(boundingBoxCubeMap.y[im]);
+            boundingBoxes.grid.push(gr[f][j]);
+            boundingBoxes.ID.push(boundingBoxCubeMap.ID[im]);
+            boundingBoxes.asset.push('cubemap');
+            boundingBoxes.class.push(boundingBoxCubeMap.class[im]);
+          }//FOR im
 
-      //   boundingBoxes.x[j] = [
-      //     Math.min(boundingBoxObject[ob[f][j]][0].x[0], boundingBoxCubeMap[ob[f][j]][0].x[0]),
-      //     Math.max(boundingBoxObject[ob[f][j]][0].x[1], boundingBoxCubeMap[ob[f][j]][0].x[1]),
-      //   ];
-      //   boundingBoxes.y[j] = [
-      //     Math.min(boundingBoxObject[ob[f][j]][0].y[0], boundingBoxCubeMap[ob[f][j]][0].y[0]),
-      //     Math.max(boundingBoxObject[ob[f][j]][0].y[1], boundingBoxCubeMap[ob[f][j]][0].y[1] ),
-      //   ];
+        //   boundingBoxes.x[j] = [
+        //     Math.min(boundingBoxObject[ob[f][j]][0].x[0], boundingBoxCubeMap[ob[f][j]][0].x[0]),
+        //     Math.max(boundingBoxObject[ob[f][j]][0].x[1], boundingBoxCubeMap[ob[f][j]][0].x[1]),
+        //   ];
+        //   boundingBoxes.y[j] = [
+        //     Math.min(boundingBoxObject[ob[f][j]][0].y[0], boundingBoxCubeMap[ob[f][j]][0].y[0]),
+        //     Math.max(boundingBoxObject[ob[f][j]][0].y[1], boundingBoxCubeMap[ob[f][j]][0].y[1] ),
+        //   ];
+        }//IF
+        updated3d = 1;
       }//IF
-      updated3d = 1;
-    }//IF
 
-    var camera = scene[taskscreen].getObjectByName('cam' + ob[f][j]);
+      var camera = scene[taskscreen].getObjectByName('cam' + ob[f][j]);
 
-    // render in THREEJS
-    renderer.render(scene[taskscreen], camera); //takes >1ms, do before the fast 2D swap (<1ms)
+      //Render in THREEJS
+      renderer.render(scene[taskscreen], camera); //takes >1ms, do before the fast 2D swap (<1ms)
 
-    //Post-render 2D filtering in pixel space
-    var [objFilterSingleFrame, imgFilterSingleFrame] = updateFilterSingleFrame(
-      taskscreen, ob[f][j], id[f][j], fr[f], gr[f][j]
-    );
+      //Post-render 2D filtering in pixel space
+      if (k==0){
+        //no filtering
+      }
+      else if (k==1){
+        VISIBLECANVAS.getContext('2d').filter = imgFilterSingleFrame;
+      }
+      else if (k==2){
+        VISIBLECANVAS.getContext('2d').filter = objFilterSingleFrame;
+      }
 
-    VISIBLECANVAS.getContext('2d').filter = objFilterSingleFrame;
+      // 3D Canvas coordinates
+      var sx = renderer.domElement.width / 2;
+      var sy = renderer.domElement.height / 2;
+      if (isNaN(crop[ob[f][j]][0]) || crop[ob[f][j]][0] < 0) {
+        var swidth = renderer.domElement.width;
+        var sheight = renderer.domElement.height;
+      } else {
+        var swidth = IMAGEMETA['THREEJStoPixels'] * crop[ob[f][j]][0];
+        var sheight = swidth;
+      }
+      sx = sx - swidth / 2;
+      sy = sy - sheight / 2;
 
-    // 3D Canvas coordinates
-    var sx = renderer.domElement.width / 2;
-    var sy = renderer.domElement.height / 2;
-    if (isNaN(crop[ob[f][j]][0]) || crop[ob[f][j]][0] < 0) {
-      var swidth = renderer.domElement.width;
-      var sheight = renderer.domElement.height;
-    } else {
-      var swidth = IMAGEMETA['THREEJStoPixels'] * crop[ob[f][j]][0];
-      var sheight = swidth;
-    }
-    sx = sx - swidth / 2;
-    sy = sy - sheight / 2;
+      // 2D Canvas coordinates
+      var swidth_2d = swidth / TASK.THREEJSRenderRatio / ENV.CanvasRatio;
+      var sheight_2d = sheight / TASK.THREEJSRenderRatio / ENV.CanvasRatio;
 
-    // 2D Canvas coordinates
-    var swidth_2d = swidth / TASK.THREEJSRenderRatio / ENV.CanvasRatio;
-    var sheight_2d = sheight / TASK.THREEJSRenderRatio / ENV.CanvasRatio;
+      var scenecenterX = ENV.XGridCenter[gr[f][j]];
+      var scenecenterY = ENV.YGridCenter[gr[f][j]];
 
-    var scenecenterX = ENV.XGridCenter[gr[f][j]];
-    var scenecenterY = ENV.YGridCenter[gr[f][j]];
+      var left = Math.round(scenecenterX / ENV.CanvasRatio - swidth_2d / 2);
+      var top = Math.round(scenecenterY / ENV.CanvasRatio - sheight_2d / 2);
 
-    var left = Math.round(scenecenterX / ENV.CanvasRatio - swidth_2d / 2);
-    var top = Math.round(scenecenterY / ENV.CanvasRatio - sheight_2d / 2);
+      // mkm.boundingBoxVisibleCanvas = [left, top, swidth_2d, sheight_2d];
 
-    // mkm.boundingBoxVisibleCanvas = [left, top, swidth_2d, sheight_2d];
+      // Transfer 3D Canvas to 2D Canvas
+      if ( TASK.Agent == 'SaveImages' && TASK.SaveImagesResolution>0 )
+      {
+        VISIBLECANVAS.getContext('2d').drawImage(
+          renderer.domElement,
+          Math.round(sx), Math.round(sy),
+          Math.round(swidth), Math.round(sheight),
+          0,0,Math.round(VISIBLECANVAS.width), Math.round(VISIBLECANVAS.height)
+        );
+      }//IF SaveImages
+      else {
+        VISIBLECANVAS.getContext('2d').drawImage(
+          renderer.domElement,
+          Math.round(sx), Math.round(sy),
+          Math.round(swidth), Math.round(sheight),
+          left, top, Math.round(swidth_2d), Math.round(sheight_2d)
+        );
+      }//ELSE
 
-    // Transfer 3D Canvas to 2D Canvas
-    if ( TASK.Agent == 'SaveImages' && TASK.SaveImagesResolution>0 )
-    {
-      VISIBLECANVAS.getContext('2d').drawImage(
-        renderer.domElement,
-        Math.round(sx), Math.round(sy),
-        Math.round(swidth), Math.round(sheight),
-        0,0,Math.round(VISIBLECANVAS.width), Math.round(VISIBLECANVAS.height)
-      );
-    }//IF SaveImages
-    else {
-      VISIBLECANVAS.getContext('2d').drawImage(
-        renderer.domElement,
-        Math.round(sx), Math.round(sy),
-        Math.round(swidth), Math.round(sheight),
-        left, top, Math.round(swidth_2d), Math.round(sheight_2d)
-      );
-    }//ELSE
-
-    try{
-
-    // update bounding boxes if crop bounding box is smaller than the boundingbox
-    let ind = boundingBoxes.x.length-1 //since not all j display items are necessarily visible, only a subset have bounding boxes
-    if ( swidth_2d * ENV.CanvasRatio < boundingBoxes.x[ind][1] - boundingBoxes.x[ind][0]) {
-      boundingBoxes.x[ind] = [ left * ENV.CanvasRatio, (left + swidth_2d) * ENV.CanvasRatio];
-      boundingBoxes.y[ind] = [ top * ENV.CanvasRatio + CANVAS.offsettop, (top + sheight_2d) * ENV.CanvasRatio + CANVAS.offsettop];
-    }//IF
-  }
-  catch(error){
-    console.log('the infrequent bb error')
-  }
-}//FOR j display items
+      try{
+        // update bounding boxes if crop bounding box is smaller than the boundingbox
+        let ind = boundingBoxes.x.length-1 //since not all j display items are necessarily visible, only a subset have bounding boxes
+        if ( swidth_2d * ENV.CanvasRatio < boundingBoxes.x[ind][1] - boundingBoxes.x[ind][0]) {
+          boundingBoxes.x[ind] = [ left * ENV.CanvasRatio, (left + swidth_2d) * ENV.CanvasRatio];
+          boundingBoxes.y[ind] = [ top * ENV.CanvasRatio + CANVAS.offsettop, (top + sheight_2d) * ENV.CanvasRatio + CANVAS.offsettop];
+        }//IF
+      }
+      catch(error){
+        console.log('the infrequent bb error')
+      }
+    }//FOR k render orders
+  }//FOR j display items
   return boundingBoxes
 }//FUNCTION render3D
 
 //------- FUNCTION render2D ---------//
-async function render2D(taskscreen, s, f, gr, fr, sc, ob, id, im, canvasobj) {
+function render2D(taskscreen, s, f, gr, fr, sc, ob, id, im, canvasobj) {
 let boundingBoxes = {x: [], y: [], grid: [], ID: [], class: [], asset: []}
 if (typeof im != 'undefined' && typeof im[0] == 'object') {
   for (var j = 0; j <= ob[f].length - 1; j++) {
+    var [filter_objs, filter_img, objFilterSingleFrame, imgFilterSingleFrame] =
+      updateFilterSingleFrame(taskscreen, ob[f][j], id[f][j], fr[f], gr[f][j]);
+    if (filter_img){
+      VISIBLECANVAS.getContext('2d').filter = imgFilterSingleFrame;
+    }
+
     var boundingBox = renderImage2D(im[j],taskscreen,
                                     ob[f][j],id[f][j],fr[f],
                                     gr[f][j],canvasobj); //render 2D image prior to next frame draw
@@ -2018,8 +2050,7 @@ function defineImageGrid(ngridpoints, gridspacing, xoffset, yoffset) {
 function updateFilterSingleFrame(taskscreen,classlabel,index,movieframe,gridindex) {
   // ======= OBJECT FILTERS
   var objFilterSingleFrame = {
-    blur: 0,
-    brightness: 100,
+    blur: 0, brightness: 100,
     contrast: 100,
     grayscale: 0,
     huerotate: 0,
@@ -2028,82 +2059,88 @@ function updateFilterSingleFrame(taskscreen,classlabel,index,movieframe,gridinde
     saturate: 100,
     sepia: 0,
   };
-  if (typeof IMAGES[taskscreen][classlabel].OBJECTFILTERS != 'undefined') {
+  let filtering_objs = 0
+  let filtering_bkgd = 0
+  if (typeof IMAGES[taskscreen][classlabel].OBJECTFILTERS !== 'undefined') {
     var nextblur = chooseArrayElement(IMAGES[taskscreen][classlabel].OBJECTFILTERS.blur,index,0);
-    if (Number.isInteger(movieframe) && nextblur != undefined) {
+    if (Number.isInteger(movieframe) && nextblur !== undefined) {
       nextblur = chooseArrayElement(nextblur, movieframe, nextblur.length - 1);
     }
-    if (nextblur != '' && nextblur != undefined) {
+    if (nextblur !== '' && nextblur !== undefined) {
       objFilterSingleFrame.blur = nextblur;
+      filtering_objs = 1
     }
 
     var nextbrightness = chooseArrayElement(IMAGES[taskscreen][classlabel].OBJECTFILTERS.brightness,index,0);
-    if (Number.isInteger(movieframe) && nextbrightness != undefined) {
+    if (Number.isInteger(movieframe) && nextbrightness !== undefined) {
       nextbrightness = chooseArrayElement(nextbrightness,movieframe,nextbrightness.length - 1);
     }
-
-    if (nextbrightness != '' && nextbrightness != undefined) {
+    if (nextbrightness !== '' && nextbrightness !== undefined) {
       objFilterSingleFrame.brightness = nextbrightness;
+      filtering_objs = 1
     }
 
     var nextcontrast = chooseArrayElement(IMAGES[taskscreen][classlabel].OBJECTFILTERS.contrast,index,0);
-    if (Number.isInteger(movieframe) && nextcontrast != undefined) {
+    if (Number.isInteger(movieframe) && nextcontrast !== undefined) {
       nextcontrast = chooseArrayElement(nextcontrast,movieframe,nextcontrast.length - 1);
     }
-
-    if (nextcontrast != '' && nextcontrast != undefined) {
+    if (nextcontrast !== '' && nextcontrast !== undefined) {
       objFilterSingleFrame.contrast = nextcontrast;
+      filtering_objs = 1
     }
 
     var nextgrayscale = chooseArrayElement(IMAGES[taskscreen][classlabel].OBJECTFILTERS.grayscale,index,0);
-    if (Number.isInteger(movieframe) && nextgrayscale != undefined) {
+    if (Number.isInteger(movieframe) && nextgrayscale !== undefined) {
       nextgrayscale = chooseArrayElement(nextgrayscale,movieframe,nextgrayscale.length - 1);
     }
-
-    if (nextgrayscale != '' && nextgrayscale != undefined) {
+    if (nextgrayscale !== '' && nextgrayscale !== undefined) {
       objFilterSingleFrame.grayscale = nextgrayscale;
+      filtering_objs = 1
     }
 
     var nexthuerotate = chooseArrayElement(IMAGES[taskscreen][classlabel].OBJECTFILTERS.huerotate,index,0);
-    if (Number.isInteger(movieframe) && nexthuerotate != undefined) {
+    if (Number.isInteger(movieframe) && nexthuerotate !== undefined) {
       nexthuerotate = chooseArrayElement(nexthuerotate,movieframe,nexthuerotate.length - 1);
     }
-
-    if (nexthuerotate != '' && nexthuerotate != undefined) {
+    if (nexthuerotate !== '' && nexthuerotate !== undefined) {
       objFilterSingleFrame.huerotate = nexthuerotate;
+      filtering_objs = 1
     }
 
     var nextinvert = chooseArrayElement(IMAGES[taskscreen][classlabel].OBJECTFILTERS.invert,index,0);
-    if (Number.isInteger(movieframe) && nextinvert != undefined) {
+    if (Number.isInteger(movieframe) && nextinvert !== undefined) {
       nextinvert = chooseArrayElement(nextinvert,movieframe,nextinvert.length - 1);
     }
-    if (nextinvert != '' && nextinvert != undefined) {
+    if (nextinvert !== '' && nextinvert !== undefined) {
       objFilterSingleFrame.invert = nextinvert;
+      filtering_objs = 1
     }
 
     var nextopacity = chooseArrayElement(IMAGES[taskscreen][classlabel].OBJECTFILTERS.opacity,index,0);
-    if (Number.isInteger(movieframe) && nextopacity != undefined) {
+    if (Number.isInteger(movieframe) && nextopacity !== undefined) {
       nextopacity = chooseArrayElement(nextopacity,movieframe,nextopacity.length - 1);
     }
-    if (nextopacity != '' && nextopacity != undefined) {
+    if (nextopacity !== '' && nextopacity !== undefined) {
       objFilterSingleFrame.opacity = nextopacity;
-    }
-    var nextsaturate = chooseArrayElement(IMAGES[taskscreen][classlabel].OBJECTFILTERS.saturate,index,0);
-    if (Number.isInteger(movieframe) && nextsaturate != undefined) {
-      nextsaturate = chooseArrayElement(nextsaturate,movieframe,nextsaturate.length - 1);
+      filtering_objs = 1
     }
 
-    if (nextsaturate != '' && nextsaturate != undefined) {
+    var nextsaturate = chooseArrayElement(IMAGES[taskscreen][classlabel].OBJECTFILTERS.saturate,index,0);
+    if (Number.isInteger(movieframe) && nextsaturate !== undefined) {
+      nextsaturate = chooseArrayElement(nextsaturate,movieframe,nextsaturate.length - 1);
+    }
+    if (nextsaturate !== '' && nextsaturate !== undefined) {
       objFilterSingleFrame.saturate = nextsaturate;
+      filtering_objs = 1
     }
 
     var nextsepia = chooseArrayElement(IMAGES[taskscreen][classlabel].OBJECTFILTERS.sepia,index,0);
-    if (Number.isInteger(movieframe) && nextsepia != undefined) {
+    if (Number.isInteger(movieframe) && nextsepia !== undefined) {
       nextsepia = chooseArrayElement(nextsepia,movieframe,nextsepia.length - 1);
     }
-
-    if (nextsepia != '' && nextsepia != undefined) {
+    if (nextsepia !== '' && nextsepia !== undefined) {
       objFilterSingleFrame.sepia = nextsepia;
+      filtering_objs = 1
     }
   } //IF OBJECTFILTERS defined
   var objFilterstr =
@@ -2130,84 +2167,88 @@ function updateFilterSingleFrame(taskscreen,classlabel,index,movieframe,gridinde
     sepia: 0,
   };
 
-  if (typeof IMAGES[taskscreen][classlabel].IMAGEFILTERS != 'undefined') {
+  if (typeof IMAGES[taskscreen][classlabel].IMAGEFILTERS !== 'undefined') {
     var nextblur = chooseArrayElement(IMAGES[taskscreen][classlabel].IMAGEFILTERS.blur, index, 0);
-    if (Number.isInteger(movieframe) && nextblur != undefined) {
+    if (Number.isInteger(movieframe) && nextblur !== undefined) {
       nextblur = chooseArrayElement(nextblur, movieframe, nextblur.length - 1);
     }
-    if (nextblur != '' && nextblur != undefined) {
+    if (nextblur !== '' && nextblur !== undefined) {
       imgFilterSingleFrame.blur = nextblur;
+      filtering_bkgd = 1
     }
 
     var nextbrightness = chooseArrayElement(IMAGES[taskscreen][classlabel].IMAGEFILTERS.brightness,index,0);
-    if (Number.isInteger(movieframe) && nextbrightness != undefined) {
+    if (Number.isInteger(movieframe) && nextbrightness !== undefined) {
       nextbrightness = chooseArrayElement(nextbrightness,movieframe,nextbrightness.length - 1);
     }
-
-    if (nextbrightness != '' && nextbrightness != undefined) {
+    if (nextbrightness !== '' && nextbrightness !== undefined) {
       imgFilterSingleFrame.brightness = nextbrightness;
+      filtering_bkgd = 1
     }
 
     var nextcontrast = chooseArrayElement(IMAGES[taskscreen][classlabel].IMAGEFILTERS.contrast,index,0);
-    if (Number.isInteger(movieframe) && nextcontrast != undefined) {
+    if (Number.isInteger(movieframe) && nextcontrast !== undefined) {
       nextcontrast = chooseArrayElement(nextcontrast,movieframe,nextcontrast.length - 1);
     }
-
-    if (nextcontrast != '' && nextcontrast != undefined) {
+    if (nextcontrast !== '' && nextcontrast !== undefined) {
       imgFilterSingleFrame.contrast = nextcontrast;
+      filtering_bkgd = 1
     }
 
     var nextgrayscale = chooseArrayElement(IMAGES[taskscreen][classlabel].IMAGEFILTERS.grayscale,index,0);
-    if (Number.isInteger(movieframe) && nextgrayscale != undefined) {
+    if (Number.isInteger(movieframe) && nextgrayscale !== undefined) {
       nextgrayscale = chooseArrayElement(nextgrayscale,movieframe,nextgrayscale.length - 1);
     }
-
-    if (nextgrayscale != '' && nextgrayscale != undefined) {
+    if (nextgrayscale !== '' && nextgrayscale !== undefined) {
       imgFilterSingleFrame.grayscale = nextgrayscale;
+      filtering_bkgd = 1
     }
 
     var nexthuerotate = chooseArrayElement(IMAGES[taskscreen][classlabel].IMAGEFILTERS.huerotate,index,0);
-    if (Number.isInteger(movieframe) && nexthuerotate != undefined) {
+    if (Number.isInteger(movieframe) && nexthuerotate !== undefined) {
       nexthuerotate = chooseArrayElement(nexthuerotate,movieframe,nexthuerotate.length - 1);
     }
-
-    if (nexthuerotate != '' && nexthuerotate != undefined) {
+    if (nexthuerotate !== '' && nexthuerotate !== undefined) {
       imgFilterSingleFrame.huerotate = nexthuerotate;
+      filtering_bkgd = 1
     }
 
     var nextinvert = chooseArrayElement(IMAGES[taskscreen][classlabel].IMAGEFILTERS.invert,index,0);
-    if (Number.isInteger(movieframe) && nextinvert != undefined) {
+    if (Number.isInteger(movieframe) && nextinvert !== undefined) {
       nextinvert = chooseArrayElement(nextinvert,movieframe,nextinvert.length - 1);
     }
-    if (nextinvert != '' && nextinvert != undefined) {
+    if (nextinvert !== '' && nextinvert !== undefined) {
       imgFilterSingleFrame.invert = nextinvert;
+      filtering_bkgd = 1
     }
 
     var nextopacity = chooseArrayElement(IMAGES[taskscreen][classlabel].IMAGEFILTERS.opacity,index,0);
-    if (Number.isInteger(movieframe) && nextopacity != undefined) {
+    if (Number.isInteger(movieframe) && nextopacity !== undefined) {
       nextopacity = chooseArrayElement(nextopacity,movieframe,nextopacity.length - 1);
     }
-    if (nextopacity != '' && nextopacity != undefined) {
+    if (nextopacity !== '' && nextopacity !== undefined) {
       imgFilterSingleFrame.opacity = nextopacity;
-    }
-    var nextsaturate = chooseArrayElement(IMAGES[taskscreen][classlabel].IMAGEFILTERS.saturate,index,0);
-    if (Number.isInteger(movieframe) && nextsaturate != undefined) {
-      nextsaturate = chooseArrayElement(nextsaturate,movieframe,nextsaturate.length - 1);
+      filtering_bkgd = 1
     }
 
-    if (nextsaturate != '' && nextsaturate != undefined) {
+    var nextsaturate = chooseArrayElement(IMAGES[taskscreen][classlabel].IMAGEFILTERS.saturate,index,0);
+    if (Number.isInteger(movieframe) && nextsaturate !== undefined) {
+      nextsaturate = chooseArrayElement(nextsaturate,movieframe,nextsaturate.length - 1);
+    }
+    if (nextsaturate !== '' && nextsaturate !== undefined) {
       imgFilterSingleFrame.saturate = nextsaturate;
+      filtering_bkgd = 1
     }
 
     var nextsepia = chooseArrayElement(IMAGES[taskscreen][classlabel].IMAGEFILTERS.sepia,index,0);
-    if (Number.isInteger(movieframe) && nextsepia != undefined) {
+    if (Number.isInteger(movieframe) && nextsepia !== undefined) {
       nextsepia = chooseArrayElement(nextsepia,movieframe,nextsepia.length - 1);
     }
-
-    if (nextsepia != '' && nextsepia != undefined) {
+    if (nextsepia !== '' && nextsepia !== undefined) {
       imgFilterSingleFrame.sepia = nextsepia;
+      filtering_bkgd = 1
     }
-  } //IF IMAGEFILTERS defined
+  }//IF IMAGEFILTERS defined
   var imgFilterstr =
     'blur(' +imgFilterSingleFrame.blur + 'px) ' +
     'brightness(' + imgFilterSingleFrame.brightness + '%) ' +
@@ -2219,7 +2260,7 @@ function updateFilterSingleFrame(taskscreen,classlabel,index,movieframe,gridinde
     'saturate(' + imgFilterSingleFrame.saturate + '%) ' +
     'sepia(' + imgFilterSingleFrame.sepia + '%)';
 
-  return [objFilterstr, imgFilterstr];
+  return [filtering_objs, filtering_bkgd, objFilterstr, imgFilterstr];
 }//FUNCTION updateFilterSingleFrame
 
 function estimatefps() {
