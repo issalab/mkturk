@@ -693,7 +693,7 @@ function renderShape2D(sc, gr, canvasobj,taskscreen) {
       break;
     case 'FixationDot':
       if (ENV.FixationDotRadius > 0) {
-        return renderSquareOnCanvas(ENV.FixationDotColor,gr,ENV.FixationSquareWidth,canvasobj);
+        return renderSquareOnCanvas(ENV.FixationDotColor,gr,2*ENV.FixationDotRadius,canvasobj);
       }
       if ( ENV.FixationWindowRadius > 0 && FLAGS.savedata == 0 && FLAGS.underlayGridPoints == 1)
       {

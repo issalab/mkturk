@@ -634,7 +634,7 @@ index_init();
       CANVAS.tsequencepost = funcreturn[0];
       CANVAS.sequencepost = funcreturn[1];
 
-      funcreturn = makeSequencePost(ENV.RewardDuration*1000,"Reward",ENV.FrameRateMovie);
+      funcreturn = makeSequencePost(TASK.RewardDuration,"Reward",ENV.FrameRateMovie);
       CANVAS.tsequencepost.push(...funcreturn[0]);
       CANVAS.sequencepost.push(...funcreturn[1]);
 
@@ -668,11 +668,11 @@ index_init();
           await Promise.all([p0, p1]);
         }//IF no hardware delivery
         else if (ble.connected == true) {
-          let p2 = writepumpdurationtoBLE( Math.round(ENV.RewardDuration * 1000) );
+          let p2 = writepumpdurationtoBLE( Math.round(TASK.RewardDuration) );
           await Promise.all([p1, p2]);
         }//ELSE IF bluetooth hardware
         else if (port.connected == true) {
-          port.writepumpdurationtoUSB( Math.round(ENV.RewardDuration * 1000) );
+          port.writepumpdurationtoUSB( Math.round(TASK.RewardDuration) );
           await Promise.all([p0, p1]);
         }//ELSE IF USB
         p0.cancel()

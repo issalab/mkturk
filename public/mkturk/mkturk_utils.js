@@ -399,8 +399,6 @@ async function index_reloadparameters(){
     // FLAGS.DirHandle = await window.showDirectoryPicker();
   } //IF SaveImages
 
-  ENV.RewardDuration = TASK.RewardDuration/1000
-
   //load previous calibration if available
   if (ENV.Eye.TrackEye > 0) {
     // IF trackeye
@@ -489,9 +487,6 @@ async function index_reloadparameters(){
 
   //Fixation dot, if >0, will appear on both fixation & sample screens
   ENV.FixationDotRadius = (TASK.FixationDotSizeInches / 2) * ENV.ViewportPPI;
-
-  ENV.FixationSquareWidth = TASK.FixationDotSizeInches * ENV.ViewportPPI;
-  ENV.FixationSquareColor = 'white';
   
   //Fixation window, if specified, operates on both fixation & sample screens
   ENV.FixationWindowRadius = (TASK.FixationWindowSizeInches / 2) * ENV.ViewportPPI;
@@ -1282,7 +1277,7 @@ async function runPumpButtonCallback(str) {
       dur = 5000; //milliseconds
       npulse = 12*4; //4 minutes
     } else if (str == 'trigger') {
-      dur = ENV.RewardDuration*1000 //milliseconds
+      dur = TASK.RewardDuration //milliseconds
       npulse = 50;
     }
     document.querySelector('button[id=pumpflush]').innerHTML = 'Stop Pump';
@@ -1357,7 +1352,7 @@ async function manualPumpKeyboardCallback(event)
   if (event.altKey && code == 'KeyR') {
     if (port.connected == true){
       playSound(2);
-      port.writepumpdurationtoUSB( Math.round(ENV.RewardDuration * 1000) );
+      port.writepumpdurationtoUSB( Math.round(TASK.RewardDuration) );
       console.log(`~~~MANUAL REWARD PULSE~~~ \n Combination of altKey + ${name} with Key code Value: ${code}`);
     }
   }//IF manual reward

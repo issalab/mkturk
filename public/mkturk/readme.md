@@ -105,7 +105,7 @@ ___________________________________________________________________________
 ___________________________________________________________________________
 SamplingStrategy (default = uniform_without_replacement except when Agent=SaveImages sets to sequential): Determines how sample images are drawn: uniform_with_replacement, uniform_without_replacement, sequential. TASK.Agent=SaveImages forces TASK.SamplingStrategy = sequential.
 
-NStimuliPerBagBlock (default = 0 --> draw from all sample bags on each trial): if TASK.NStimuliPerBagBlock = 0, randomly samples from all bags (interleaved design), if >0, samples N consecutive images from the same sample image bag (block design). This is equivalent to blocking the session so that training is done in object blocks rather than interleaving all objects. After N sample draws are completed for bag i, proceeds to next bag i+1 according to bag sequence specified in ImageBagsSample. When all bags have been sampled NTrialsPerBagBlock times, starts back at bag 0. Note, that in an RSVP design, if NRSVP = x and NStimuliPerBagBlock = y, then y/x consecutive trials will be from the same bag. In other words, the counting of what goes into a block is in units of images not trials.
+NStimuliPerBagBlock (default = 0 --> draw from all sample bags on each trial): if TASK.NStimuliPerBagBlock = 0, randomly samples from all bags (interleaved design), if >0, samples N consecutive images from the same sample image bag (block design). This is equivalent to blocking the session so that training is done in object blocks rather than interleaving all objects. After N sample draws are completed for bag i, proceeds to next bag i+1 according to bag sequence specified in ImageBagsSample. When all bags have been sampled NTrialsPerBagBlock times, starts back at bag 0. Note, that in an RSVP design, if NRSVP = x and NStimuliPerBagBlock = y, then y/x consecutive trials will be from the same bag. In other words, the counting of what goes into a block is in units of images not trials. Also, since the trial queue is predetermined, when NRSVP = x images are drawn ahead of time for that trial, even if the agent does not view of all of them on that trial, the next trial will be a new set of images. This behavior serves as feature so that if you want each RSVP trial to draw from only one type of scene bag, then set NStimuliPerBagBlock = NRSVP so that now each queued RSVP sequence is from one and only one scene bag (where the objects/background may be of a certain type for that trial).
 
 ___________________________________________________________________________
 *RESPONSE OPTIONS*
@@ -258,7 +258,7 @@ DeviceTouchscreen: 0 (not available) or 1 (available), indicates if touchscreen 
 
 DeviceType:desktop or mobile
 
-EffectorSaveJSONDataRelativetoFixationDotDisplayMS: dt in milliseconds relative to fixation appearance when to save eye data into json. if dt<0, this means eye data immediately before fixation appears will be included in the json datafile. Note, for parallel saving to bigquery, we currently keep up 500ms before fixation, but for json data file may want to keep less to save space.
+EffectorSaveJSONDataRelativetoFixationDotDisplayMS: dt in milliseconds relative to fixation appearance when to start saving eye data into json relative to trial start (i.e., fixation display). if dt<0, this means eye data immediately before fixation appears will be included in the json datafile. Always ends saving with trial end. Note, for parallel saving to bigquery, we currently keep up 500ms before fixation, but for json data file may want to keep less to save space.
 
 Eye.CalibXTransform: Stores the parameters from the linear regression fit of eye tracker's x,y --> screen x (eg x_screen = a*x + b*y + c)
 
@@ -382,7 +382,7 @@ StartTime: Time recorded when the most recent fixation dot was shown for that tr
 
 Test: Indices of test choices displayed on each trial where N indices are stored for an N-AFC task. Index into list of test imagebags for that session
 
-TSequenceActualClip: Actual software-reported ON times of first frame of each clip for blank, sample, blank, sample...test/choice. Should only be one frame or less offset from times in TSequenceDesiredClip.
+TSequenceActualClip: Actual software-reported ON times of first frame of each clip for blank, sample, blank, sample...test/choice ballistic display sequence (does not include fixation screen on time or reward/punish on time). Should only be one frame or less offset from times in TSequenceDesiredClip. Last frame times of each clip are not currently included in this variable.
 
 TSequenceDesiredClip: Desired software-reported ON times of first frame of each clip for blank, sample, blank, sample...test/choice
 

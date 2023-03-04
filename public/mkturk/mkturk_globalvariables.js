@@ -54,7 +54,6 @@ ENV.ChoiceRadius = 0;
 ENV.ChoiceColor = 'white';
 ENV.XGridCenter = [];
 ENV.YGridCenter = [];
-ENV.RewardDuration = NaN;
 ENV.ParamFileName = '';
 ENV.ParamFileRev = '';
 ENV.ParamFileDate = ''; //stores complete path to subject parameter file

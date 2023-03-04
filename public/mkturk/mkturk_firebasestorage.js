@@ -425,7 +425,7 @@ async function loadParametersfromFirebase(paramfile_path) {
     // RESPONSE
     if (typeof TASK.Target == 'undefined'){TASK.Target = 'object';}
     if (typeof TASK.FixationWindowSizeInches == 'undefined'){TASK.FixationWindowSizeInches = 0;}
-    if (typeof TASK.NStickyResponse == 'undefined'){TASK.NStickyResponse = 0;}
+    if (typeof TASK.NStickyResponse == 'undefined' || TASK.ImageBagsTest.length <= 1){TASK.NStickyResponse = 0;}
     if (typeof TASK.BlinkGracePeriod == 'undefined'){TASK.BlinkGracePeriod = 200;}
 
     // REWARD
