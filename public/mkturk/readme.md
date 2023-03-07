@@ -485,7 +485,7 @@ A4,A5 - unused - IN3
 
 <br>
 
-## ARDUINO V0.3 -- mkphotodiode
+## ARDUINO V0.3 -- mkphotodiode/mksensor
 ### Digital Pins
 0 - RX
 

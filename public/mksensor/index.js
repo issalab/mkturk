@@ -2,7 +2,7 @@
 
   //================== GOOGLE CHARTS ==================//
   // index.js: initiate charts
-  // mkphotodiode_usb.js: update charts as data are received
+  // mksensor_usb.js: update charts as data are received
   google.charts.load('current', {packages: ['line']});
   google.charts.setOnLoadCallback(drawChart);
 
@@ -18,7 +18,7 @@
 
   //================== CONNECT REALTIMEDATABASE ==================//
   // const rtdb = firebase.database();
-document.getElementById("agent-list").addEventListener("change",agentSelectionListener,false);
+  document.getElementById("agent-list").addEventListener("change",agentSelectionListener,false);
 
   //================== CONNECT WEBUSB ==================//
   if (typeof navigator.usb == 'object') {

@@ -5,7 +5,7 @@
     <meta name="viewport">
     <meta content="width=device-width, initial-scale=1">
     <meta http-equiv="Content-Type">
-    <title>MkPhotodiode</title>
+    <title>MkSensor</title>
 
 	<!-- ======== MDL ======== -->
     <link rel="stylesheet" href="http://fonts.googleapis.com/css?family=Roboto:300,400,500,700">
@@ -18,7 +18,7 @@
     <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
     <link rel="stylesheet" href="https://code.getmdl.io/1.3.0/material.indigo-pink.min.css">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/jsoneditor/7.0.4/jsoneditor.css" rel="stylesheet">
-    <link rel="stylesheet" href="mkphotodiode.css">
+    <link rel="stylesheet" href="mksensor.css">
 
 		<!-- ======== GOOGLE CHARTS ======== -->
     <script src="https://www.gstatic.com/charts/loader.js"></script>
@@ -29,7 +29,7 @@
 		<div class="mdl-layout mdl-js-layout mdl-layout--fixed-header">
       <header class="mdl-layout__header mdl-layout__header--scroll mdl-color--primary">       
         <div class="mdl-layout__header-row">
-          <h3 id="titletext">MkPhotodiode</h3>
+          <h3 id="titletext">MkSensor</h3>
         </div>
       </header>		
 
@@ -95,6 +95,33 @@
  </div>
 
 		<script type="text/javascript">
+			let deviceWorker = new Worker('mksensor_worker.js');
+
+			// Read data from the connected device.
+			function readDevice() {
+      			deviceWorker.postMessage({action: "read-device"});
+		  }//FUNCTION readDevice
+
+			// Update the pre element with output from the device.
+			deviceWorker.onmessage = function(event) {
+				console.log(event.data);
+				if (event.data == 'Navigator USB DEVICE DISCONNECTED'){
+					showHardwareButton()
+				}//IF usb disconnected
+
+				if (event.data == 'USB DEVICE CONNECTED BY USER ACTION!' ||
+						event.data == 'RECONNECTED USB DEVICE!'){
+					hideHardwareButton()
+				}
+
+				if (event.data.action == 'zeroTrigger'){
+					astat.manualtriggerval = 0;
+				}
+				if (event.data.action == 'plotTrial'){
+					updatePlots(event.data.val)
+				}
+			};//deviceWorker.onmessage
+
 			function connectHardwareButtonPromise() {
 			  let resolveFunc;
 			  let errFunc;
@@ -119,6 +146,27 @@
 			  return p;
 			}//FUNCTION connectHardwareButtonPromise
 
+			function hideHardwareButton(){
+				//Hide manual connect button upon successful connect
+				document.querySelector('button[id=connectusb]').style.display = 'none';
+
+				//Show manual trigger button
+				document.querySelector('button[id=manualtrigger]').style.display = 'block';
+				document.querySelector('button[id=manualtrigger]').style.visibility = 'visible';
+				document.querySelector('button[id=manualtrigger]').style.top = '5%';
+				//Show plot data button
+				document.querySelector('button[id=plotdata]').style.display = 'block';
+				document.querySelector('button[id=plotdata]').style.visibility = 'visible';
+				document.querySelector('button[id=plotdata]').style.top = '5%';
+			}//FUNCTION hideHardwareButton
+
+			function showHardwareButton(){
+				// Expose button in case need to manually reconnect (navigator.usb.onconnect doesn't seem to work on all chrome for android)
+				document.querySelector('button[id=connectusb]').style.display = 'block';
+			  document.querySelector('button[id=connectusb]').style.visibility = 'visible';
+  			document.querySelector('button[id=connectusb]').style.top = '5%';
+			}//FUNCTION showHardwareButton
+
 			var dataRunning=null
 			var lineRunning=null
 		</script>
@@ -129,9 +177,9 @@
 		<script src="/__/firebase/8.2.3/firebase-functions.js"></script>
 		<script src="/__/firebase/init.js"></script>
 
-    <script src="mkphotodiode_auth.js"></script>
-    <script src="mkphotodiode_usb.js"></script>
-    <script src="mkphotodiode_googlecharts.js"></script>
+    <script src="mksensor_auth.js"></script>
+    <script src="mksensor_usb.js"></script>
+    <script src="mksensor_googlecharts.js"></script>
 
 		<script src="everpolate.browserified.min.js"></script>
 
