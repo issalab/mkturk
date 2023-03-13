@@ -80,9 +80,7 @@ async function updateEventDataonFirestore(EVENTS) {
       console.log(`FIRESTORE: Trial ${FLAGS.firestorelastsavedtrial}--Update Task Doc`);
     })
     .catch((error) => {
-      console.error(
-        `FIRESTORE: !Trial ${FLAGS.firestorelastsavedtrial}--Error updating database task doc: ${error}`
-      );
+      console.error( `FIRESTORE: !Trial ${FLAGS.firestorelastsavedtrial}--Error updating database task doc: ${error}`);
     });
 }//FUNCTION updateEventDataonFirestore
 //================== UPDATE FIRESTORE WITH EVENT DATA (end) ====================//
@@ -97,9 +95,7 @@ async function loadAgentRFIDfromFirestore(subject, species) {
 
       if (doc.exists == false || typeof doc.data().rfid == 'undefined') {
         ENV.AgentRFID = 'XX';
-        console.log(
-          'MISSING AGENT: no biographical document in firestore database for this agent'
-        );
+        console.log('MISSING AGENT: no biographical document in firestore database for this agent');
       } else {
         ENV.AgentRFID = doc.data().rfid;
       }

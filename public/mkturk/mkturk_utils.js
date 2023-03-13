@@ -8,7 +8,8 @@ function index_init(){
 
   //Set SampleCommand line back to 0 before close window
   window.addEventListener('beforeunload', async (evt) => {
-    if (port.connected) { await port.writeSampleCommandTriggertoUSB('0');}
+    usbDeviceWorker.postMessage({ action: "writeSampleCommandTriggertoUSB", val: 0 });
+      await sleep(20)
   });
 
   // Button callbacks for inline connection to arduino device
@@ -62,6 +63,7 @@ async function index_init_awaits(){
   document.querySelector('button[id=quickload]').addEventListener('click', quickLoad_listener, false); //for Safari
 
   if (ENV.WebUSBAvailable) {
+    await usbworker_scriptLoaded;
     await usb_scriptLoaded;
     document.querySelector('button[id=connectusb]').addEventListener('pointerup', findUSBDevice, false);
     document.querySelector('button[id=nousb]').addEventListener('pointerup', skipHardwareDevice, false);
@@ -121,9 +123,7 @@ async function index_init_awaits(){
   //====================== (END) Retrieve device's screen properties ===========================//
 
   if (ENV.WebUSBAvailable) {
-    var event = {};
-    event.type = 'AutoConnect';
-    await findUSBDevice(event);
+    await usbAutoConnectPromise
   }
 
   //====================== Quickload Button Set-up ===========================//
@@ -285,7 +285,7 @@ async function index_init_params_screen_automator(){
     if (typeof port.connected == 'undefined' || port.connected == false) {
       var event = {};
       event.type = 'AutoConnect';
-      await findUSBDevice(event);
+      findUSBDevice(event);
     }//IF !port.connected, findUSBDevice
 
     if (
@@ -387,8 +387,8 @@ async function index_init_params_screen_automator(){
 
 async function index_reloadparameters(){
   if (port.connected) {
-    port.writeSampleCommandTriggertoUSB('0');
-    port.writepumptopauseeyetoUSB('|');//pause eyetracker
+    usbDeviceWorker.postMessage({ action: "writeSampleCommandTriggertoUSB", val: 0 });
+    usbDeviceWorker.postMessage({ action: "writepumptopauseeyetoUSB", val: '|' });//pause eyetracker
   }
   FLAGS.need2loadParameters = await loadParametersfromFirebase(ENV.ParamFileName);
 
@@ -777,9 +777,9 @@ async function index_send_filecode(){
 ];
 
   for (let i=0; i<=time_digits.length-1; i++){
-    port.writeSampleCommandTriggertoUSB('1');
+    usbDeviceWorker.postMessage({ action: "writeSampleCommandTriggertoUSB", val: 1 });
     await sleep(10*(time_digits[i]+1));
-    port.writeSampleCommandTriggertoUSB('0');
+    usbDeviceWorker.postMessage({ action: "writeSampleCommandTriggertoUSB", val: 0 });
     await sleep(25);//milliseconds  
   }//FOR i digits
 
@@ -791,9 +791,9 @@ async function index_send_trialcode(){
   var str = String(CURRTRIAL.num).padStart(4,'0') //max trial# 9999
 
   for (var i=0; i<=str.length-1; i++){
-    port.writeTrialCodetoUSB('1');
+    usbDeviceWorker.postMessage({ action: "writeTrialCodetoUSB", val: 1 });
     await sleep(10*(Number(str[i])+1));
-    port.writeTrialCodetoUSB('0');
+    usbDeviceWorker.postMessage({ action: "writeTrialCodetoUSB", val: 0 });
     if (i<str.length-1){
       await sleep(25);//milliseconds
     }//postpend gap between digits
@@ -853,7 +853,6 @@ function index_log_displaytimes(){
                 + "  actual:" + CURRTRIAL.tsequenceactual 
                 + "  desired:" + CURRTRIAL.tsequencedesired)
   }
-
   if (FLAGS.savedata == 0) {
     updateImageLoadingAndDisplayText(' '); // displays frame tactual - tdesired
   }
@@ -997,7 +996,7 @@ function index_housekeeping_effector_data(){
         }//IF Touch
       }//IF within ENV.EffectorSaveJSONDataRelativetoFixationDotDisplayMS of currtrial
     }//FOR i times sampled
-console.log('N=' + t.length + '  t_effector ' + [...t] )
+// console.log('N=' + t.length + '  t_effector ' + [...t] )
     EVENTS['timeseries']['EffectorData'].t[CURRTRIAL.num] = new Int16Array(t)
     EVENTS['timeseries']['EffectorData'].x[CURRTRIAL.num] = new Int16Array(x)
     EVENTS['timeseries']['EffectorData'].y[CURRTRIAL.num] = new Int16Array(y)
@@ -1311,7 +1310,8 @@ async function runPumpButtonCallback(str) {
         var startweight = blescale.weights[blescale.weights.length - 1];
       }
 
-      await port.writepumpdurationtoUSB(Math.round(dur));
+      usbDeviceWorker.postMessage({ action: "writepumpdurationtoUSB", val: Math.round(dur) });
+      await sleep(Math.round(dur))
 
       var endweight = blescale.weights[blescale.weights.length - 1];
       port.statustext_connect =
@@ -1320,7 +1320,7 @@ async function runPumpButtonCallback(str) {
       updateHeadsUpDisplayDevices();
     } //if usb pump
 
-    await timeout(dur + 800);
+    await sleep(dur + 800);
     console.log('pulse' + i);
   } //for i pulses
 
@@ -1352,7 +1352,7 @@ async function manualPumpKeyboardCallback(event)
   if (event.altKey && code == 'KeyR') {
     if (port.connected == true){
       playSound(2);
-      port.writepumpdurationtoUSB( Math.round(TASK.RewardDuration) );
+      usbDeviceWorker.postMessage({ action: "writepumpdurationtoUSB", val: Math.round(TASK.RewardDuration) });
       console.log(`~~~MANUAL REWARD PULSE~~~ \n Combination of altKey + ${name} with Key code Value: ${code}`);
     }
   }//IF manual reward
@@ -1363,21 +1363,17 @@ async function manualPumpKeyboardCallback(event)
       //Digit1 = 1 minutes, ..., Digit4 = 4 minutes (in 30ms pulses)
        for (let i=1; i<=num; i++){
         playSound(2);
-        await port.writepumpdurationtoUSB( Math.round(30 * 1000) );
-        await timeout(30000 + 500);
+        usbDeviceWorker.postMessage({ action: "writepumpdurationtoUSB", val: Math.round(30 * 1000) });
+        await sleep(30000 + 500);
 
         playSound(2);
-        await port.writepumpdurationtoUSB( Math.round(30 * 1000) );
-        await timeout(30000 + 500);
+        usbDeviceWorker.postMessage({ action: "writepumpdurationtoUSB", val: Math.round(30 * 1000) });
+        await sleep(30000 + 500);
       }//FOR i seconds
       console.log('~~~DONE FLUSHING PUMP~~~')
     }//IF port.connected
   }//ELSE IF flush
 }//FUNCTION manualPumpKeyboardCallback(event)
-
-function timeout(ms) {
-  return new Promise((resolve) => setTimeout(resolve, ms));
-}
 
 function objectomeSceneNamesToLatentVars(scenefilepaths, scenelabels, scenes) {
   var images = {

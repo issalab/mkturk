@@ -373,7 +373,7 @@ function updateTrialHistory() {
   trialhistory.correct.push(CURRTRIAL.correct);
 }
 
-function logEVENTS(eventname, eventval, eventtype) {
+function logEVENTS(eventname, eventval, eventtype,timestamp = Date.now()) {
   //log events for a trial
   if (eventtype == 'trialseries' || eventtype == 'imageseries') {
     //index by trial
@@ -399,7 +399,7 @@ function logEVENTS(eventname, eventval, eventtype) {
   } else if (eventtype == 'timeseries') {
     //running index
     var indevent = Object.keys(EVENTS[eventtype][eventname]).length;
-    var trialtime = [EVENTS.trialnum, new Date(Date.now()).toJSON()];
+    var trialtime = [EVENTS.trialnum, new Date(timestamp).toJSON()];
     EVENTS[eventtype][eventname][indevent.toString()] = trialtime.concat(eventval);
   }
 }
