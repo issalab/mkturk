@@ -106,7 +106,7 @@ function displayTrial(ti, gr, cl, fr, sc, ob, id, ims, mkm, trig) {
         CURRTRIAL.samplestarttime = Date.now() - ENV.CurrentDate.valueOf();
         CURRTRIAL.samplestarttime_string = new Date(CURRTRIAL.samplestarttime + ENV.CurrentDate.valueOf()).toJSON();
         if (port.connected){
-          port.writeSampleCommandTriggertoUSB('1');
+          usbDeviceWorker.postMessage({ action: "writeSampleCommandTriggertoUSB", val: 1 });
         }
       } //IF showing sample trigger frame
     }//IF showing frame
@@ -1270,48 +1270,23 @@ function updateImageLoadingAndDisplayText(str) {
   var dt = [];
   var u_dt = 0;
   for (var i = 0; i <= CURRTRIAL.tsequenceactualclip.length - 1; i++) {
-    dt[i] = Math.round(
-      CURRTRIAL.tsequenceactualclip[i] - CURRTRIAL.tsequencedesiredclip[i]
-    );
+    dt[i] = Math.round( CURRTRIAL.tsequenceactualclip[i] - CURRTRIAL.tsequencedesiredclip[i] );
     u_dt = u_dt + Math.abs(dt[i]);
-  }
+  }//FOR i
   u_dt = u_dt / dt.length;
 
   textobj.innerHTML =
-    str +
-    imageloadingtimestr +
-    '<br>' +
-    displayoutofboundsstr +
-    '<br>' +
-    0.01 * Math.round(100 * ENV.FrameRateDisplay) +
-    'Hz ' +
-    ' (' +
-    0.1 * Math.round(10000 / ENV.FrameRateDisplay) +
-    'ms res) display' +
-    ' --- ' +
-    0.01 * Math.round(100 * ENV.FrameRateMovie) +
-    'Hz scene update' +
-    '<br>' +
+    str + imageloadingtimestr + '<br>' + displayoutofboundsstr + '<br>' +
+    0.01 * Math.round(100 * ENV.FrameRateDisplay) + 'Hz ' +
+    ' (' + 0.1 * Math.round(10000 / ENV.FrameRateDisplay) + 'ms res) display' +
+    ' --- ' + 0.01 * Math.round(100 * ENV.FrameRateMovie) + 'Hz scene update' + '<br>' +
     '<font color=red> mean(t_actual - t_desired) = ' +
-    Math.round(u_dt) +
-    ' ms' +
-    '  (min=' +
-    Math.round(Math.min(...dt)) +
-    ', max=' +
-    Math.round(Math.max(...dt)) +
-    ') </font>' +
-    '<br>' +
-    'software desired - software actual' +
-    dt +
-    '<br><br>' +
-    'roundtrip command' +
-    +'<br>' +
-    'roundtrip reward' +
-    +'<br><br>' +
-    'softwared desired - software actual' +
-    '<br><br>' +
-    'softwared actual - photodiode actual' +
-    '<br>' +
+    Math.round(u_dt) + ' ms' + '  (min=' + Math.round(Math.min(...dt)) + ', max=' +
+    Math.round(Math.max(...dt)) + ') </font>' + '<br>' +
+    'software desired - software actual' + dt + '<br><br>' + 'roundtrip command' + +'<br>' +
+    'roundtrip reward' + '<br><br>' +
+    'softwared desired - software actual' + '<br><br>' +
+    'softwared actual - photodiode actual' + '<br>' +
     eyedataratestr;
 }//FUNCTION updateImageLoadingAndDisplayText
 
@@ -1724,17 +1699,12 @@ function updateHeadsUpDisplay() {
     if (CURRTRIAL.num > TASK.ModelConfig.trainIdx) {
       for (
         let i = TASK.ModelConfig.trainIdx + 1;
-        i < EVENTS['trialseries']['Response'].length;
-        i++
+        i < EVENTS['trialseries']['Response'].length; i++
       ) {
-        if (
-          EVENTS['trialseries']['Response'][i] ==
-          EVENTS['trialseries']['CorrectItem'][i]
-        ) {
+        if ( EVENTS['trialseries']['Response'][i] == EVENTS['trialseries']['CorrectItem'][i])
+        {
           ncorrect = ncorrect + 1;
-          let len =
-            EVENTS['trialseries']['Response'].length -
-            TASK.ModelConfig.trainIdx;
+          let len = EVENTS['trialseries']['Response'].length - TASK.ModelConfig.trainIdx;
           var pctcorrect = Math.round((100 * ncorrect) / len);
         }
       }
@@ -1751,8 +1721,8 @@ function updateHeadsUpDisplay() {
           (100 * ncorrect) / EVENTS['trialseries']['Response'].length
         );
       }
-    } //FOR i trials
-  }
+    }//FOR i trials
+  }//ELSE
 
   // Task type
   var task1 = '';
@@ -1770,110 +1740,48 @@ function updateHeadsUpDisplay() {
         let tmp = EVENTS['trialseries']['Response'].length;
         let tmp2 = CURRTRIAL.num + 2;
         textobj.innerHTML =
-          'User: ' +
-          ENV.ResearcherDisplayName +
-          ', ' +
-          ENV.ResearcherEmail +
-          '<br>' +
-          'Agent: ' +
-          ENV.Subject +
-          ', <font color=green><b>' +
-          'TRAINING</b></font> ' +
-          '(' +
-          tmp2 +
-          ' of ' +
-          TASK.ModelConfig.trainIdx +
-          ')' +
-          '<br>' +
-          task1 +
-          '<br>' +
-          task2 +
-          '<br>' +
-          '<br>' +
-          'last trial @ ' +
-          CURRTRIAL.lastTrialCompleted.toLocaleTimeString('en-US') +
-          '<br>' +
-          'last saved to firebase @ ' +
-          CURRTRIAL.lastFirebaseSave.toLocaleTimeString('en-US');
+          'User: ' + ENV.ResearcherDisplayName + ', ' + ENV.ResearcherEmail + '<br>' +
+          'Agent: ' + ENV.Subject + ', <font color=green><b>' +
+          'TRAINING</b></font> ' + '(' + tmp2 + ' of ' + TASK.ModelConfig.trainIdx + ')' +
+          '<br>' + task1 + '<br>' + task2 +
+          '<br>' + '<br>' +
+          'last trial @ ' + CURRTRIAL.lastTrialCompleted.toLocaleTimeString('en-US') + '<br>' +
+          'last saved to firebase @ ' + CURRTRIAL.lastFirebaseSave.toLocaleTimeString('en-US');
       } else {
         textobj.innerHTML =
-          'User: ' +
-          ENV.ResearcherDisplayName +
-          ', ' +
-          ENV.ResearcherEmail +
-          '<br>' +
-          'Agent: ' +
-          ENV.Subject +
-          ', <font color=green><b>' +
-          pctcorrect +
-          '%</b></font> ' +
-          '(' +
-          ncorrect +
-          ' of ' +
-          (EVENTS['trialseries']['Response'].length -
-            TASK.ModelConfig.trainIdx) +
-          ' trials)' +
-          '<br>' +
-          task1 +
-          '<br>' +
-          task2 +
-          '<br>' +
-          '<br>' +
-          'last trial @ ' +
-          CURRTRIAL.lastTrialCompleted.toLocaleTimeString('en-US') +
-          '<br>' +
-          'last saved to firebase @ ' +
-          CURRTRIAL.lastFirebaseSave.toLocaleTimeString('en-US');
+          'User: ' + ENV.ResearcherDisplayName + ', ' + ENV.ResearcherEmail + '<br>' +
+          'Agent: ' + ENV.Subject + ', <font color=green><b>' +
+          pctcorrect + '%</b></font> ' + '(' +
+          ncorrect + ' of ' + (EVENTS['trialseries']['Response'].length - TASK.ModelConfig.trainIdx) + ' trials)' + '<br>' +
+          task1 + '<br>' + task2 + 
+          '<br>' + '<br>' +
+          'last trial @ ' + CURRTRIAL.lastTrialCompleted.toLocaleTimeString('en-US') + '<br>' +
+          'last saved to firebase @ ' + CURRTRIAL.lastFirebaseSave.toLocaleTimeString('en-US');
       }
     } else {
       textobj.innerHTML =
-        'User: ' +
-        ENV.ResearcherDisplayName +
-        ', ' +
-        ENV.ResearcherEmail +
-        '<br>' +
-        'Agent: ' +
-        ENV.Subject +
-        ', <font color=green><b>' +
-        pctcorrect +
-        '%</b></font> ' +
-        '(' +
-        ncorrect +
-        ' of ' +
-        EVENTS['trialseries']['Response'].length +
-        ' trials)' +
-        '<br>' +
-        'NRewards=' +
-        nreward +
-        '</font> (' +
-        Math.round(TASK.RewardDuration) +
-        ' milliseconds)' +
-        '<br> ' +
-        task1 +
-        '<br>' +
-        task2 +
-        '<br>' +
-        '<br>' +
-        'last trial @ ' +
-        CURRTRIAL.lastTrialCompleted.toLocaleTimeString('en-US') +
-        '<br>' +
-        'last saved to firebase @ ' +
-        CURRTRIAL.lastFirebaseSave.toLocaleTimeString('en-US');
-    }
+        'User: ' + ENV.ResearcherDisplayName + ', ' + ENV.ResearcherEmail + '<br>' +
+        'Agent: ' + ENV.Subject + ', <font color=green><b>' + pctcorrect + '%</b></font> ' +
+        '(' + ncorrect + ' of ' + EVENTS['trialseries']['Response'].length + ' trials)' + '<br>' +
+        'NRewards=' + nreward +
+        '</font> (' + Math.round(TASK.RewardDuration) + ' milliseconds)' + '<br> ' +
+        task1 + '<br>' + task2 + 
+        '<br>' + '<br>' +
+        'last trial @ ' + CURRTRIAL.lastTrialCompleted.toLocaleTimeString('en-US') + '<br>' +
+        'last saved to firebase @ ' + CURRTRIAL.lastFirebaseSave.toLocaleTimeString('en-US');
+    }//ELSE
 
     if (FLAGS.RFIDGeneratorCreated == 1) {
       textobj.innerHTML =
         textobj.innerHTML +
-        '<br>' +
-        '<font color = red>' +
+        '<br>' + '<font color = red>' +
         'PAUSED: waiting for RFID read!!' +
         '<br></font>';
     }
     if (TASK.CheckRFID > 0 && port.connected == false) {
       textobj.innerHTML =
         textobj.innerHTML +
-        '<br>' +
-        '<font color = red>' +
+        '<br>' + '<font color = red>' +
         'WARNING: USB device not connected to check RFID!!' +
         '<br></font>';
     }
@@ -1906,66 +1814,31 @@ function updateHeadsUpDisplay() {
       '<br>' + 'No trials performed' +
       '<br>' +
       '<br><b>' + firestoreRecordFound +
-      ' for ' + ENV.DeviceName.toLowerCase() +
-      '</b>' +
-      '<br>' +
+      ' for ' + ENV.DeviceName.toLowerCase() + '</b>' + '<br>' +
       'Screen Size = ' + ENV.ScreenSizeInches[2] +
-      'in (' + ENV.ViewportPixels +
-      'px; ' + ENV.ScreenRatio +
-      'x' + ')' +
-      '<br>' +
-      screenRatioMatchesDPR +
-      '<br>' +
-      '<br>' +
-      'Device brand,name,type: ' + ENV.DeviceBrand +
-      ', ' +
-      '<u><font color = green>' + ENV.DeviceName +
-      '</font></u>' + ', ' + ENV.DeviceType +
-      '<br>' +
-      'Screen: ' + ENV.DeviceScreenWidth +
-      'x' + ENV.DeviceScreenHeight +
-      ' pixels' +
-      '<br>' +
-      'TouchScreen: ' + ENV.DeviceTouchScreen +
-      '<br>' +
-      'GPU: ' + ENV.DeviceGPU +
-      '<br>' +
+      'in (' + ENV.ViewportPixels + 'px; ' + ENV.ScreenRatio + 'x' + ')' + '<br>' +
+      screenRatioMatchesDPR + '<br>' + '<br>' +
+      'Device brand,name,type: ' + ENV.DeviceBrand + ', ' +
+      '<u><font color = green>' + ENV.DeviceName + '</font></u>' + ', ' + ENV.DeviceType + '<br>' +
+      'Screen: ' + ENV.DeviceScreenWidth + 'x' + ENV.DeviceScreenHeight + ' pixels' + '<br>' +
+      'TouchScreen: ' + ENV.DeviceTouchScreen + '<br>' +
+      'GPU: ' + ENV.DeviceGPU + '<br>' +
       'OS name,codename,ver: ' + ENV.DeviceOSName +
-      ', ' +
-      '<u><font color = green>' +
-      ENV.DeviceOSCodeName +
-      '</font></u>' +
-      ', ' + ENV.DeviceOSVersion +
-      '<br>' +
-      'Browser: ' +
-      '<u><font color = green>' +
-      ENV.DeviceBrowserName +
-      '</font></u>' +
-      ' v' +
-      ENV.DeviceBrowserVersion;
-  } //ELSE IF isnan
-} //FUNCTION updateHeadsUpDisplay
+      ', ' + '<u><font color = green>' + ENV.DeviceOSCodeName + '</font></u>' + ', ' + ENV.DeviceOSVersion +
+      '<br>' + 'Browser: ' + '<u><font color = green>' + ENV.DeviceBrowserName + '</font></u>' +
+      ' v' + ENV.DeviceBrowserVersion;
+  }//ELSE IF isnan
+}//FUNCTION updateHeadsUpDisplay
 
 function updateHeadsUpDisplayDevices() {
   var textobj = document.getElementById('headsuptextdevices');
   if (CANVAS.headsupfraction > 0) {
     textobj.innerHTML =
-      '<font color=red><b>' +
-      ble.statustext +
-      port.statustext_connect +
-      '<br></font>' +
-      '<font color=green><b>' +
-      port.statustext_sent +
-      '<br></font>' +
-      '<font color=blue><b>' +
-      port.statustext_received +
-      '<br></font>' +
-      '<font color=red><b>' +
-      blescale.statustext_connect +
-      '<br></font>' +
-      '<font color=blue><b>' +
-      blescale.statustext_received +
-      '<br></font>';
+      '<font color=red><b>' + ble.statustext + port.statustext_connect + '<br></font>' +
+      '<font color=green><b>' + port.statustext_sent + '<br></font>' +
+      '<font color=blue><b>' + port.statustext_received + '<br></font>' +
+      '<font color=red><b>' + blescale.statustext_connect + '<br></font>' +
+      '<font color=blue><b>' + blescale.statustext_received + '<br></font>';
   } else if (CANVAS.headsupfraction == 0) {
     textobj.innerHTML = ''; //port.statustext_connect + blescale.statustext_connect
   } else if (isNaN(CANVAS.headsupfraction)) {
@@ -1976,36 +1849,16 @@ function updateHeadsUpDisplayDevices() {
 
 function updateHeadsUpDisplayAutomator(
   currentautomatorstagename,
-  pctcorrect,
-  ntrials,
-  minpctcorrect,
-  mintrials,
-  eventstring
+  pctcorrect, ntrials,
+  minpctcorrect, mintrials, eventstring
 ) {
   if (CANVAS.headsupfraction > 0) {
     var textstr =
-      'Automator: ' +
-      '<font color=red><b>' +
-      TASK.Automator +
-      '</b></font>' +
-      ', <font color=white><b>' +
-      'Stage=' +
-      currentautomatorstagename +
-      TASK.CurrentAutomatorStage +
-      '</b></font>' +
-      '<br> Performance: ' +
-      '<font color=green><b>' +
-      Math.round(pctcorrect) +
-      '%, last ' +
-      ntrials +
-      ' trials</b></font> ' +
-      '(min: ' +
-      minpctcorrect +
-      '%, ' +
-      mintrials +
-      ' trials)' +
-      '<br>' +
-      eventstring;
+      'Automator: ' + '<font color=red><b>' + TASK.Automator + '</b></font>' + ', <font color=white><b>' +
+      'Stage=' + currentautomatorstagename + TASK.CurrentAutomatorStage + '</b></font>' +
+      '<br> Performance: ' + '<font color=green><b>' + Math.round(pctcorrect) + '%, last ' + ntrials + ' trials</b></font> ' +
+      '(min: ' + minpctcorrect + '%, ' + mintrials + ' trials)' +
+      '<br>' + eventstring;
   } else if (CANVAS.headsupfraction == 0) {
     var textstr = '';
   }

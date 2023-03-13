@@ -13,7 +13,7 @@ function hold_promise_simple(touchduration, outsideGracePeriod, broadcast_over_r
 			if (finished) { return; }
 
 			// Cancel-path scenario
-      console.log('cancel (reject) promise since not finished yet')
+      // console.log('HoldPromise -- cancel (reject) promise since not finished yet')
 			reject();
 		};//CANCEL
   }).then(function (resolveval) {
@@ -21,7 +21,7 @@ function hold_promise_simple(touchduration, outsideGracePeriod, broadcast_over_r
     finished = true
     return resolveval;
   }).catch(e => {
-    console.log('canceled promise throws error as return value of reject():' + e);
+    // console.log('HoldPromise -- canceled promise throws error as return value of reject():' + e);
   });
 ;
   function* waitforeventGenerator() {
@@ -81,7 +81,7 @@ function hold_promise_simple(touchduration, outsideGracePeriod, broadcast_over_r
             holdstart = Date.now() - ENV.CurrentDate.valueOf();
             CURRTRIAL.xhold = []
             CURRTRIAL.yhold = []
-            console.log('INITIATED IN BOX, holddur=0ms')
+            // console.log('HoldPromise -- INITIATED IN BOX, holddur=0ms')
           }//IF clicked in box
         }//ONLY IF fixation screen && mouse || touch, then have to click to initiate trial
         else{
@@ -89,7 +89,7 @@ function hold_promise_simple(touchduration, outsideGracePeriod, broadcast_over_r
             holdstart = Date.now() - ENV.CurrentDate.valueOf();
             CURRTRIAL.xhold = []
             CURRTRIAL.yhold = []
-            console.log('INITIATED IN BOX, holddur=0ms')
+            // console.log('HoldPromise -- INITIATED IN BOX, holddur=0ms')
           }//IF went into box or clicked in box  
         }//ELSE in all other cases, can drag to activate target
       }//IF hadn't moved into box or clicked in box yet
@@ -129,6 +129,10 @@ function hold_promise_simple(touchduration, outsideGracePeriod, broadcast_over_r
           if (holdstart >= 0 && (Date.now()- ENV.CurrentDate.valueOf()) - holdstart >= touchduration){
             return_event.type = 'held'
           }//IF held long enough
+          else if (holdstart <= 0 && performance.now() - tStartGenerator < outsideGracePeriod){
+            //weird case: mouseup before initiated but most recently in box --> do nothing
+            return_event.type = 'weird_grace'
+          }
           else {
             return_event.type = 'broke_early'
           }//ELSE released early
@@ -218,7 +222,7 @@ function hold_promise_simple(touchduration, outsideGracePeriod, broadcast_over_r
       FLAGS.effectorState.xmedian, FLAGS.effectorState.ymedian,
       FLAGS.effectorState.timestamp
     ];
-    console.log('//// RESOLVE HOLD_SIMPLE --> ' + return_event.type + '__' + return_event.cxyt)
+    console.log('HoldPromise -- RESOLVE HOLD_SIMPLE --> ' + return_event.type + '__' + return_event.cxyt)
     resolveFunc(return_event);
   }//Generator
   FLAGS.effectorState.holdstart = -1
@@ -228,7 +232,7 @@ function hold_promise_simple(touchduration, outsideGracePeriod, broadcast_over_r
   waitforEvent = waitforeventGenerator(); // start async function
   let tStartGenerator = performance.now()
   FLAGS.touchGeneratorCreated = 1;
-  console.log('//// STARTING GENERATOR HOLD_SIMPLE')
+  console.log('HoldPromise --  STARTING GENERATOR HOLD_SIMPLE')
     
   waitforEvent.next(); //move out of default state
   return {p, cancel};
@@ -321,11 +325,9 @@ function gridPoints_listener(event) {
     FLAGS.underlayGridPoints = 1;
     event.currentTarget.innerHTML = '<font color = red>G</font>';
     document.querySelector('p[id=imageloadingtext]').style.display = 'block';
-    document.querySelector('p[id=imageloadingtext]').style.visibility =
-      'visible';
+    document.querySelector('p[id=imageloadingtext]').style.visibility = 'visible';
     document.querySelector('button[id=stressTest]').style.display = 'block';
-    document.querySelector('button[id=stressTest]').style.visibility =
-      'visible';
+    document.querySelector('button[id=stressTest]').style.visibility = 'visible';
   } else if (FLAGS.underlayGridPoints == 1) {
     FLAGS.underlayGridPoints = 0;
     event.currentTarget.innerHTML = '<font color = black>G</font>';

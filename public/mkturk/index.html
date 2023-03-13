@@ -31,6 +31,7 @@
 		//loadScriptAsync
 
 		if (typeof (navigator.usb) == "object") {
+			var usbworker_scriptLoaded = loadScriptAsync('mkturk_usbworker.js');
 			var usb_scriptLoaded = loadScriptAsync('mkturk_usb.js');
 		}
 		if (typeof (navigator.bluetooth) == "object") {

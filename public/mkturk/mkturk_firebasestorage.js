@@ -69,9 +69,7 @@ async function loadMeshfromFirebase(meshfile_path) {
   //file ext = gltf or obj
   try {
     var meshfileRef = await storage.ref().child(meshfile_path);
-    var url = await meshfileRef
-      .getDownloadURL()
-      .catch((error) => console.log(error));
+    var url = await meshfileRef.getDownloadURL().catch((error) => console.log(error));
 
     var strs = meshfile_path.split('.');
     var ext = strs[1];
@@ -293,9 +291,7 @@ async function loadImageArrayfromFirebase(imagepathlist) {
         console.log('FIREBASE: Buffering ' + imagepathlist.length + ' images');
         var tstart = performance.now();
         var image_array = await Promise.all(image_requests)
-          .catch(function (error) {
-            console.log(error);
-          })
+          .catch(function (error) { console.log(error);})
           .then();
 
         var load_success = 1;
@@ -315,10 +311,8 @@ async function loadImageArrayfromFirebase(imagepathlist) {
           updateImageLoadingAndDisplayText(' ');
           break;
         } else if (load_success <= 0) {
-          await timeout(i * 250);
-          console.log(
-            'FIREBASE: RETRYING IMAGE LOAD for ' + i + 'th time!!!!!'
-          );
+          await sleep(i * 250);
+          console.log('FIREBASE: RETRYING IMAGE LOAD for ' + i + 'th time!!!!!');
         }
       } //for 3 retry attempts
     }
@@ -339,10 +333,7 @@ async function checkParameterFileStatusFirebase() {
       FLAGS.need2loadParameters = 1;
       updateEventDataonFirestore(EVENTS);
 
-      console.log(
-        'FIREBASE: Parameter file on disk was changed. New rev =' +
-          ENV.ParamFileRev
-      );
+      console.log( 'FIREBASE: Parameter file on disk was changed. New rev =' + ENV.ParamFileRev );
     } //if file updated
   } catch (error) {
     //try
@@ -491,19 +482,10 @@ async function saveParameterTexttoFirebase(parameter_text) {
           .child(ENV.ParamFileName)
           .put(blob, metadata);
         CURRTRIAL.lastFirebaseSave = new Date(response.metadata.timeCreated);
-        console.log(
-          'FIREBASE: Save TaskParams. Size:' +
-            Math.round(response.totalBytes / 1000) +
-            'kb'
-        );
+        console.log( 'FIREBASE: Save TaskParams. Size:' + Math.round(response.totalBytes / 1000) + 'kb');
       } catch (error) {
         console.log(error);
-        console.log(
-          'FIREBASE: Trying to write in ' +
-            timeout_seed * i +
-            'ms...on try ' +
-            i
-        );
+        console.log( 'FIREBASE: Trying to write in ' + timeout_seed * i + 'ms...on try ' + i);
         sleep(timeout_seed * i);
         i++;
         continue;
@@ -548,13 +530,7 @@ async function saveParameterstoFirebase() {
       ENV.ParamFileDate = new Date(filemeta.updated);
     } //if filemeta
 
-    console.log(
-      'FIREBASE: TASK written to disk as ' +
-        ENV.ParamFileName +
-        '. Size: ' +
-        Math.round(response.totalBytes / 1000) +
-        'kb'
-    );
+    console.log( 'FIREBASE: TASK written to disk as ' + ENV.ParamFileName + '. Size: ' + Math.round(response.totalBytes / 1000) + 'kb' );
     return 0; //need2saveParameters
   } catch (error) {
     console.error(error);
@@ -597,9 +573,7 @@ async function saveBehaviorDatatoFirebase(TASK, ENV, CANVAS, EVENTS) {
         // 'Arduino': EVENTS['timeseries']['Arduino'],
       },
     };
-    let dataFileName = ENV.DataFileName.split('/')
-      .slice(-1)[0]
-      .replaceAll(':', '_');
+    let dataFileName = ENV.DataFileName.split('/').slice(-1)[0].replaceAll(':', '_');
     // console.log(dataFileName);
     let dataFileHandle = await FLAGS.DirHandle.getFileHandle(dataFileName, {
       create: true,

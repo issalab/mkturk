@@ -42,7 +42,9 @@ index_init();
     }//IF need2LoadScenes
 
     //Resume eyetracker
-    if (CURRTRIAL.num <= 0 && port.connected){ port.writepumptopauseeyetoUSB('~'); }
+    if (CURRTRIAL.num <= 0 && port.connected){
+      usbDeviceWorker.postMessage({ action: "writepumptopauseeyetoUSB", val: '~' });
+    }
 
     //============ SELECT SAMPLE & TEST IMAGES ============//
     if (TASK.NRSVP > 0) {
@@ -353,7 +355,6 @@ index_init();
         CURRTRIAL.images,
         mkm,FLAGS.savedata
       );
-      console.log('sample promise START --------->')
       let race_return = [];
       if (ENV.StressTest <= 0){
         race_return = await Promise.race([p1.p, p2]);
@@ -362,7 +363,6 @@ index_init();
         race_return = await p2;
       }//ELSE STRESSTEST
       p1.cancel()
-      console.log('sample promise END --------->')
 
       //Determine number of clips fixated
       CURRTRIAL.nclipshown = frame.shown.lastIndexOf(1) !== undefined ? CURRTRIAL.sequenceclip[frame.shown.lastIndexOf(1)] : 0;
@@ -672,7 +672,7 @@ index_init();
           await Promise.all([p1, p2]);
         }//ELSE IF bluetooth hardware
         else if (port.connected == true) {
-          port.writepumpdurationtoUSB( Math.round(TASK.RewardDuration) );
+          usbDeviceWorker.postMessage({ action: "writepumpdurationtoUSB", val: Math.round(TASK.RewardDuration) });
           await Promise.all([p0, p1]);
         }//ELSE IF USB
         p0.cancel()
@@ -721,7 +721,7 @@ index_init();
 
     // Log trial end time
     if (port.connected && FLAGS.savedata) {
-      port.writeSampleCommandTriggertoUSB('0');
+      usbDeviceWorker.postMessage({ action: "writeSampleCommandTriggertoUSB", val: 0 });
       CURRTRIAL.endtime = Date.now() - ENV.CurrentDate.valueOf();
       await sleep(5);
     }//IF usb, zero sample command line
@@ -762,7 +762,7 @@ index_init();
     if (remainingInterTrialInterval > 0) {
       await sleep(remainingInterTrialInterval);
     }
-    console.log('END OF TRIAL ', CURRTRIAL.num);
+    console.log('||||||||||||||||||||  END OF TRIAL ', CURRTRIAL.num,' |||||||||||||||||||');
     if (endloop == 1){ return }//IF end task
 
     CURRTRIAL.num++;
