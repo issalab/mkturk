@@ -9,6 +9,12 @@ function index_init(){
   //Set SampleCommand line back to 0 before close window
   window.addEventListener('beforeunload', async (evt) => {
     usbDeviceWorker.postMessage({ action: "writeSampleCommandTriggertoUSB", val: 0 });
+    if (ENV.WebUSBAvailable && port.connected){
+      let dev = convertConnectedDevicesString(localStorage.getItem('ConnectedDevices'))
+      dev[port.deviceind] = 0;
+      localStorage.setItem('ConnectedDevices', dev)
+      console.log('DISCONNECTED A USB DEVICE, devlist = ' + localStorage.getItem('ConnectedDevices'))
+    }
       await sleep(20)
   });
 
@@ -122,9 +128,9 @@ async function index_init_awaits(){
   updateHeadsUpDisplay();
   //====================== (END) Retrieve device's screen properties ===========================//
 
-  if (ENV.WebUSBAvailable) {
+  if (ENV.WebUSBAvailable){
     await usbAutoConnectPromise
-  }
+  }//(init) IF WebUSBAvailable, try to autoconnect
 
   //====================== Quickload Button Set-up ===========================//
   // GET PARAMFILE NAME
@@ -283,15 +289,12 @@ async function index_init_params_screen_automator(){
   //====================== Connect USB ===========================//
   if (ENV.WebUSBAvailable) {
     if (typeof port.connected == 'undefined' || port.connected == false) {
-      var event = {};
-      event.type = 'AutoConnect';
-      findUSBDevice(event);
-    }//IF !port.connected, findUSBDevice
+      await usbAutoConnectPromise
+    }//(subject params load) IF !port.connected, findUSBDevice
 
     if (
       (typeof port.connected == 'undefined' || port.connected == false) &&
-      (QuickLoad.load == 0 ||
-        (QuickLoad.load == 1 && QuickLoad.connectusb == 1))
+      (QuickLoad.load == 0 || (QuickLoad.load == 1 && QuickLoad.connectusb == 1))
     ) {
       //=============== AWAIT CONNECT TO HARDWARE (via USB) ===============//
       port.connected = false;

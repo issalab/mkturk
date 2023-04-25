@@ -16,6 +16,11 @@
       "src": "mkturklogo192.png",
       "type": "image/png",
       "sizes": "192x192"
+    },
+    {
+      "src": "mklogo_square_joined.png",
+      "type": "image/png",
+      "sizes": "142x142"
     }
   ],
   "start_url": "/mkturk/index.html",
