@@ -103,7 +103,6 @@ function saveDisplayTimestoBigQuery() {
 		}
 		//push single event
 		displaydata.push(obj);
-		
 	}//FOR i events
 
 	bqInsertDisplayTimes(displaydata);

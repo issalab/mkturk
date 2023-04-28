@@ -6,43 +6,36 @@ var port = {
 
   USBDeviceType: '',
   USBDeviceName: '',
-  deviceind: -1
 };
 
 let usbDeviceWorker = new Worker('mkturk_usbworker.js');
-// Read data from the connected device.
-function readDevice() {
-  usbDeviceWorker.postMessage({action: "read-device"});
-}//FUNCTION readDevice
 
-const usbAutoConnectPromise = new Promise((res, rej) => {
-  const channel = new MessageChannel(); 
+async function usbAutoConnectPromise(){
+  return new Promise((res, rej) => {
+    const channel = new MessageChannel(); 
 
-  channel.port1.onmessage = ({data}) => {
-    if (data.connected == true){
-      port.connected = true
-      localStorage.setItem('ConnectUSB', 1);
-      hideHardwareButton()
-    }
-    else {
-      port.connected = false
-    }
-    console.log(data.val);
-    port.statustext_connect = data.val
-    updateHeadsUpDisplayDevices();
+    channel.port1.onmessage = ({data}) => {
+      if (data.connected == true){
+        port.connected = true
+        localStorage.setItem('ConnectUSB', 1);
+        hideHardwareButton()
+      }
+      else { port.connected = false }
+      port.statustext_connect = data.val
+      updateHeadsUpDisplayDevices();
+  
+      channel.port1.close();
+      if (data.error) {
+        rej(data.error);
+      }
+      else {
+        res(data.val);
+      }
+    };//channel.onmessage
+    usbDeviceWorker.postMessage({action: 'connect', val: 'AutoConnect'},[channel.port2]);
+  })
+}//FUNCTION usbAutoConnectPromise()
 
-    channel.port1.close();
-    if (data.error) {
-      rej(data.error);
-    }
-    else {
-      res(data.val);
-    }
-  };//channel.onmessage
-  usbDeviceWorker.postMessage(
-      {action: 'connect', val: 'AutoConnect', connections: convertConnectedDevicesString(localStorage.getItem('ConnectedDevices'))}, 
-      [channel.port2]);
-});
 
 async function findUSBDevice(event) {
   //User manually connects to Port
@@ -64,11 +57,7 @@ async function findUSBDevice(event) {
 
       device = await navigator.usb.requestDevice({ filters: filters });
       if (port.connected == false){
-        usbDeviceWorker.postMessage({
-          action: 'connect',
-          val: 'ManualConnect',
-          connections: convertConnectedDevicesString(localStorage.getItem('ConnectedDevices'))
-        })//postMessage(get-device)        
+        usbDeviceWorker.postMessage({action: 'connect', val: 'ManualConnect'})//postMessage(get-device)        
       }//(in case of a reconnect event) IF hadn't allready reconnected in time it took user to select
     } catch (error) {
       console.log(error);
@@ -82,11 +71,6 @@ usbDeviceWorker.onmessage = function(event) {
   if (event.data.message == 'USBDisconnect'){
     port.connected = false
     FLAGS.runPump = 0;
-
-    let connecteddevices = convertConnectedDevicesString(localStorage.getItem('ConnectedDevices'));
-    connecteddevices[event.data.closeddeviceind] = 0;
-    port.deviceind = -1;
-    localStorage.setItem('ConnectedDevices',connecteddevices)
     showHardwareButton()
 
     console.log(event.data.val);
@@ -96,12 +80,7 @@ usbDeviceWorker.onmessage = function(event) {
   
   if (event.data.message == 'USBConnect'){
     port.connected = true
-    port.deviceind = event.data.deviceind
-    let connecteddevices =  convertConnectedDevicesString(localStorage.getItem('ConnectedDevices'));
-    connecteddevices[port.deviceind] = 1;
-
     localStorage.setItem('ConnectUSB', 1);
-    localStorage.setItem('ConnectedDevices',connecteddevices)
     hideHardwareButton()
 
     console.log(event.data.val);
@@ -240,17 +219,3 @@ function showHardwareButton(){
   document.querySelector('button[id=connectusb]').style.visibility = 'visible';
   document.querySelector('button[id=connectusb]').style.top = '5%';
 }//FUNCTION showHardwareButton
-
-function convertConnectedDevicesString(devstr){
-  let devarr = []
-  if (devstr == null || typeof(devstr) == 'undefined' || typeof(devstr) == ''){
-    //do nothing
-  }
-  else{
-    for (let i=0; i<=devstr.length-1; i++){
-      if (devstr[i] == ','){ continue }
-      else (devarr[devarr.length] = devstr[i])
-    }//FOR i char
-  }//ELSE
-  return devarr
-}//FUNCTION convertConnectedDevicesString

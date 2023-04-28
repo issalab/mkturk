@@ -62,16 +62,13 @@ if (window.location.search) {
     console.error('Error Parsing User Config:', e);
   }
 }
-
 console.log('mturkUserConfig:', mturkUserConfig);
 
 let provider = new firebase.auth.GoogleAuthProvider();
 provider.addScope('https://www.googleapis.com/auth/user.emails.read');
 provider.addScope('https://www.googleapis.com/auth/userinfo.email');
 
-auth
-  .getRedirectResult()
-  .then((redirectResult) => {
+auth.getRedirectResult().then((redirectResult) => {
     if (redirectResult.user) {
       // User just signed in
       ENV.ResearcherDisplayName = redirectResult.user.displayName;
@@ -88,16 +85,14 @@ auth
       ENV.ResearcherEmail = auth.currentUser.email;
       ENV.ResearcherID = auth.currentUser.uid;
 
-      console.log(
-        `Sign-In Redirect Result, USER ${auth.currentUser.email} is signed in`
-      );
+      console.log(`Sign-In Redirect Result, USER ${auth.currentUser.email} is signed in`);
       updateHeadsUpDisplay();
     } else {
       // User not yet authenticated
       console.log('User Not Yet Authenticated');
       auth.signInWithRedirect(provider);
     }
-  })
+  })//.then
   .catch((authError) => {
     console.error(`[Authentication Error]: ${authError}`);
   });

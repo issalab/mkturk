@@ -9,13 +9,7 @@ function index_init(){
   //Set SampleCommand line back to 0 before close window
   window.addEventListener('beforeunload', async (evt) => {
     usbDeviceWorker.postMessage({ action: "writeSampleCommandTriggertoUSB", val: 0 });
-    if (ENV.WebUSBAvailable && port.connected){
-      let dev = convertConnectedDevicesString(localStorage.getItem('ConnectedDevices'))
-      dev[port.deviceind] = 0;
-      localStorage.setItem('ConnectedDevices', dev)
-      console.log('DISCONNECTED A USB DEVICE, devlist = ' + localStorage.getItem('ConnectedDevices'))
-    }
-      await sleep(20)
+    await sleep(20)
   });
 
   // Button callbacks for inline connection to arduino device
@@ -69,7 +63,6 @@ async function index_init_awaits(){
   document.querySelector('button[id=quickload]').addEventListener('click', quickLoad_listener, false); //for Safari
 
   if (ENV.WebUSBAvailable) {
-    await usbworker_scriptLoaded;
     await usb_scriptLoaded;
     document.querySelector('button[id=connectusb]').addEventListener('pointerup', findUSBDevice, false);
     document.querySelector('button[id=nousb]').addEventListener('pointerup', skipHardwareDevice, false);
@@ -128,10 +121,6 @@ async function index_init_awaits(){
   updateHeadsUpDisplay();
   //====================== (END) Retrieve device's screen properties ===========================//
 
-  if (ENV.WebUSBAvailable){
-    await usbAutoConnectPromise
-  }//(init) IF WebUSBAvailable, try to autoconnect
-
   //====================== Quickload Button Set-up ===========================//
   // GET PARAMFILE NAME
   var subjectlistobj = document.getElementById('subjectID_select');
@@ -153,17 +142,21 @@ async function index_init_awaits(){
     document.querySelector('button[id=quickload]').style.visibility = 'visible';
 
     if (QuickLoad.connectusb == 0) {
-      document.querySelector('button[id=quickload]').innerHTML =
-        QuickLoad.agent;
+      document.querySelector('button[id=quickload]').innerHTML = QuickLoad.agent;
     } else if (QuickLoad.connectusb == 1) {
-      document.querySelector('button[id=quickload]').innerHTML =
-        QuickLoad.agent + ' <i>USB</i>';
+      document.querySelector('button[id=quickload]').innerHTML = QuickLoad.agent + ' <i>USB</i>';
     }
   } else {
     // ELSE don't show button
     document.querySelector('button[id=quickload]').style.display = 'none';
   }
   //====================== (END) Quickload Set-up ===========================//
+
+  if (ENV.WebUSBAvailable){
+    if (typeof port.connected == 'undefined' || port.connected == false) {
+      await usbAutoConnectPromise()
+    }
+  }//(init) IF WebUSBAvailable, try to autoconnect
 
   return 1
 }//FUNCTION index_init_awaits()
@@ -289,7 +282,7 @@ async function index_init_params_screen_automator(){
   //====================== Connect USB ===========================//
   if (ENV.WebUSBAvailable) {
     if (typeof port.connected == 'undefined' || port.connected == false) {
-      await usbAutoConnectPromise
+      await usbAutoConnectPromise()
     }//(subject params load) IF !port.connected, findUSBDevice
 
     if (
