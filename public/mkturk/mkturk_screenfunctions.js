@@ -93,7 +93,7 @@ function displayTrial(ti, gr, cl, fr, sc, ob, id, ims, mkm, trig) {
   var start = null;
   async function updateCanvas(timestamp) {
     // FLAGS.bbTarget = { taskscreen: [], indscreen: [], grid: [], x: [], y: [], ID: [], class: [], asset: [] }
-    FLAGS.bbDisplay = { taskscreen: [], indscreen: [], grid: [], x: [], y: [], ID: [], class: [], asset: [] } //accumulate all bounding boxes for this frame
+    FLAGS.bbDisplay = { taskscreen: [], indscreen: [], grid: [], x: [], y: [], ID: [], class: [], asset: [], sceneTarget: [] } //accumulate all bounding boxes for this frame
 
     if (!start) start = timestamp; //IF start has not been set to a float timestamp, set it now.
 
@@ -148,6 +148,7 @@ function displayTrial(ti, gr, cl, fr, sc, ob, id, ims, mkm, trig) {
               FLAGS.bbDisplay.asset.push(bbTarget.asset[j])
               FLAGS.bbDisplay.x.push(bbTarget.x[j])
               FLAGS.bbDisplay.y.push(bbTarget.y[j])
+              FLAGS.bbDisplay.sceneTarget.push(bbTarget.sceneTarget[j])
             }//FOR j rendered items
             const defaultFilter = 'blur(0px) brightness(100%) contrast(100%) grayscale(0%) hue-rotate(0deg) invert(0%) opacity(100%) saturate(100%) sepia(0%)';
             VISIBLECANVAS.getContext('2d').filter = defaultFilter; //restore 2D filter
@@ -165,6 +166,7 @@ function displayTrial(ti, gr, cl, fr, sc, ob, id, ims, mkm, trig) {
               FLAGS.bbDisplay.asset.push(bbTarget.asset[j])
               FLAGS.bbDisplay.x.push(bbTarget.x[j])
               FLAGS.bbDisplay.y.push(bbTarget.y[j])
+              FLAGS.bbDisplay.sceneTarget.push(1)
             }//FOR j rendered items
             const defaultFilter = 'blur(0px) brightness(100%) contrast(100%) grayscale(0%) hue-rotate(0deg) invert(0%) opacity(100%) saturate(100%) sepia(0%)';
             VISIBLECANVAS.getContext('2d').filter = defaultFilter; //restore 2D filter
@@ -200,7 +202,8 @@ function displayTrial(ti, gr, cl, fr, sc, ob, id, ims, mkm, trig) {
             FLAGS.bbDisplay.class.push(bbTarget.class[j])
             FLAGS.bbDisplay.asset.push(bbTarget.asset[j])
             FLAGS.bbDisplay.x.push(bbTarget.x[j])
-            FLAGS.bbDisplay.y.push(bbTarget.y[j])  
+            FLAGS.bbDisplay.y.push(bbTarget.y[j])
+            FLAGS.bbDisplay.sceneTarget.push(1)
           }//FOR j rendered items
           updated2d = 1;
         }//IF Choice/Reward/Punish, renderShape
@@ -216,7 +219,8 @@ function displayTrial(ti, gr, cl, fr, sc, ob, id, ims, mkm, trig) {
             FLAGS.bbDisplay.class.push(bbTarget.class[j])
             FLAGS.bbDisplay.asset.push(bbTarget.asset[j])
             FLAGS.bbDisplay.x.push(bbTarget.x[j])
-            FLAGS.bbDisplay.y.push(bbTarget.y[j])  
+            FLAGS.bbDisplay.y.push(bbTarget.y[j])
+            FLAGS.bbDisplay.sceneTarget.push(1)
           }//FOR j rendered items
         }//IF touchfix, renderShape
 
@@ -314,7 +318,7 @@ function updateTargetBoundingBoxes(boundingBoxes){
   }//IF scene, will create overall box for each scene class
 
   for (let i=0; i<=boundingBoxes.x.length-1; i++){
-    if (boundingBoxes.indscreen[i]==0 && boundingBoxes.class[i]>=0){
+    if (boundingBoxes.indscreen[i]==0 && boundingBoxes.class[i]>=0 && boundingBoxes.sceneTarget[i] >= 1){
       objectCenter.x = (boundingBoxes.x[i][0] + boundingBoxes.x[i][1])/2
       objectCenter.y = (boundingBoxes.y[i][0] + boundingBoxes.y[i][1])/2
 
@@ -425,7 +429,7 @@ function broadcastBoundingBoxes(boundingBoxes,areTarg){
 //------- FUNCTION render3D ---------//
 function render3D(taskscreen, s, f, gr, fr, sc, ob, id, im) {
   renderer.autoClear = false;
-  let boundingBoxes = {x:[],y:[],grid:[],ID:[],class:[], asset:[]}
+  let boundingBoxes = {x:[],y:[],grid:[],ID:[],class:[], asset:[],sceneTarget:[]}
   for (var j = 0; j < ob[f].length; j++) {
     var [filter_objs, filter_img, objFilterSingleFrame, imgFilterSingleFrame] = updateFilterSingleFrame(taskscreen, ob[f][j], id[f][j], fr[f], gr[f][j]);
 
@@ -462,18 +466,8 @@ function render3D(taskscreen, s, f, gr, fr, sc, ob, id, im) {
           boundingBoxes.grid.push(gr[f][j]);
           boundingBoxes.ID.push(boundingBoxObject.ID[n_ob] + '_scene' + boundingBoxObject.class[n_ob]);
           boundingBoxes.asset.push('object');
-          // boundingBoxes.class.push(boundingBoxObject.class[n_ob]); //id # of that scene file
           boundingBoxes.class.push(j) //index to choice in n-way rather than class #
-    
-        //   // multiple objects in a scene
-        //   boundingBoxes.x[j] = [
-        //     Math.min(boundingBoxes.x[j][0], boundingBoxObject[ob[f][j]][n_ob].x[0]),
-        //     Math.max(boundingBoxes.x[j][1], boundingBoxObject[ob[f][j]][n_ob].x[1]),
-        //   ];
-        //   boundingBoxes.y[j] = [
-        //     Math.min(boundingBoxes.y[j][0],boundingBoxObject[ob[f][j]][n_ob].y[0]),
-        //     Math.max(boundingBoxes.y[j][1],boundingBoxObject[ob[f][j]][n_ob].y[1]),
-        //   ];
+          boundingBoxes.sceneTarget.push(boundingBoxObject.sceneTarget[n_ob])
         }//FOR n_ob
         
         if (typeof boundingBoxCubeMap.x != 'undefined') {
@@ -484,16 +478,8 @@ function render3D(taskscreen, s, f, gr, fr, sc, ob, id, im) {
             boundingBoxes.ID.push(boundingBoxCubeMap.ID[im]);
             boundingBoxes.asset.push('cubemap');
             boundingBoxes.class.push(boundingBoxCubeMap.class[im]);
+            boundingBoxes.sceneTarget.push(boundingBoxCubeMap.sceneTarget[im])
           }//FOR im
-
-        //   boundingBoxes.x[j] = [
-        //     Math.min(boundingBoxObject[ob[f][j]][0].x[0], boundingBoxCubeMap[ob[f][j]][0].x[0]),
-        //     Math.max(boundingBoxObject[ob[f][j]][0].x[1], boundingBoxCubeMap[ob[f][j]][0].x[1]),
-        //   ];
-        //   boundingBoxes.y[j] = [
-        //     Math.min(boundingBoxObject[ob[f][j]][0].y[0], boundingBoxCubeMap[ob[f][j]][0].y[0]),
-        //     Math.max(boundingBoxObject[ob[f][j]][0].y[1], boundingBoxCubeMap[ob[f][j]][0].y[1] ),
-        //   ];
         }//IF
         updated3d = 1;
       }//IF

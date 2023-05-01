@@ -289,6 +289,7 @@ async function addToScene(taskscreen) {
 
       let objects = OBJECTS[taskscreen][classlabel].meshes[obj].scene;
       let materialparam = IMAGES[taskscreen][classlabel].OBJECTS[obj].material;
+      //Default texture = true if not specified
       let addtexture = IMAGES[taskscreen][classlabel].OBJECTS[obj].texture ? IMAGES[taskscreen][classlabel].OBJECTS[obj].texture : "true"
 
       let meshpartnames = [];
@@ -330,11 +331,13 @@ async function addToScene(taskscreen) {
        * Future scenefile will only have sizeTHREEJS and positionTHREEJS
        */
 
+      //Default for objects[obj].sizeTHREEJS
       if (IMAGES[taskscreen][classlabel].OBJECTS[obj].sizeTHREEJS === undefined){
         let objSize = IMAGES[taskscreen][classlabel].OBJECTS[obj].sizeInches;
         IMAGES[taskscreen][classlabel].OBJECTS[obj].sizeTHREEJS = rescaleArrayInchestoTHREEJS(objSize, ENV.THREEJStoInches);
       }//IF sizeTHREEJS
 
+      //Default for objects[obj].positionTHREEJS
       if (IMAGES[taskscreen][classlabel].OBJECTS[obj].positionTHREEJS === undefined) {
         IMAGES[taskscreen][classlabel].OBJECTS[obj].positionTHREEJS = {};
         for (let key in IMAGES[taskscreen][classlabel].OBJECTS[obj].positionInches) {
@@ -342,6 +345,11 @@ async function addToScene(taskscreen) {
             rescaleArrayInchestoTHREEJS(IMAGES[taskscreen][classlabel].OBJECTS[obj].positionInches[key],ENV.THREEJStoInches);
         }//FOR key
       }//IF
+
+      //Default for objects[obj].target
+      if (IMAGES[taskscreen][classlabel].OBJECTS[obj].target == undefined){
+        IMAGES[taskscreen][classlabel].OBJECTS[obj].target = [1]
+      }//IF target undefined, default to object to being a target in the scene
 
       objects.name = classlabel + obj;
       scene[taskscreen].add(objects);
@@ -401,6 +409,15 @@ async function addToScene(taskscreen) {
             FLAGS.movieper[taskscreen][classlabel][i] =
               IMAGES[taskscreen][classlabel].OBJECTS[obj].visible[i].length;
           }//IF isArray Object.visible
+
+          if (IMAGES[taskscreen][classlabel].OBJECTS[obj].target !== undefined && 
+            Array.isArray(IMAGES[taskscreen][classlabel].OBJECTS[obj].target[i])
+          ){
+            IMAGES[taskscreen][classlabel].OBJECTS[obj].target[i] =
+              interpParam_frames(IMAGES[taskscreen][classlabel].OBJECTS[obj].target[i],"binary",durationMS,framerate);
+            FLAGS.movieper[taskscreen][classlabel][i] =
+              IMAGES[taskscreen][classlabel].OBJECTS[obj].target[i].length;
+          }//IF isArray Object.target
 
           if (IMAGES[taskscreen][classlabel].OBJECTS[obj].material.opacity !== undefined &&
             Array.isArray(IMAGES[taskscreen][classlabel].OBJECTS[obj].material.opacity[i])
@@ -751,9 +768,9 @@ function updateSingleFrame3D(taskscreen,classlabels,index,movieframe,gridindex,c
   }//FOR sceneElements
 
   //==== TURN BACK ON THE CURRENT DISPLAY ITEMS
-  var allBoundingBoxesObjects = { x: [], y:[], ID: [], class: [] };
+  var allBoundingBoxesObjects = { x: [], y:[], ID: [], class: [], sceneTarget: [] };
   var crop = [];
-  var allBoundingBoxesCubeMap = { x: [], y:[], ID: [], class: [] };
+  var allBoundingBoxesCubeMap = { x: [], y:[], ID: [], class: [], sceneTarget: [] };
 
   if (typeof classlabels == "number") {
     classlabels = [classlabels];
@@ -839,11 +856,8 @@ function updateSingleFrame3D(taskscreen,classlabels,index,movieframe,gridindex,c
         nextvisible = chooseArrayElement(nextvisible,movieframe,nextvisible.length - 1);
       }//IF get movieframe
 
-      if (nextvisible == 1) {
-        light.visible = true;
-      } else {
-        light.visible = false;
-      }//IF visible
+      if (nextvisible == 1) { light.visible = true; }
+      else { light.visible = false; }//IF visible
 
       updateLightSingleFrame(light, nextlightPosition, nextintensity);
     }//FOR lt lights
@@ -897,6 +911,17 @@ function updateSingleFrame3D(taskscreen,classlabels,index,movieframe,gridindex,c
         var nextvisible = chooseArrayElement(IMAGES[taskscreen][classlabel].OBJECTS[obj].visible,index,0);
         if (Number.isInteger(movieframe)) {
           nextvisible = chooseArrayElement(nextvisible,movieframe,nextvisible.length - 1);
+        }//IF get movieframe
+      }
+
+      //OBJECT TARGET
+      if (show_objs == 0){
+        nexttarget = 0;
+      }
+      else{
+        var nexttarget = chooseArrayElement(IMAGES[taskscreen][classlabel].OBJECTS[obj].target,index,0);
+        if (Number.isInteger(movieframe)) {
+          nexttarget = chooseArrayElement(nexttarget,movieframe,nexttarget.length - 1);
         }//IF get movieframe
       }
 
@@ -980,7 +1005,8 @@ function updateSingleFrame3D(taskscreen,classlabels,index,movieframe,gridindex,c
         allBoundingBoxesObjects.x.push(boundingBox.x)
         allBoundingBoxesObjects.y.push(boundingBox.y)
         allBoundingBoxesObjects.ID.push(obj)
-        allBoundingBoxesObjects.class.push(classlabel)  
+        allBoundingBoxesObjects.class.push(classlabel)
+        allBoundingBoxesObjects.sceneTarget.push(nexttarget)
       }//IF visible
     }//FOR obj in scene
 
@@ -1019,7 +1045,8 @@ function updateSingleFrame3D(taskscreen,classlabels,index,movieframe,gridindex,c
       allBoundingBoxesCubeMap.x.push(boundingBoxCubeMap.x)
       allBoundingBoxesCubeMap.y.push(boundingBoxCubeMap.y)
       allBoundingBoxesCubeMap.ID.push('backgroundimage3d')
-      allBoundingBoxesCubeMap.class.push(classlabel)  
+      allBoundingBoxesCubeMap.class.push(classlabel)
+      allBoundingBoxesCubeMap.class.push(1) //Default to 1 since this can be controlled at the task level via TASK.Target = 'scene' vs 'object'
     }//IF background image
   }//FOR classlabel in classlabels
   return [allBoundingBoxesObjects, allBoundingBoxesCubeMap, crop];

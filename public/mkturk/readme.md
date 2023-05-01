@@ -433,6 +433,89 @@ ALT/OPTION + 4 --> manually flush pump for 1 minute (8 x 30second pulses)
 
 <br>
 
+## SCENES
+Most variables except those marked * or ** can be changed on a per movie clip and per movie frame basis using an array or array of arrays. An array specifies how values should be set for each movie clip. For params that you wish to animate, an array of arrays specifies how the param value changes on each frame for each clip. Inner arrays for an animation can specify the start and end value or particular keypoints in between. All intervening values are linearly interpolated to produce durationMS * framerate values (e.g., 3 sec * 60 Hz = 240 values) and this array of expanded values is stored in the final data file in the field for that animated variable. Besides the calculated parameter value on each frame, the 2D object bounding box values in pixels after projecting to screen are stored in the final SCENES variable in the output data file.
+
+*cannot be changed (constant)
+**cannot be animated
+() meta appended to SCENES and saved into final data file (i.e., not user-specified in scene file)
+
+# CAMERAS
+type*:
+fieldofview*:
+near*:
+far*:
+position:
+targetTHREEJS:
+visible:
+(targetInches):
+
+# LIGHTS
+type*:
+color*:
+intensity:
+position:
+visible:
+
+# OBJECTS
+meshpath*:
+objectdoc*:
+texture*:
+material.type*:
+material.color*:
+material.metalness*:
+material.roughness*:
+material.reflectivity*:
+material.opacity:
+material.transparent*: 
+sizeTHREEJS:
+positionTHREEJS:
+rotationDegrees:
+visible:
+
+target**: (default = 1 --> an object is a valid target) Allows user to toggle which objects in the scene are used as a target in that particular scene render. This is done per movie clip, so if not a target (SCENE.OBJECTS."name".target = 0), then remains not a target for entire movie. Note, that if an object's visible property is set to 0, this also makes them not a fixatable/touchable target. Setting the target property on objects is useful for creating a "where's waldo" type scene where there is one target among many distractor objects. It's a what-where task instead of just a what task as in stimulus-reponse, match-to-sample, and same-different paradigms.
+
+(boundingBox2DPixels):
+(intrinsicMeshBoundingBox):
+(intrinsicMeshMaxDim):
+(morphTargetDelta):
+(morphMultiplier):
+(sizeInches):
+(positionInches):
+
+# IMAGES
+imagebag*:
+imageidx:
+sizeTHREEJS:
+(boundingBoxCube2DPixels):
+
+# OBJECTFILTERS || IMAGEFILTERS
+blur: Applies a Gaussian blur to the input image in pixels.
+
+brightness: Applies a linear multiplier to the input image, making it appear more or less bright. Values are linear multipliers on the effect, with 0% creating a completely black image, 100% having no effect, and values over 100% brightening the image.
+
+contrast: Adjusts the contrast of the input image. A value of 0% makes the image grey, 100% has no effect, and values over 100% create a contrast.
+
+grayscale: Converts the image to grayscale. A value of 100% is completely grayscale. The initial value of 0% leaves the input unchanged. Values between 0% and 100% produce linear multipliers on the effect.
+
+huerotate: Applies a hue rotation. The <angle> value defines the number of degrees around the hue color circle at which the input samples will be adjusted. A value of 0deg leaves the input unchanged.
+
+invert: Inverts the samples in the input image. A value of 100% completely inverts the image. A value of 0% leaves the input unchanged. Values between 0% and 100% have linear multipliers on the effect.
+
+opacity: Applies transparency. 0% makes the image completely transparent and 100% leaves the image unchanged.
+
+saturate: Saturates the image, with 0% being completely unsaturated, 100% leaving the image unchanged, and values of over 100% increasing saturation.
+
+sepia: Converts the image to sepia, with a value of 100% making the image completely sepia and 0% making no change.
+
+# durationMS**
+Duration of a movie clip in milliseconds. Specifying as an array of values allows setting of different durations for each movie clip.
+(nimages)
+(nbackgroundimages)
+(nframes)
+
+<br>
+
 ## ARDUINO V0.3 -- mkturk
 ### Digital Pins
 0 - RX
