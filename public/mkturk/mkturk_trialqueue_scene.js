@@ -438,10 +438,10 @@ async get_next_trial(){
 	var test_scenebag_indices = []
 
 	if (TASK.SameDifferent <= 0){
-	for (var j = 0; j < test_indices.length; j++){
-		test_scenebag_labels[j] = this.testbag_labels[test_indices[j]]; 
-		test_scenebag_indices[j] = this.testbag_indices[test_indices[j]];
-	} //for j test
+		for (var j = 0; j < test_indices.length; j++){
+			test_scenebag_labels[j] = this.testbag_labels[test_indices[j]]; 
+			test_scenebag_indices[j] = this.testbag_indices[test_indices[j]];
+		} //for j test
 	}
 	else if (TASK.SameDifferent > 0){
 		test_scenebag_labels.push(this.testbag_labels[test_indices])
@@ -545,12 +545,25 @@ selectTestImages(correct_label, testbag_labels){
 
 		// Get all unique labels 
 		var labelspace = []
-		for (var i = 0; i < testbag_labels.length; i++){
-			if(labelspace.indexOf(testbag_labels[i]) == -1 && 
-				testbag_labels[i] != correct_label){
-				labelspace.push(testbag_labels[i])
-			}
-		}
+
+		if (testbag_labels.length >= TASK.TestGridIndex.length){
+			for (var i = 0; i < testbag_labels.length; i++){
+				if(labelspace.indexOf(testbag_labels[i]) == -1 && testbag_labels[i] != correct_label){
+					labelspace.push(testbag_labels[i])
+				}//IF unique distractor
+			}//FOR i classes
+		}//IF number of object classes >= number of choices, choose unique classes
+		else if ( testbag_labels.length < TASK.TestGridIndex.length){
+			for (var i=0; i<=TASK.TestGridIndex.length-1; i++){
+				while(1){
+					var test_index = testbag_labels[Math.floor((testbag_labels.length)*Math.random())];
+					if (testbag_labels[test_index] != correct_label){
+						labelspace.push(testbag_labels[test_index])
+						break
+					}//IF distractor
+				}//while haven't drawn a distractor
+			}//FOR i test grid indices
+		}//ELSE IF fewer classes than choices, sample distractors with replacement
 
 		// Randomly select n-1 labels to serve as distractors 
 		var distractors = []

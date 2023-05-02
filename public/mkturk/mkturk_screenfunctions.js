@@ -551,10 +551,10 @@ function render3D(taskscreen, s, f, gr, fr, sc, ob, id, im) {
           boundingBoxes.x[ind] = [ left * ENV.CanvasRatio, (left + swidth_2d) * ENV.CanvasRatio];
           boundingBoxes.y[ind] = [ top * ENV.CanvasRatio + CANVAS.offsettop, (top + sheight_2d) * ENV.CanvasRatio + CANVAS.offsettop];
         }//IF
-      }
+      }//TRY
       catch(error){
-        console.log('the infrequent bb error')
-      }
+        //bb error, likely because this display element is not shown
+      }//CATCH
     }//FOR k render orders
   }//FOR j display items
   return boundingBoxes
