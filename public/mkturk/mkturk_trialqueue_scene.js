@@ -17,6 +17,7 @@ constructor(samplingStrategy){
 
 
 	this.currentbag = -1;
+	this.currentbag_starttime = -1;
 
 	// ImageBuffer
 	this.IB = new ImageBuffer(); 
@@ -132,9 +133,9 @@ async generate_trials(n_trials){
 
 	for (var i = 0; i < n_trials; i++){
 		var newbagblock = 0;
-		if (TASK.NStimuliPerBagBlock <= 0){
+		if (TASK.NStimuliPerBagBlock <= 0 || TASK.NMillisecondsPerBagBlock > 0){
 			// do nothing
-		} //use all bags in block
+		}//use all bags in block -> Note: TASK.NMillisecondsPerBagBlock overrides TASK.NStimuliPerBagBlock
 		else if (TASK.NStimuliPerBagBlock > 0){
 			if (this.currentbag < 0 || this.ndrawn_per_bag[this.currentbag] == TASK.NStimuliPerBagBlock){
 				
@@ -157,7 +158,7 @@ async generate_trials(n_trials){
 		//global bucket
 		if (this.samplebucket.length == 0 || newbagblock == 1){
 			this.samplebucket = []
-			if (TASK.NStimuliPerBagBlock > 0){
+			if (TASK.NStimuliPerBagBlock > 0 && TASK.NMillisecondsPerBagBlock <= 0){
 				for (var j = 0; j <= this.samplebag_labels.length-1; j++){
 					if (this.samplebag_labels[j] == this.currentbag){
 						this.samplebucket.push(j)
@@ -379,7 +380,27 @@ async get_next_trial(){
 			break
 		}//ELSE not stick
 	}//WHILE not drawing correct response on opposite side of response bias (sticky side)
-
+	
+	if (TASK.NMillisecondsPerBagBlock > 0 && FLAGS.savedata){
+		while(true){
+			if ( this.samplebag_labels[sample_index] != this.currentbag){
+				if (this.sampleq.filename.length == 0){
+					// console.log("Reached end of trial queue... generating one more in this.get_next_trial")
+					await this.generate_trials(1); 
+				}
+				// DRAW FROM INDEX LIST
+				sample_filename = this.sampleq.filename.shift(); 
+				sample_index = this.sampleq.index.shift(); 
+				test_filenames = this.testq.filenames.shift(); 
+				test_indices = this.testq.indices.shift(); 
+				test_correctIndex = this.testq.correctIndex.shift();
+			}//IF need to stick to a bag for NMillisecondsPerBagBlock, continue drawing trials till get one matching this.currentbag
+			else {
+				break
+			}//ELSE correct bag for this block is queued up
+		}//WHILE not drawing from bag matching this.currentbag
+	}//IF TASK.NMillisecondsPerBagBlock > 0
+	
 	// Get image from imagebag
 	if (typeof(sample_filename) != "undefined"){
 		var sample_image = []
@@ -412,11 +433,11 @@ async get_next_trial(){
 		for (var i = 0; i <= test_filenames.length-1; i++){
 			if (Array.isArray(test_filenames[i])){
 				for (var j = 0; j <= test_filenames[i].length-1;j++){
-					if (i==0){
+					if (i==0 || typeof(test_images[j]) == 'undefined'){
 						test_images[j] = []
 					}//IF first item in frame
 					if (test_filenames[i][j] !=""){
-						test_images[j].push(await this.IB.get_by_name(test_filenames[i][j])); 
+							test_images[j].push(await this.IB.get_by_name(test_filenames[i][j])); 
 					}//IF image
 				}//FOR j frames
 			}//IF isArray test filenames
@@ -594,6 +615,3 @@ selectTestImages(correct_label, testbag_labels){
 }//FUNCTION selectTestImages
 
 } //CLASS TrialQueueScene
-
-
-

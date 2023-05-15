@@ -412,6 +412,7 @@ async function loadParametersfromFirebase(paramfile_path) {
     // SAMPLING STRATEGY
     if (typeof TASK.SamplingStrategy == 'undefined'){ TASK.SamplingStrategy = 'uniform_without_replacement'; }
     if (typeof TASK.NStimuliPerBagBlock == 'undefined'){ TASK.NStimuliPerBagBlock = 0; }
+    if (typeof TASK.NSecondsPerBagBlock == 'undefined'){ TASK.NSecondsPerBagBlock = 0; }
 
     // RESPONSE
     if (typeof TASK.Target == 'undefined'){TASK.Target = 'object';}
@@ -451,6 +452,7 @@ async function loadParametersfromFirebase(paramfile_path) {
     if (typeof TASK.CalibrateEyeCrossTerms == 'undefined'){TASK.CalibrateEyeCrossTerms = 0;}
     if (typeof TASK.CheckRFID == 'undefined'){TASK.CheckRFID = 0;}
     if (typeof TASK.InterTrialInterval == 'undefined'){TASK.InterTrialInterval = 0}
+    if (typeof TASK.MinTrialDuration_AfterSampleCommandTrigger == 'undefined'){TASK.MinTrialDuration_AfterSampleCommandTrigger = -1}
 
     return 0; //need2loadParameters
   } catch (error) {

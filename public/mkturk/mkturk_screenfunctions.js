@@ -105,6 +105,9 @@ function displayTrial(ti, gr, cl, fr, sc, ob, id, ims, mkm, trig) {
       if ( frame.current==1 && (typeof(trig) != "undefined" && trig == 1) ){
         CURRTRIAL.samplestarttime = Date.now() - ENV.CurrentDate.valueOf();
         CURRTRIAL.samplestarttime_string = new Date(CURRTRIAL.samplestarttime + ENV.CurrentDate.valueOf()).toJSON();
+        if (TASK.NMillisecondsPerBagBlock > 0 && TQS.currentbag_starttime < 0){
+          TQS.currentbag_starttime = Date.now()
+        }//IF
         if (port.connected){
           usbDeviceWorker.postMessage({ action: "writeSampleCommandTriggertoUSB", val: 1 });
         }

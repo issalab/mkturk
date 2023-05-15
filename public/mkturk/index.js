@@ -57,6 +57,23 @@ index_init();
 
     let imgSeqLen = TASK.NRSVP <= 0 ? 1 : ENV.NRSVPMax;
 
+    if (TASK.NMillisecondsPerBagBlock > 0 && FLAGS.savedata){
+      if (TQS.currentbag_starttime == -1 || Date.now() - TQS.currentbag_starttime > TASK.NMillisecondsPerBagBlock){
+        // Increment bag
+        if (TQS.currentbag < 0){
+          TQS.currentbag = 0; //initialize with first bag
+        }
+        else{
+          TQS.currentbag = TQS.currentbag + 1; //go to next bag
+  
+          if (TQS.currentbag > Math.max(...TQS.samplebag_labels)){
+            TQS.currentbag = 0; //go back to first bag
+          }
+        }//IF
+        TQS.currentbag_starttime = -1;//update to Date.now() only when trigger in screenfunctions
+      }//IF enough time has elapsed, switch bags 
+    }//IF fixed duration blocks
+
     for (let i = 0; i < imgSeqLen; i++) {
       let x = await TQS.get_next_trial();
       CURRTRIAL.images.sampleimage[i] = x[0];
@@ -762,6 +779,18 @@ index_init();
     if (remainingInterTrialInterval > 0) {
       await sleep(remainingInterTrialInterval);
     }
+
+    if ( TASK.MinTrialDuration_AfterSampleCommandTrigger > 0 && TASK.RewardStage != 0){
+      CURRTRIAL.endtime = Date.now() - ENV.CurrentDate.valueOf();
+      CURRTRIAL.samplestarttime = Date.now() - ENV.CurrentDate.valueOf();
+      let elapsedTime = (Date.now()-ENV.CurrentDate.valueOf()) - CURRTRIAL.samplestarttime
+
+      remainingInterTrialInterval = TASK.MinTrialDuration_AfterSampleCommandTrigger - elapsedTime
+      if (remainingInterTrialInterval > 0){
+        await sleep(remainingInterTrialInterval);
+      }
+    }//IF
+
     console.log('||||||||||||||||||||  END OF TRIAL ', CURRTRIAL.num,' |||||||||||||||||||');
     if (endloop == 1){ return }//IF end task
 
