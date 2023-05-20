@@ -213,7 +213,67 @@ export class Mkeditor {
         `onClassName path=${classNameParams.path}, field=${classNameParams.field}, value=${classNameParams.value}`
       );
 
-      const bioKeys = ['Agent', 'CheckRFID'];
+      const defaultKeys = [
+        'Agent', 'Species',
+        'NGridPoints','GridSpacingInches',
+        'FixationGridIndex','FixationSizeInches',
+        'RewardDuration','PunishTimeOut',
+      ];
+      const taskKeys = [
+        'RewardStage','NRSVP','SameDifferent','VisualSearch',
+        'ImageBagsSample','ImageBagsTest',
+        'SamplingStrategy','Target',
+      ];
+      const otherKeys = [
+        'BackgroundColor2D',
+        'BlinkGracePeriod',
+        'BQSaveDisplayTimes',
+        'BQSaveEye',
+        'BQSaveTouch',
+        'CalibrateEye',
+        'CalibrateEyeCrossTerms',
+        'CheckRFID',
+        'ChoiceGridIndex',
+        'ChoiceOutsideGracePeriod',
+        'ChoiceSizeInches',
+        'ChoiceTimeOut',
+        'DeviceConfig',
+        'FixationDotSizeInches',
+        'FixationDuration',
+        'FixationOutsideGracePeriod',
+        'FixationTimeOut',
+        'FixationUsesSample',
+        'FixationWindowSizeInches',
+        'GridXOffsetInches',
+        'GridYOffsetInches',
+        'HeadsupDisplayFraction',
+        'HideChoiceDistractors',
+        'HideTestDistractors',
+        'InterTrialInterval',
+        'KeepSampleON',
+        'KeepTestON',
+        'MinTrialDuration_AfterSampleCommandTrigger',
+        'NConsecutiveHitsforBonus',
+        'NFixations',
+        'NMillisecondsPerBagBlock',
+        'NRewardMax',
+        'NRSVPMax',
+        'NStickyResponse',
+        'NStimuliPerBagBlock',
+        'ObjectGridIndex',
+        'Photodiode',
+        'SampleGridIndex',
+        'SampleOFF',
+        'SampleOutsideGracePeriod',
+        'SamplePRE',
+        'SaveImagesResolution',
+        'TestGridIndex',
+        'TestOFF',
+        'THREEJSCameraFOV',
+        'THREEJSCameraZDist',
+        'THREEJSRenderRatio',
+
+      ]
       const automatorKeys = [
         'Automator',
         'AutomatorFilePath',
@@ -221,85 +281,89 @@ export class Mkeditor {
         'MinPercentCriterion',
         'MinTrialsCriterion',
       ];
-      const generalKeys = [
-        'DragtoRespond',
-        'CalibrateEye',
-        'NRSVP',
-        'NRSVPMax',
-        'SameDifferent',
-        'SamplingStrategy',
-        'NStickyResponse',
-        'NTrialsPerBagBlock',
-      ];
-      const gridKeys = [
-        'NGridPoints',
-        'GridSpacingInches',
-        'GridXOffsetInches',
-        'GridYOffsetInches',
-        'FixationGridIndex',
-        'SampleGridIndex',
-        'ObjectGridIndex',
-        'ChoiceGridIndex',
-        'TestGridIndex',
-      ];
-      const fixationKeys = [
-        'NFixations',
-        'FixationUsesSample',
-        'FixationSizeInches',
-        'FixationDuration',
-        'FixationTimeOut',
-      ];
-      const fixationConfigKeys = [
-        'FixationWindowSizeInches',
-        'FixationDotSizeInches',
-      ];
-      const sampleKeys = [
-        'ImageBagsSample',
-        'KeepSampleON',
-        'SamplePRE',
-        'SampleOFF',
-      ];
-      const testKeys = [
-        'ImageBagsTest',
-        'KeepTestON',
-        'TestOFF',
-        'HideTestDistractors',
-      ];
-      const choiceKeys = [
-        'ChoiceSizeInches',
-        'HideChoiceDistractors',
-        'ChoiceTimeOut',
-      ];
-      const rewardKeys = [
-        'RewardStage',
-        'RewardPer1000Trials',
-        'NRewardMax',
-        'NConsecutiveHitsforBonus',
-        'PunishTimeOut',
-        'ConsecutiveHitsITI',
-      ];
+      // const bioKeys = ['CheckRFID'];
+      // const generalKeys = [
+      //   'DragtoRespond',
+      //   'CalibrateEye',
+      //   'NRSVP',
+      //   'NRSVPMax',
+      //   'SameDifferent',
+      //   'SamplingStrategy',
+      //   'NStickyResponse',
+      //   'NTrialsPerBagBlock',
+      // ];
+      // const gridKeys = [
+      //   'NGridPoints',
+      //   'GridSpacingInches',
+      //   'GridXOffsetInches',
+      //   'GridYOffsetInches',
+      //   'SampleGridIndex',
+      //   'ObjectGridIndex',
+      //   'ChoiceGridIndex',
+      //   'TestGridIndex',
+      // ];
+      // const fixationKeys = [
+      //   'NFixations',
+      //   'FixationUsesSample',
+      //   'FixationTimeOut',
+      // ];
+      // const fixationConfigKeys = [
+      //   'FixationWindowSizeInches',
+      //   'FixationDotSizeInches',
+      // ];
+      // const sampleKeys = [
+      //   'ImageBagsSample',
+      //   'KeepSampleON',
+      //   'SamplePRE',
+      //   'SampleOFF',
+      // ];
+      // const testKeys = [
+      //   'ImageBagsTest',
+      //   'KeepTestON',
+      //   'TestOFF',
+      //   'HideTestDistractors',
+      // ];
+      // const choiceKeys = [
+      //   'ChoiceSizeInches',
+      //   'HideChoiceDistractors',
+      //   'ChoiceTimeOut',
+      // ];
+      // const rewardKeys = [
+      //   'RewardStage',
+      //   'NRewardMax',
+      //   'NConsecutiveHitsforBonus',
+      //   'ConsecutiveHitsITI',
+      // ];
 
-      if (bioKeys.includes(classNameParams.field)) {
-        return 'color-node-bio';
+      if (defaultKeys.includes(classNameParams.field)) {
+        return 'color-node-default';
+      } else if (taskKeys.includes(classNameParams.field)) {
+        return 'color-node-task';
+      } else if (otherKeys.includes(classNameParams.field)) {
+        return 'color-node-other';
       } else if (automatorKeys.includes(classNameParams.field)) {
         return 'color-node-automator';
-      } else if (generalKeys.includes(classNameParams.field)) {
-        return 'color-node-general';
-      } else if (gridKeys.includes(classNameParams.field)) {
-        return 'color-node-grid';
-      } else if (fixationKeys.includes(classNameParams.field)) {
-        return 'color-node-fixation';
-      } else if (fixationConfigKeys.includes(classNameParams.field)) {
-        return 'color-node-fixation-config';
-      } else if (sampleKeys.includes(classNameParams.field)) {
-        return 'color-node-sample';
-      } else if (testKeys.includes(classNameParams.field)) {
-        return 'color-node-test';
-      } else if (choiceKeys.includes(classNameParams.field)) {
-        return 'color-node-choice';
-      } else if (rewardKeys.includes(classNameParams.field)) {
-        return 'color-node-reward';
-      } else {
+      }
+      // else if (bioKeys.includes(classNameParams.field)) {
+      //   return 'color-node-bio';
+      // } else if (generalKeys.includes(classNameParams.field)) {
+      //   return 'color-node-general';
+      // } else if (gridKeys.includes(classNameParams.field)) {
+      //   return 'color-node-grid';
+      // } else if (fixationKeys.includes(classNameParams.field)) {
+      //   return 'color-node-fixation';
+      // } else if (fixationConfigKeys.includes(classNameParams.field)) {
+      //   return 'color-node-fixation-config';
+      // } else if (sampleKeys.includes(classNameParams.field)) {
+      //   return 'color-node-sample';
+      // } else if (testKeys.includes(classNameParams.field)) {
+      //   return 'color-node-test';
+      // } else if (choiceKeys.includes(classNameParams.field)) {
+      //   return 'color-node-choice';
+      // } else if (rewardKeys.includes(classNameParams.field)) {
+      //   return 'color-node-reward';
+      // }
+      else {
         return 'color-node-nuisance';
       }
     }

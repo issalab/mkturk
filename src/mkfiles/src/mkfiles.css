@@ -405,6 +405,18 @@
   grid-template-areas: 'add-rule-btn undo-edit-btn';
 }
 
+.color-node-default div.jsoneditor-field {
+  background-color: #cbcbcb;
+}
+
+.color-node-task div.jsoneditor-field {
+  background-color: #e8a9a9;
+}
+
+.color-node-other div.jsoneditor-field {
+  background-color: #90dde1;
+}
+
 .color-node-bio div.jsoneditor-field {
   background-color: #c7ceea;
 }
@@ -446,5 +458,5 @@
 }
 
 .color-node-nuisance div.jsoneditor-field {
-  background-color: #fde2e6;
+  background-color: #ebe9be;
 }
