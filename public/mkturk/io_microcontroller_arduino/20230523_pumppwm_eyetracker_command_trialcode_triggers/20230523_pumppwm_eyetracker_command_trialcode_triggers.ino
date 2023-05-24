@@ -28,15 +28,15 @@ char receivedSampleCmdCharsEye[numChars];
 boolean newSampleCmd = false;
 
 //Sync pin for external devices
-const int sampleCmdPin = A2;
+const int sampleCmdPin = A4;
 const int sampleCmdLEDPin=5;
 
 //Trigger pins for external devices
-const int trialTriggerPin1 = A0;
-const int trialTriggerPin2 = A1;
-const int blockTriggerPin1 = A4;
-const int blockTriggerPin2 = A5;
-const int blockTriggerLEDPin = 6;
+const int trialTriggerPin1 = A2;
+const int trialTriggerPin2 = A3;
+const int blockTriggerPin1 = A0;
+const int blockTriggerPin2 = A1;
+const int blockTriggerLEDPin = 3;
 
 int sampleCmd;
 int prevSampleCmd = 0;
@@ -47,8 +47,8 @@ char sampleCmdOutMarker[] = "sa";
 // TRIAL# LINE
 char receivedTrialNumCmdChars[numChars];
 boolean newTrialNumCmd = false;
-const int trialNumCmdPin = A3;
-const int trialNumCmdLEDPin=3;
+const int trialNumCmdPin = A5;
+const int trialNumCmdLEDPin=6;
 int trialNumCmd;
 int prevTrialNumCmd = 0;
 char trialNumCmdStartMarker = '@'; 

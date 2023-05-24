@@ -529,13 +529,13 @@ Duration of a movie clip in milliseconds. Specifying as an array of values allow
 
 2 - eye led
 
-3 - trial code led
+3 - block trigger LED
 
 4 - pump (pin 2 in v0.2)
 
 5 - sample command led
 
-6 - rfid led
+6 - trial code led (formerly, rfid led)
 
 7 - pump led
 
@@ -548,28 +548,25 @@ Duration of a movie clip in milliseconds. Specifying as an array of values allow
 ~13 - pump pwm
 
 ### Analog Pins
-A0 - trial trigger
+A0 - block trigger
+A1 - block trigger
 
-A1 - trial trigger
+A2 - trial trigger
+A3 - trial trigger
 
-A2 - sample command
-
-A3 - trial code
-
-A4 - block trigger
-
-A5 - block trigger
+A4 - sample command
+A5 - trial code
 
 ### Lines
 D8,D9 (D2 led) - eye - softwareserial2
 
 D10,D11 - rfid - softwareserial1
 
-A2,A3 (D5 led) - file code+sample command & trial code - IN1
+A0,A1 (D3 led) - block triggers - IN2
 
-A0,A1 (D3 led) - trial triggers - IN2
+A2,A3 (D5 led) - trial triggers - IN1
 
-A4,A5 (D6 led, D1 can't be used because serial comm) - block triggers - IN3
+A4,A5 (D6 led for trial code) - file code+sample command & trial code - IN3 (note, D1 can't be used because for serial comm)
 
 <br>
 
