@@ -105,7 +105,7 @@ ___________________________________________________________________________
 ___________________________________________________________________________
 SamplingStrategy (default = uniform_without_replacement except when Agent=SaveImages sets to sequential): Determines how sample images are drawn: uniform_with_replacement, uniform_without_replacement, sequential. TASK.Agent=SaveImages forces TASK.SamplingStrategy = sequential.
 
-NStimuliPerBagBlock (default = 0 --> draw from all sample bags on each trial): if TASK.NStimuliPerBagBlock = 0, randomly samples from all bags (interleaved design), if >0, samples N consecutive images from the same sample image bag (block design). This is equivalent to blocking the session so that training is done in object blocks rather than interleaving all objects. After N sample draws are completed for bag i, proceeds to next bag i+1 according to bag sequence specified in ImageBagsSample. When all bags have been sampled NTrialsPerBagBlock times, starts back at bag 0. Note, that in an RSVP design, if NRSVP = x and NStimuliPerBagBlock = y, then y/x consecutive trials will be from the same bag. In other words, the counting of what goes into a block is in units of images not trials. Also, since the trial queue is predetermined, when NRSVP = x images are drawn ahead of time for that trial, even if the agent does not view all of them on that trial, the next trial will be a new set of images. This behavior serves as a feature so that if you want each RSVP trial to draw from only one type of scene bag, then set NStimuliPerBagBlock = NRSVP so that now each queued RSVP sequence is from one and only one scene bag (where the objects/background may be of a certain type for that trial). Overrides by TASK.NMillisecondsPerBagBlock
+NStimuliPerBagBlock (default = 0 --> draw from all sample bags on each trial): if TASK.NStimuliPerBagBlock = 0, randomly samples from all bags (interleaved design), if >0, samples N consecutive images from the same sample image bag (block design). This is equivalent to blocking the session so that training is done in object blocks rather than interleaving all objects. After N sample draws are completed for bag i, proceeds to next bag i+1 according to bag sequence specified in ImageBagsSample. When all bags have been sampled NStimuliPerBagBlock times, starts back at bag 0. Since the trial queue is predetermined, when NRSVP = x images are drawn ahead of time for that trial, even if the agent does not view all of them on that trial, the next trial will be a new set of images and the non-viewed images count toward the count for NStimuliPerBagBlock see (as an alternative, see TASK.NMillisecondsPerBagBlock for a fixed duration block). Note, that for ease of implementation & also for interpretability in analysis, all stimuli in a given trial will be drawn from the currently specified bag. In other words, the block updates at trial granularity at the end of a trial, so if TASK.NRSVP>1 and TASK.NStimuliPerBagBlock is not an integer multiple of TASK.NRSVP, this means that not exactly NStimuliPerBagBlock will be drawn, may get a few stimuli more if TASK.NRSVP is large. However, this approach does guarantee the following possibly desirable side effect -- that in an RSVP design, if NRSVP = x and NStimuliPerBagBlock = y, then ceil(y/x) consecutive trials will be from the same bag. Thus, each queued RSVP sequence is from one and only one scene bag (where the objects/background may be of a certain type for that trial). Overrides by TASK.NMillisecondsPerBagBlock
 
 NMillisecondsPerBagBlock (default = -1 --> do not require stimuli from same bag be sampled for a duration): if TASK.NMillisecondsPerBagBlock > 0, then consecutive images from the same sample image bag i will be drawn until TASK.NMillisecondsPerBagBlock milliseconds have elapsed, after which, will proceed to drawing from bag i+1 until TASK.NMillisecondsPerBagBlock is once again fulfilled. Overriden by TASK.NStimuliPerBagBlock
 
@@ -345,6 +345,8 @@ Eye.BlinkGracePeriod (Deprecated December 9, 2022; elevated to be user facing in
 
 
 ## EVENTS TRIALSERIES (saved to json data file)
+BlockNum: Current block number, a level of organization above trial number
+
 CorrectItem: Index of the correct item on each trial
 
 EndTime: End of trial, time is recorded when either reward delivery or punish timeout promise is fulfilled. On each task trial, SampleCommand line is set to 0 upon completion of reward/punish (was set to 1 at beginning of trial as recorded by SampleStartTime).
@@ -546,28 +548,28 @@ Duration of a movie clip in milliseconds. Specifying as an array of values allow
 ~13 - pump pwm
 
 ### Analog Pins
-A0 - unused
+A0 - trial trigger
 
-A1 - unused
+A1 - trial trigger
 
 A2 - sample command
 
 A3 - trial code
 
-A4 - unused
+A4 - block trigger
 
-A5 - unused
+A5 - block trigger
 
 ### Lines
 D8,D9 (D2 led) - eye - softwareserial2
 
-D10,D11 (D6 led) - rfid - softwareserial1
+D10,D11 - rfid - softwareserial1
 
-A2,A3 (D5 led) - sample command & trial code - IN1
+A2,A3 (D5 led) - file code+sample command & trial code - IN1
 
-A0,A1 (D3 led) - unused - IN2
+A0,A1 (D3 led) - trial triggers - IN2
 
-A4,A5 - unused - IN3
+A4,A5 (D6 led, D1 can't be used because serial comm) - block triggers - IN3
 
 <br>
 

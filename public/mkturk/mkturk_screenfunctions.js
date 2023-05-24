@@ -105,13 +105,25 @@ function displayTrial(ti, gr, cl, fr, sc, ob, id, ims, mkm, trig) {
       if ( frame.current==1 && (typeof(trig) != "undefined" && trig == 1) ){
         CURRTRIAL.samplestarttime = Date.now() - ENV.CurrentDate.valueOf();
         CURRTRIAL.samplestarttime_string = new Date(CURRTRIAL.samplestarttime + ENV.CurrentDate.valueOf()).toJSON();
-        if (TASK.NMillisecondsPerBagBlock > 0 && TQS.currentbag_starttime < 0){
-          TQS.currentbag_starttime = Date.now()
-        }//IF
-        if (port.connected){
-          usbDeviceWorker.postMessage({ action: "writeSampleCommandTriggertoUSB", val: 1 });
-        }
-      } //IF showing sample trigger frame
+        
+        let newbagblock = 0
+        if (TASK.NMillisecondsPerBagBlock > 0 || TASK.NStimuliPerBagBlock > 0){
+          if (TASK.NMillisecondsPerBagBlock > 0 && TQS.currentbag_starttime < 0){
+            TQS.currentbag_starttime = Date.now()
+          }//IF
+  
+          if ( (CURRTRIAL.blocknum >= 0 && CURRTRIAL.num == 0) ||
+                (CURRTRIAL.blocknum >=0 && CURRTRIAL.blocknum != EVENTS['trialseries']['BlockNum'][CURRTRIAL.num-1]))
+          { newbagblock = 1 }//IF new bag  
+        }//IF block design
+
+        if (port.connected && newbagblock == 0){
+          usbDeviceWorker.postMessage({ action: "writeSampleCommandTriggertoUSB", val: 't1' });
+        }//IF !block, activate both trial trigger line in addition to sample command sync line
+        else if (port.connected && newbagblock == 1){
+          usbDeviceWorker.postMessage({ action: "writeSampleCommandTriggertoUSB", val: 'b1' });
+        }//ELSE new block, activate both trial & block trigger lines in addition to sample command sync line
+      }//IF showing sample trigger frame
     }//IF showing frame
 
     //---------------- RENDER THE NEXT FRAME ------------------//

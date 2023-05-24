@@ -16,7 +16,7 @@ constructor(samplingStrategy){
 	this.testq.filenames = []; 
 
 
-	this.currentbag = -1;
+	this.currentbag = 0;
 	this.currentbag_starttime = -1;
 
 	// ImageBuffer
@@ -132,44 +132,12 @@ async generate_trials(n_trials){
 	var image_requests = []; 
 
 	for (var i = 0; i < n_trials; i++){
-		var newbagblock = 0;
-		if (TASK.NStimuliPerBagBlock <= 0 || TASK.NMillisecondsPerBagBlock > 0){
-			// do nothing
-		}//use all bags in block -> Note: TASK.NMillisecondsPerBagBlock overrides TASK.NStimuliPerBagBlock
-		else if (TASK.NStimuliPerBagBlock > 0){
-			if (this.currentbag < 0 || this.ndrawn_per_bag[this.currentbag] == TASK.NStimuliPerBagBlock){
-				
-				// Increment bag
-				if (this.currentbag < 0){
-					this.currentbag = 0; //initialize with first bag
-				}
-				else{
-					this.ndrawn_per_bag[this.currentbag] = 0; //reset trials
-					this.currentbag = this.currentbag + 1; //go to next bag
-
-					if (this.currentbag >= this.ndrawn_per_bag.length){
-						this.currentbag = 0; //go back to first bag
-					}
-				}//IF
-				newbagblock = 1
-			}//IF ndrawn_per_bag exceeded
-		}//IF sample all bags vs blocks
-
 		//global bucket
-		if (this.samplebucket.length == 0 || newbagblock == 1){
+		if (this.samplebucket.length == 0){
 			this.samplebucket = []
-			if (TASK.NStimuliPerBagBlock > 0 && TASK.NMillisecondsPerBagBlock <= 0){
-				for (var j = 0; j <= this.samplebag_labels.length-1; j++){
-					if (this.samplebag_labels[j] == this.currentbag){
-						this.samplebucket.push(j)
-					}
-				}//FOR i sample images
-			}//IF blocked, then restrict to one object category
-			else{
-				for (var j = 0; j <= this.samplebag_labels.length-1; j++){
-					this.samplebucket.push(j)
-				}//FOR i sample images
-			}//ELSE interleaved, sample all categories
+			for (var j = 0; j <= this.samplebag_labels.length-1; j++){
+				this.samplebucket.push(j)
+			}//FOR j sample images, sample all categories
 		}//Need to make a new bucket
 
 		// Draw one (1) sample image from current samplebucket
@@ -381,7 +349,7 @@ async get_next_trial(){
 		}//ELSE not stick
 	}//WHILE not drawing correct response on opposite side of response bias (sticky side)
 	
-	if (TASK.NMillisecondsPerBagBlock > 0 && FLAGS.savedata){
+	if ( (TASK.NStimuliPerBagBlock > 0 || TASK.NMillisecondsPerBagBlock > 0) && FLAGS.savedata){
 		while(true){
 			if ( this.samplebag_labels[sample_index] != this.currentbag){
 				if (this.sampleq.filename.length == 0){
@@ -476,7 +444,7 @@ async get_next_trial(){
 
 	return	[sample_image, sample_index, test_images, test_indices, test_correctIndex, sample_scenebag_label, sample_scenebag_index, test_scenebag_labels, test_scenebag_indices, sample_reward]
 // return [sample_image, sample_index]
-} //FUNCTION get_next_trial
+}//FUNCTION get_next_trial
 
 
 selectSampleImage(SampleBucket, SamplingStrategy){

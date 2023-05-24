@@ -63,9 +63,7 @@ async function automateTask(automatorData, trialhistory) {
   ENV.StagePctCorrect = runningHistoryStats[0];
   ENV.StageNTrials = runningHistoryStats[1];
 
-  console.log(
-    `Performance history: ${ENV.StageNTrials} trials, pctcorrect=${ENV.StagePctCorrect}`
-  );
+  console.log(`Performance history: ${ENV.StageNTrials} trials, pctcorrect=${ENV.StagePctCorrect}`);
 
   // ---------- CHANGE TASK.STUFF TO AUTOMATOR DATA [ NEXT_STAGE ] ----------------------
   // If transition criteria are met,
@@ -140,7 +138,6 @@ async function automateTask(automatorData, trialhistory) {
     purgeTrackingVariables();
 
     // Update TASK
-
     const updatedTaskTransition = Object.fromEntries(
       Object.entries(
         Object.assign({}, TASK, automatorData[currentStageIdx + 1])
@@ -180,7 +177,7 @@ async function automateTask(automatorData, trialhistory) {
   );
   updateHeadsUpDisplay();
   return;
-} //FUNCTION automateTask(automatorData,trialhistory)
+}//FUNCTION automateTask(automatorData,trialhistory)
 
 function stageHash(task) {
   // Returns a value that uniquely describes the automator and stage of the automator

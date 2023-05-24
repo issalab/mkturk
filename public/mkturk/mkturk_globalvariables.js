@@ -227,6 +227,7 @@ frame_prime.reset = function(framesequence) {
 var CURRTRIAL = {};
 CURRTRIAL.reset = function () {
   this.num = 0;
+  this.blocknum = 0;
   this.starttime = NaN;
   this.reinforcementtime = NaN;
   this.endtime = NaN;
@@ -270,6 +271,7 @@ EVENTS.reset_trialseries = function () {
   this.trialnum = CURRTRIAL.num;
   this.trialseries = {};
   this.imageseries = {};
+  this.trialseries.BlockNum = {};
   this.trialseries.Sample = {};
   this.trialseries.Test = {};
   this.trialseries.CorrectItem = {};
@@ -371,7 +373,7 @@ function updateTrialHistory() {
   trialhistory.starttime.push(CURRTRIAL.starttime);
   trialhistory.response.push(CURRTRIAL.response);
   trialhistory.correct.push(CURRTRIAL.correct);
-}
+}//FUNCTION updateTrialHistory
 
 function logEVENTS(eventname, eventval, eventtype,timestamp = Date.now()) {
   //log events for a trial
@@ -402,7 +404,7 @@ function logEVENTS(eventname, eventval, eventtype,timestamp = Date.now()) {
     var trialtime = [EVENTS.trialnum, new Date(timestamp).toJSON()];
     EVENTS[eventtype][eventname][indevent.toString()] = trialtime.concat(eventval);
   }
-}
+}//FUNCTION logEVENTS
 
 function purgeTrackingVariables(src) {
   // Purges heresies committed in the test period
@@ -420,20 +422,16 @@ function purgeTrackingVariables(src) {
     )}_${ENV.Subject}.json`;
   } else {
     ENV.DataFileName =
-      DATA_SAVEPATH +
-      ENV.Subject +
-      '/' +
-      datestr.slice(0, datestr.indexOf('.')) +
-      '_' +
-      ENV.Subject +
-      '.json';
+      DATA_SAVEPATH + ENV.Subject +
+      '/' + datestr.slice(0, datestr.indexOf('.')) +
+      '_' + ENV.Subject + '.json';
   }
-  ENV.FirestoreDocRoot =
-    datestr.slice(0, datestr.indexOf('.')) + '_' + ENV.Subject;
+  ENV.FirestoreDocRoot = datestr.slice(0, datestr.indexOf('.')) + '_' + ENV.Subject;
 
   if (FLAGS.waitingforTouches > 0 || FLAGS.purge == 1) {
     // purge requested by user at beginning of trial during fixation (most likely)
     CURRTRIAL.num = 0;
+    CURRTRIAL.blocknum = 0;
     EVENTS.trialnum = 0;
     CURRTRIAL.starttime = Date.now() - ENV.CurrentDate.valueOf();
     logEVENTS('StartTime', CURRTRIAL.starttime, 'trialseries');
@@ -442,10 +440,9 @@ function purgeTrackingVariables(src) {
     CURRTRIAL.num = -1;
   }
 
-  FLAGS.sampleblockcount = 0;
   FLAGS.consecutivehits = 0;
   FLAGS.firestorelastsavedtrial=0;
   FLAGS.filecodeSent = 0;
 
   return;
-}
+}//FUNCTION purgeTrackingVariables

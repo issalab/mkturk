@@ -27,6 +27,10 @@ index_init();
       FLAGS.purge = 0;
     }//IF purge trial tracking variables
 
+    if (FLAGS.savedata>0 && FLAGS.filecodeSent <= 0){
+      await index_send_filecode(CURRTRIAL.starttime)
+    }//IF first trial, send filecode pulse on sample command line
+
     //Real-time Broadcast of {filename, trial#, performance} for Agent
     var frac_correct=0;
     if (EVENTS['trialseries']['Response'].length>0){
@@ -57,23 +61,6 @@ index_init();
 
     let imgSeqLen = TASK.NRSVP <= 0 ? 1 : ENV.NRSVPMax;
 
-    if (TASK.NMillisecondsPerBagBlock > 0 && FLAGS.savedata){
-      if (TQS.currentbag_starttime == -1 || Date.now() - TQS.currentbag_starttime > TASK.NMillisecondsPerBagBlock){
-        // Increment bag
-        if (TQS.currentbag < 0){
-          TQS.currentbag = 0; //initialize with first bag
-        }
-        else{
-          TQS.currentbag = TQS.currentbag + 1; //go to next bag
-  
-          if (TQS.currentbag > Math.max(...TQS.samplebag_labels)){
-            TQS.currentbag = 0; //go back to first bag
-          }
-        }//IF
-        TQS.currentbag_starttime = -1;//update to Date.now() only when trigger in screenfunctions
-      }//IF enough time has elapsed, switch bags 
-    }//IF fixed duration blocks
-
     for (let i = 0; i < imgSeqLen; i++) {
       let x = await TQS.get_next_trial();
       CURRTRIAL.images.sampleimage[i] = x[0];
@@ -98,6 +85,7 @@ index_init();
 
     logEVENTS('Sample', CURRTRIAL.sampleindex_nonarray, 'trialseries');
     logEVENTS('Test', CURRTRIAL.testindices[0], 'trialseries');
+    logEVENTS('BlockNum',CURRTRIAL.blocknum,'trialseries');
     //============(END) SELECT SAMPLE & TEST IMAGES ============//
 
     //============ SET UP SAMPLE & TEST SEQUENCE ============//
@@ -736,9 +724,28 @@ index_init();
       p0.cancel()
     }//ELSE IF PUNISH, then timeout (Blank, Punish, Blank)
 
+    let updateBlockNum = 0;
+    if (TASK.NMillisecondsPerBagBlock > 0 && FLAGS.savedata && CURRTRIAL.num > 0){
+      if (TQS.currentbag_starttime == -1 || Date.now() - TQS.currentbag_starttime > TASK.NMillisecondsPerBagBlock){
+        updateBlockNum = 1;
+      }
+    }//IF nmillisecondsperbagblock (overrides nstimuliperbagblock)
+    else if (TASK.NStimuliPerBagBlock > 0 && FLAGS.savedata){
+      let nstimpertrial = 1;
+      if (TASK.NRSVP > 0){nstimpertrial = TASK.NRSVP}
+      if ( (CURRTRIAL.num+1)*nstimpertrial >= TASK.NStimuliPerBagBlock*(CURRTRIAL.blocknum + 1) ){
+        updateBlockNum = 1;
+      }
+    }//ELSE IF nstimuliperbagblock
+
     // Log trial end time
     if (port.connected && FLAGS.savedata) {
-      usbDeviceWorker.postMessage({ action: "writeSampleCommandTriggertoUSB", val: 0 });
+      if (!updateBlockNum){
+        usbDeviceWorker.postMessage({ action: "writeSampleCommandTriggertoUSB", val: "t0" });
+      }//IF not new block, only turn off trail trigger lines
+      else if (updateBlockNum){
+        usbDeviceWorker.postMessage({ action: "writeSampleCommandTriggertoUSB", val: "b0" });
+      }//ELSE IF updateBlockNum, also turn off block trigger lines
       CURRTRIAL.endtime = Date.now() - ENV.CurrentDate.valueOf();
       await sleep(5);
     }//IF usb, zero sample command line
@@ -794,6 +801,7 @@ index_init();
     console.log('||||||||||||||||||||  END OF TRIAL ', CURRTRIAL.num,' |||||||||||||||||||');
     if (endloop == 1){ return }//IF end task
 
+    if (updateBlockNum){ index_update_blocknum() } //updates CURRTRIAL.blocknum
     CURRTRIAL.num++;
     EVENTS.trialnum = CURRTRIAL.num;
   }//WHILE(true): Main Task Loop

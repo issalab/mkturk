@@ -8,7 +8,7 @@ function index_init(){
 
   //Set SampleCommand line back to 0 before close window
   window.addEventListener('beforeunload', async (evt) => {
-    usbDeviceWorker.postMessage({ action: "writeSampleCommandTriggertoUSB", val: 0 });
+    usbDeviceWorker.postMessage({ action: "writeSampleCommandTriggertoUSB", val: 'b0' });
     await sleep(20)
   });
 
@@ -383,7 +383,7 @@ async function index_init_params_screen_automator(){
 
 async function index_reloadparameters(){
   if (port.connected) {
-    usbDeviceWorker.postMessage({ action: "writeSampleCommandTriggertoUSB", val: 0 });
+    usbDeviceWorker.postMessage({ action: "writeSampleCommandTriggertoUSB", val: 'b0' });
     usbDeviceWorker.postMessage({ action: "writepumptopauseeyetoUSB", val: '|' });//pause eyetracker
   }
   FLAGS.need2loadParameters = await loadParametersfromFirebase(ENV.ParamFileName);
@@ -773,9 +773,9 @@ async function index_send_filecode(){
 ];
 
   for (let i=0; i<=time_digits.length-1; i++){
-    usbDeviceWorker.postMessage({ action: "writeSampleCommandTriggertoUSB", val: 1 });
+    usbDeviceWorker.postMessage({ action: "writeSampleCommandTriggertoUSB", val: 'f1' });
     await sleep(10*(time_digits[i]+1));
-    usbDeviceWorker.postMessage({ action: "writeSampleCommandTriggertoUSB", val: 0 });
+    usbDeviceWorker.postMessage({ action: "writeSampleCommandTriggertoUSB", val: 'f0' });
     await sleep(25);//milliseconds  
   }//FOR i digits
 
@@ -1083,6 +1083,16 @@ function index_housekeeping_exits(){
 
   return 0
 }//FUNCTION index_housekeeping_exits()
+
+function index_update_blocknum(){
+  //---- Sequential sampling of samplebags ----//
+  TQS.currentbag = TQS.currentbag + 1; //go to next bag
+  if (TQS.currentbag > Math.max(...TQS.samplebag_labels)){
+    TQS.currentbag = 0; //go back to first bag
+  }
+  CURRTRIAL.blocknum++
+  TQS.currentbag_starttime = -1;//update to Date.now() only when trigger in screenfunctions
+}//FUNCTION index_update_blocknum
 
 (function (window) {
   window.utils = {
