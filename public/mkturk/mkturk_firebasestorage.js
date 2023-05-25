@@ -381,6 +381,7 @@ async function loadParametersfromFirebase(paramfile_path) {
         "/mkturkfiles/scenebags/objectome3d/camel/20200709_camel_token.js",
         "/mkturkfiles/scenebags/objectome3d/wrench/20200709_wrench_token.js"
     ]}
+    if (typeof TASK.SampleHoldDuration == 'undefined'){TASK.SampleHoldDuration = Infinity}
 
     // TEST SCREEN
     if (typeof TASK.ImageBagsTest == 'undefined'){
@@ -408,6 +409,7 @@ async function loadParametersfromFirebase(paramfile_path) {
     if (typeof TASK.ChoiceTimeOut == 'undefined'){TASK.ChoiceTimeOut = 5000;}
     if (typeof TASK.HideChoiceDistractors == 'undefined'){TASK.HideChoiceDistractors = 0;}
     if (typeof TASK.ChoiceOutsideGracePeriod == 'undefined'){TASK.ChoiceOutsideGracePeriod = TASK.ChoiceTimeOut+1}
+    if (typeof TASK.ChoiceHoldDuration == 'undefined'){TASK.ChoiceHoldDuration = 0}
 
     // SAMPLING STRATEGY
     if (typeof TASK.SamplingStrategy == 'undefined'){ TASK.SamplingStrategy = 'uniform_without_replacement'; }

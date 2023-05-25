@@ -543,8 +543,8 @@ async function index_loadScenes(){
         typeof(IMAGES.Sample[i]['LIGHTS']) != "undefined" ||
         typeof(IMAGES.Sample[i]['OBJECTS']) != "undefined"){
       FLAGS.usecanvas2D = 0;
-    } //IF
-  } //FOR i samplebags
+    }//IF
+  }//FOR i samplebags
 
   for (let i = 0; i < TASK.ImageBagsTest.length; i++) {
     IMAGES.Test[i] = await loadTextfromFirebase(TASK.ImageBagsTest[i]);
@@ -552,8 +552,8 @@ async function index_loadScenes(){
         typeof(IMAGES.Test[i]['LIGHTS']) != "undefined" ||
         typeof(IMAGES.Test[i]['OBJECTS']) != "undefined"){
       FLAGS.usecanvas2D = 0;
-    } //IF
-  } //FOR i testbags
+    }//IF
+  }//FOR i testbags
 
   // find the longest scene param array in IMAGES (ie # of stim)
   for (let i = 0; i < IMAGES.Sample.length; i++) {
@@ -583,9 +583,7 @@ if (!FLAGS.usecanvas2D)
       classLabel++
     ) {
       for (const obj in IMAGES[taskscreen][classLabel].OBJECTS) {
-        meshPaths.push(
-          IMAGES[taskscreen][classLabel].OBJECTS[obj].meshpath
-        );
+        meshPaths.push(IMAGES[taskscreen][classLabel].OBJECTS[obj].meshpath);
         meshIdxs.push([classLabel, obj]);
       }
     }

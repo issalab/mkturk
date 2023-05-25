@@ -348,7 +348,7 @@ index_init();
       CURRTRIAL.samplefixationtouchevent = '';
       CURRTRIAL.samplefixationxyt = [];
 
-      let p1 = hold_promise_simple(Infinity, TASK.SampleOutsideGracePeriod,0);
+      let p1 = hold_promise_simple(TASK.SampleHoldDuration, TASK.SampleOutsideGracePeriod,0);
       let p2 = displayTrial(
         CURRTRIAL.tsequencedesired,
         CURRTRIAL.sequencegridindex,
@@ -576,7 +576,7 @@ index_init();
           race_return.cxyt = [ currchoice, -1, -1, CURRTRIAL.samplefixationxyt[2] ];
         }//IF RSVP, skip choice
         else {
-          let p1 = hold_promise_simple(TASK.FixationDuration, TASK.ChoiceOutsideGracePeriod,1);
+          let p1 = hold_promise_simple(TASK.ChoiceHoldDuration, TASK.ChoiceOutsideGracePeriod,1);
           let p2 = choiceTimeOut(TASK.ChoiceTimeOut);
           race_return = await Promise.race([p1.p, p2]);
           p1.cancel();

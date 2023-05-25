@@ -653,9 +653,7 @@ async function addToScene(taskscreen) {
         }//FOR i
       }//ELSE
 
-      transparentFace = new THREE.MeshBasicMaterial({
-        transparent: true, opacity: 0, side: THREE.BackSide,
-      });
+      transparentFace = new THREE.MeshBasicMaterial({transparent: true, opacity: 0, side: THREE.BackSide});
 
       let backgroundCube = new THREE.Mesh(boxGeometry, materialArray);
       backgroundCube.name = "backgroundCube" + classlabel;
@@ -677,15 +675,20 @@ async function addToScene(taskscreen) {
 
         // IF background image idx isArray
         let imgIdx;
-        if (!Array.isArray(IMAGES[taskscreen][classlabel].IMAGES.imageidx[i])) {
+
+        let useidx = i;
+        if (typeof(IMAGES[taskscreen][classlabel].IMAGES.imageidx[useidx]) == 'undefined'){
+          useidx = 0;
+        }//IF no entry available
+        if (!Array.isArray(IMAGES[taskscreen][classlabel].IMAGES.imageidx[useidx])) {
           imgIdx = [
-            IMAGES[taskscreen][classlabel].IMAGES.imageidx[i],
-            IMAGES[taskscreen][classlabel].IMAGES.imageidx[i],
+            IMAGES[taskscreen][classlabel].IMAGES.imageidx[useidx],
+            IMAGES[taskscreen][classlabel].IMAGES.imageidx[useidx],
           ];
-        } else {
-          // ELSE isArray
-          imgIdx = IMAGES[taskscreen][classlabel].IMAGES.imageidx[i];
-        }
+        }//IF !array, make 2-element array
+        else {
+          imgIdx = IMAGES[taskscreen][classlabel].IMAGES.imageidx[useidx];
+        }//ELSE isArray
 
         let durationMS = chooseArrayElement(IMAGES[taskscreen][classlabel].durationMS,i,0);
 
@@ -697,7 +700,7 @@ async function addToScene(taskscreen) {
           }//IF
         }//FOR j img indices, round
 
-        if ( !IMAGES[taskscreen][classlabel].IMAGES.imageidx[i].every((val, i, arr) => val === arr[0])) {
+        if (!IMAGES[taskscreen][classlabel].IMAGES.imageidx[i].every((val, i, arr) => val === arr[0])) {
           FLAGS.movieper[taskscreen][classlabel][i] = IMAGES[taskscreen][classlabel].IMAGES.imageidx[i].length;
         }//IF
 
@@ -707,10 +710,10 @@ async function addToScene(taskscreen) {
             IMAGES[taskscreen][classlabel].IMAGES.visible[i] =
               interpParam_frames(IMAGES[taskscreen][classlabel].IMAGES.visible[i],"binary",durationMS,framerate);
           }//IF
-        } else {
-          // ELSE IMAGES.visible exists
+        }//IF IMAGES.visible exists
+        else {
           IMAGES[taskscreen][classlabel].IMAGES.visible = [1];
-        }
+        }//ELSE default to background is visible
 
         IMAGES[taskscreen][classlabel].IMAGES.boundingBoxCube2DPixels[i]=[];
         for (var f=0; f<=FLAGS.movieper[taskscreen][classlabel][i].length-1; f++){

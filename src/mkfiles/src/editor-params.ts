@@ -123,6 +123,11 @@ export const taskParamSchema = {
       default: '[0,1]',
       examples: ['[m,n] --> [location of same circle, location of different square]'],
     },
+    ChoiceHoldDuration: {
+      type: 'integer',
+      default: "0 (just needs to click)",
+      examples: ['in milliseconds (duration of choice item selection hold)', '0 (immediately reward upon choosing item)'],
+    },
     ChoiceOutsideGracePeriod: {
       type: 'integer',
       default: 'TASK.ChoiceTimeOut+1',
@@ -147,7 +152,7 @@ export const taskParamSchema = {
     },
     FixationDuration: {
       type: 'integer',
-      minimum: 0,
+      default: '0',
       examples: ['in milliseconds (duration of fixation hold)'],
     },
     FixationOutsideGracePeriod: {
@@ -257,6 +262,11 @@ export const taskParamSchema = {
     Photodiode: {
       type: 'integer',
       default: 1,
+    },
+    SampleHoldDuration: {
+      type: 'integer',
+      default: "Infinity (enter as a string with quotes)",
+      examples: ['in milliseconds (duration of fixation hold)', 'Infinity (view target through whole sample sequence -- follow mode)', '0 (immediately reward upon finding target -- find mode)'],
     },
     SampleGridIndex: {
       type: 'integer',
