@@ -50,8 +50,7 @@ async function automateTask(automatorData, trialhistory) {
   // Read transition criteria from automatorData
   ENV.MinPercentCriterion = automatorData[currentStageIdx].MinPercentCriterion;
   ENV.MinTrialsCriterion = automatorData[currentStageIdx].MinTrialsCriterion;
-  ENV.CurrentAutomatorStageName =
-    automatorData[currentStageIdx].CurrentAutomatorStageName;
+  ENV.CurrentAutomatorStageName = automatorData[currentStageIdx].CurrentAutomatorStageName;
 
   // Calculate current pctcorrect and ntrials
   const runningHistoryStats = computeRunningHistory(

@@ -27,7 +27,7 @@ index_init();
       FLAGS.purge = 0;
     }//IF purge trial tracking variables
 
-    if (FLAGS.savedata>0 && FLAGS.filecodeSent <= 0){
+    if (port.connected && FLAGS.savedata>0 && FLAGS.filecodeSent <= 0){
       await index_send_filecode(CURRTRIAL.starttime)
     }//IF first trial, send filecode pulse on sample command line
 
