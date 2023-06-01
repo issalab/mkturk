@@ -81,8 +81,9 @@ KeepSampleON (default = 0 --> extinguishes sample screen before test/choice scre
 
 **HideTestDistractors (currently inactive):** HideTestDistractors=1, hides the distractor choices so that subject only sees matching choice. Still gets punished if touches blank area where the incorrect button would have been.
 
-SampleOutsideGracePeriod (default = 0 --> punish touches or viewing outside sample image sequence): Time in milliseconds that subject is allowed to touch or view non-target parts of screen after sample screen appears (note: test screen is also part of the launched sequence). If do not want to punish touches (viewing) outside of sample+test targets, then set TASK.SampleOutsideGracePeriod to be longer than the total duration of the RSVP or MtS or SR or SD image sequence being shown. Could just choose an arbitrarily large value like 20000 milliseconds if do not want to calculate the duration of the frame sequence.
+SampleOutsideGracePeriod (default = 0 --> punish touches or viewing outside sample image sequence): Time in milliseconds that subject is allowed to touch or view non-target parts of screen after sample screen appears (note: test screen is also part of the launched sequence). If do not want to punish touches (viewing) outside of sample+test targets, then set TASK.SampleOutsideGracePeriod to be longer than the total duration of the RSVP or MtS or SR or SD image sequence being shown. Could just choose an arbitrarily large value like 20000 milliseconds if do not want to calculate the duration of the frame sequence. Note that SampleOutsideGracePeriod applies to the whole sample-test ballistic display sequence (see TASK.SampleHoldDuration for a more complete explanation). This usually is not an issue as the sample movie is typically what the subject is expected to view/fixate, but for test movies, then have to account for test duration as that is part of the sample-test display sequence and subject to SampleOutsideGracePeriod which could just as well be called Sample(Test)OutsideGracePeriod for complete accuracy.
 
+SampleHoldDuration (default = Infinity --> have to maintain fixation until Sample sequence completes -- follow mode): How long subject has to fixate Sample movie in milliseconds for a successful fixation to register. IF TASK.SampleHoldDuration<=0, then simply clicking in a Sample target will proceed to reward and abort the remainder of the Sample sequence (find mode). Note that SampleHoldDuration applies to the sample sequence if TASK.NRSVP>0 (no choice required); however, for choice tasks (SR, MtS, and SD), the SampleHoldDuration applies to the whole sample-test ballistic display sequence. When test is simply a single frame image movie, then it's not materially different, but when test is a longer image (such as in same-different) or a movie (such as in a movie discrimination task), then really this parameter applies across the sample-test sequence and is in effect better termed SampleTestHoldDuration, but for legacy reasons, we do not use this SampleTest terminology as the Sample movie sequence is the first class citizen that TASK.SampleHoldDuration mainly applies to. If fixation breaks early, then the sequence jumps to the last frame which is the last frame of the test choices, or in a same-different task would be the choice buttons (white circle and white square), so the subject has to make a decision with less temporal information.
 
 ___________________________________________________________________________
 *ADD CHOICE SCREEN*
@@ -99,13 +100,16 @@ HideChoiceDistractors (default = 0): If TASK.HideChoiceDistractors=1, hides the 
 
 ChoiceOutsideGracePeriod (default = TASK.ChoiceTimeOut + 1 --> do not punish any touches or viewing outside choice targets): Time in milliseconds that subject is allowed to touch or view non-target parts of screen after test (or choice) screen finishes displaying in a SR, MtS, or SD task. If do not want to punish touches (viewing) outside of choice targets, then set TASK.ChoiceOutsideGracePeriod to be larger than TASK.ChoiceTimeOut. Alternatively, if want to punish subject for any spurious touches outside the available choices, then set TASK.ChoiceOutsideGracePeriod = 0.
 
+ChoiceHoldDuration (default = 0 milliseconds): How long subject has to hold fixation touch in milliseconds on a choice item for a successful choice to register. If TASK.ChoiceHoldDuration <=0, then simply has to click to register choice and immediately proceed to reward/punish screen.
 
 ___________________________________________________________________________
 *SAMPLING STRATEGY*
 ___________________________________________________________________________
 SamplingStrategy (default = uniform_without_replacement except when Agent=SaveImages sets to sequential): Determines how sample images are drawn: uniform_with_replacement, uniform_without_replacement, sequential. TASK.Agent=SaveImages forces TASK.SamplingStrategy = sequential.
 
-NStimuliPerBagBlock (default = 0 --> draw from all sample bags on each trial): if TASK.NStimuliPerBagBlock = 0, randomly samples from all bags (interleaved design), if >0, samples N consecutive images from the same sample image bag (block design). This is equivalent to blocking the session so that training is done in object blocks rather than interleaving all objects. After N sample draws are completed for bag i, proceeds to next bag i+1 according to bag sequence specified in ImageBagsSample. When all bags have been sampled NTrialsPerBagBlock times, starts back at bag 0. Note, that in an RSVP design, if NRSVP = x and NStimuliPerBagBlock = y, then y/x consecutive trials will be from the same bag. In other words, the counting of what goes into a block is in units of images not trials. Also, since the trial queue is predetermined, when NRSVP = x images are drawn ahead of time for that trial, even if the agent does not view of all of them on that trial, the next trial will be a new set of images. This behavior serves as feature so that if you want each RSVP trial to draw from only one type of scene bag, then set NStimuliPerBagBlock = NRSVP so that now each queued RSVP sequence is from one and only one scene bag (where the objects/background may be of a certain type for that trial).
+NStimuliPerBagBlock (default = 0 --> draw from all sample bags on each trial): if TASK.NStimuliPerBagBlock = 0, randomly samples from all bags (interleaved design), if >0, samples N consecutive images from the same sample image bag (block design). This is equivalent to blocking the session so that training is done in object blocks rather than interleaving all objects. After N sample draws are completed for bag i, proceeds to next bag i+1 according to bag sequence specified in ImageBagsSample. When all bags have been sampled NStimuliPerBagBlock times, starts back at bag 0. Since the trial queue is predetermined, when NRSVP = x images are drawn ahead of time for that trial, even if the agent does not view all of them on that trial, the next trial will be a new set of images and the non-viewed images count toward the count for NStimuliPerBagBlock see (as an alternative, see TASK.NMillisecondsPerBagBlock for a fixed duration block). Note, that for ease of implementation & also for interpretability in analysis, all stimuli in a given trial will be drawn from the currently specified bag. In other words, the block updates at trial granularity at the end of a trial, so if TASK.NRSVP>1 and TASK.NStimuliPerBagBlock is not an integer multiple of TASK.NRSVP, this means that not exactly NStimuliPerBagBlock will be drawn, may get a few stimuli more if TASK.NRSVP is large. However, this approach does guarantee the following possibly desirable side effect -- that in an RSVP design, if NRSVP = x and NStimuliPerBagBlock = y, then ceil(y/x) consecutive trials will be from the same bag. Thus, each queued RSVP sequence is from one and only one scene bag (where the objects/background may be of a certain type for that trial). Overrides by TASK.NMillisecondsPerBagBlock
+
+NMillisecondsPerBagBlock (default = -1 --> do not require stimuli from same bag be sampled for a duration): if TASK.NMillisecondsPerBagBlock > 0, then consecutive images from the same sample image bag i will be drawn until TASK.NMillisecondsPerBagBlock milliseconds have elapsed, after which, will proceed to drawing from bag i+1 until TASK.NMillisecondsPerBagBlock is once again fulfilled. Overriden by TASK.NStimuliPerBagBlock
 
 ___________________________________________________________________________
 *RESPONSE OPTIONS*
@@ -136,7 +140,7 @@ NConsecutiveHitsforBonus (default = 0 --> do not count consecutive hits toward e
 
 NRewardMax (default = 1 --> no bonus reward possible): Max number of rewards that can be given for a successful trial. This caps how much extra (bonus) reward subject can get for successful completion of consecutive trials. If nrewardmax=3, then subject can get up to 3x reward for completing 3*NConsecutiveHitsforBonus consecutive trials successfully, and then would get 3x reward after that until gets a trial wrong.
 
-NRSVPMax (default = 0 --> no expenontial reward for fixating NRSVP sequence longer): Works in tandem with TASK.NRSVP where TASK.NRSVP is the min # of images required to fixate for reward and a rsvp sequence of TASK.NRSVPMax images is queued up per trial. Exponentially more reward pulses given for longer fixations up to NRewardMax for fixating NRSVPMax images. No reward for less than NRSVP clips fixated, one reward pulse for NRSVP clips viewed, and NRewardMax pulses given for NRSVPMax.  Trial-by-Trial bonus reward for consecutive hits will be ignored if this option is on to reward more images fixated within a trial. NRSVPMax is ignored if set less than NRSVP. See TSequenceActualClip in TRIALEVENTS if want to determine which clips were fixated (-1 is registered for clip times if broke fixation). See TRIALEVENTS[NReward] to determine how many reward pulses were delivered. NOTE: If want to use bonus rewards & NRewardMax in the traditional trial-by-trial sense, then set NRSVPMax < NRSVP so that only one reward is given per NRSVP images shown and bonus is enacted based on multiple consecutive trial hits.
+NRSVPMax (default = 0 --> no exponential reward for fixating NRSVP sequence longer): Works in tandem with TASK.NRSVP where TASK.NRSVP is the min # of images required to fixate for reward and a rsvp sequence of TASK.NRSVPMax images is queued up per trial. Exponentially more reward pulses given for longer fixations up to NRewardMax for fixating NRSVPMax images. No reward for less than NRSVP clips fixated, one reward pulse for NRSVP clips viewed, and NRewardMax pulses given for NRSVPMax.  Trial-by-Trial bonus reward for consecutive hits will be ignored if this option is on to reward more images fixated within a trial. NRSVPMax is ignored if set less than NRSVP. See TSequenceActualClip in TRIALEVENTS if want to determine which clips were fixated (-1 is registered for clip times if broke fixation). See TRIALEVENTS[NReward] to determine how many reward pulses were delivered. NOTE: If want to use bonus rewards & NRewardMax in the traditional trial-by-trial sense, then set NRSVPMax < NRSVP so that only one reward is given per NRSVP images shown and bonus is enacted based on multiple consecutive trial hits.
 
 ___________________________________________________________________________
 *ADD AUTOMATOR*
@@ -190,8 +194,9 @@ CalibrateEyeCrossTerms (default = 0 --> do not calibrate with additional crosste
 
 CheckRFID (default = 0 --> do not check for an RFID read to proceed with task): Time in milliseconds over which at least one matching RFID read is required so that agent doesn't get kicked off of task. If there is a read within the last CheckRFID ms, task continues, otherwise agent is locked out at start of next trial. CheckRFID <= 0 turns off RFID checking.
 
-InterTrialInterval (default = 0 millisceonds): How long to wait after reward/punish is delivered before starting next trial. Only a gray screen is shown for InterTrialInterval milliseconds, followed by the fixation dot. If not specified, is set to 0 ms.
+InterTrialInterval (default = 0 milliseconds): How long to wait after reward/punish is delivered before starting next trial. Only a gray screen is shown for InterTrialInterval milliseconds, followed by the fixation dot. If not specified, is set to 0 ms.
 
+MinTrialDuration_AfterSampleCommandTrigger (default = -1; do not enforce a lower bound on trial duration post sample command trigger): Whether to enforce a minimum trial period after the sample command trigger before proceeding to the next trial. If after the TASK.InterTrialInterval wait period currentTime - sampleStartTime is still less than TASK.MinTrialDuration_AfterSampleCommandTrigger, then wait an additional period. This optional trial duration condition is useful for working with external devices that have a fixed data acquisition period following a trigger. In this way, can make sure MkTurk does not start a new trial and re-trigger the device until the device has finished its acquisition for the current trial.
 
 ## TASK (deprecated)
 ___________________________________________________________________________
@@ -342,6 +347,8 @@ Eye.BlinkGracePeriod (Deprecated December 9, 2022; elevated to be user facing in
 
 
 ## EVENTS TRIALSERIES (saved to json data file)
+BlockNum: Current block number, a level of organization above trial number
+
 CorrectItem: Index of the correct item on each trial
 
 EndTime: End of trial, time is recorded when either reward delivery or punish timeout promise is fulfilled. On each task trial, SampleCommand line is set to 0 upon completion of reward/punish (was set to 1 at beginning of trial as recorded by SampleStartTime).
@@ -433,6 +440,89 @@ ALT/OPTION + 4 --> manually flush pump for 1 minute (8 x 30second pulses)
 
 <br>
 
+## SCENES
+Most variables except those marked * or ** can be changed on a per movie clip and per movie frame basis using an array or array of arrays. An array specifies how values should be set for each movie clip. For params that you wish to animate, an array of arrays specifies how the param value changes on each frame for each clip. Inner arrays for an animation can specify the start and end value or particular keypoints in between. All intervening values are linearly interpolated to produce durationMS * framerate values (e.g., 3 sec * 60 Hz = 240 values) and this array of expanded values is stored in the final data file in the field for that animated variable. Besides the calculated parameter value on each frame, the 2D object bounding box values in pixels after projecting to screen are stored in the final SCENES variable in the output data file.
+
+*cannot be changed (constant)
+**cannot be animated
+() meta appended to SCENES and saved into final data file (i.e., not user-specified in scene file)
+
+# CAMERAS
+type*:
+fieldofview*:
+near*:
+far*:
+position:
+targetTHREEJS:
+visible:
+(targetInches):
+
+# LIGHTS
+type*:
+color*:
+intensity:
+position:
+visible:
+
+# OBJECTS
+meshpath*:
+objectdoc*:
+texture*:
+material.type*:
+material.color*:
+material.metalness*:
+material.roughness*:
+material.reflectivity*:
+material.opacity:
+material.transparent*: 
+sizeTHREEJS:
+positionTHREEJS:
+rotationDegrees:
+visible:
+
+target**: (default = 1 --> an object is a valid target) Allows user to toggle which objects in the scene are used as a target in that particular scene render. This is done per movie clip, so if not a target (SCENE.OBJECTS."name".target = 0), then remains not a target for entire movie. Note, that if an object's visible property is set to 0, this also makes them not a fixatable/touchable target. Setting the target property on objects is useful for creating a "where's waldo" type scene where there is one target among many distractor objects. It's a what-where task instead of just a what task as in stimulus-reponse, match-to-sample, and same-different paradigms.
+
+(boundingBox2DPixels):
+(intrinsicMeshBoundingBox):
+(intrinsicMeshMaxDim):
+(morphTargetDelta):
+(morphMultiplier):
+(sizeInches):
+(positionInches):
+
+# IMAGES
+imagebag*:
+imageidx:
+sizeTHREEJS:
+(boundingBoxCube2DPixels):
+
+# OBJECTFILTERS || IMAGEFILTERS
+blur: Applies a Gaussian blur to the input image in pixels.
+
+brightness: Applies a linear multiplier to the input image, making it appear more or less bright. Values are linear multipliers on the effect, with 0% creating a completely black image, 100% having no effect, and values over 100% brightening the image.
+
+contrast: Adjusts the contrast of the input image. A value of 0% makes the image grey, 100% has no effect, and values over 100% create a contrast.
+
+grayscale: Converts the image to grayscale. A value of 100% is completely grayscale. The initial value of 0% leaves the input unchanged. Values between 0% and 100% produce linear multipliers on the effect.
+
+huerotate: Applies a hue rotation. The <angle> value defines the number of degrees around the hue color circle at which the input samples will be adjusted. A value of 0deg leaves the input unchanged.
+
+invert: Inverts the samples in the input image. A value of 100% completely inverts the image. A value of 0% leaves the input unchanged. Values between 0% and 100% have linear multipliers on the effect.
+
+opacity: Applies transparency. 0% makes the image completely transparent and 100% leaves the image unchanged.
+
+saturate: Saturates the image, with 0% being completely unsaturated, 100% leaving the image unchanged, and values of over 100% increasing saturation.
+
+sepia: Converts the image to sepia, with a value of 100% making the image completely sepia and 0% making no change.
+
+# durationMS**
+Duration of a movie clip in milliseconds. Specifying as an array of values allows setting of different durations for each movie clip.
+(nimages)
+(nbackgroundimages)
+(nframes)
+
+<br>
+
 ## ARDUINO V0.3 -- mkturk
 ### Digital Pins
 0 - RX
@@ -441,13 +531,13 @@ ALT/OPTION + 4 --> manually flush pump for 1 minute (8 x 30second pulses)
 
 2 - eye led
 
-3 - trial code led
+3 - block trigger LED
 
 4 - pump (pin 2 in v0.2)
 
 5 - sample command led
 
-6 - rfid led
+6 - trial code led (formerly, rfid led)
 
 7 - pump led
 
@@ -460,28 +550,25 @@ ALT/OPTION + 4 --> manually flush pump for 1 minute (8 x 30second pulses)
 ~13 - pump pwm
 
 ### Analog Pins
-A0 - unused
+A0 - block trigger
+A1 - block trigger
 
-A1 - unused
+A2 - trial trigger
+A3 - trial trigger
 
-A2 - sample command
-
-A3 - trial code
-
-A4 - unused
-
-A5 - unused
+A4 - sample command
+A5 - trial code
 
 ### Lines
 D8,D9 (D2 led) - eye - softwareserial2
 
-D10,D11 (D6 led) - rfid - softwareserial1
+D10,D11 - rfid - softwareserial1
 
-A2,A3 (D5 led) - sample command & trial code - IN1
+A0,A1 (D3 led) - block triggers - IN2
 
-A0,A1 (D3 led) - unused - IN2
+A2,A3 (D5 led) - trial triggers - IN1
 
-A4,A5 - unused - IN3
+A4,A5 (D6 led for trial code) - file code+sample command & trial code - IN3 (note, D1 can't be used because for serial comm)
 
 <br>
 

@@ -751,11 +751,8 @@ export class Mkfinder {
       this.mke.renderBtn.style.display = 'none';
       this.mke.updateBtn.style.display = 'inline-block';
       this.mke.storeParamBtn.style.display = 'inline-block';
-      this.mke.btnBoxDiv.style.gridTemplateAreas =
-        '"update-btn store-param-btn"';
-    } else if (
-      fileRef.fullPath == 'mkturkfiles/scenebags/objectome3d/templates'
-    ) {
+      this.mke.btnBoxDiv.style.gridTemplateAreas ='"update-btn store-param-btn"';
+    } else if (fileRef.fullPath == 'mkturkfiles/scenebags/objectome3d/templates') {
       this.mke.makeActiveBtn.style.display = 'none';
       this.mke.storeParamBtn.style.display = 'none';
       this.mke.svSceneBtn.style.display = 'none';
@@ -765,9 +762,7 @@ export class Mkfinder {
       this.mke.updateBtn.style.display = 'inline-block';
       this.mke.btnBoxDiv.style.gridTemplateAreas =
         '"param-gen-btn-box update-btn"';
-    } else if (
-      fileRef.fullPath == 'mkturkfiles/scenebags/objectome3d/background'
-    ) {
+    } else if (fileRef.fullPath == 'mkturkfiles/scenebags/objectome3d/background') {
       this.mke.makeActiveBtn.style.display = 'none';
       this.mke.storeParamBtn.style.display = 'none';
       this.mke.paramGenBtnBox.style.display = 'none';
@@ -786,7 +781,6 @@ export class Mkfinder {
     }
 
     this.pathName.innerText = fileRef.fullPath;
-
     let pathArr: string[] = fileRef.fullPath.split('/');
     let mdArr = new Array();
     let fileList = await listAll(fileRef);

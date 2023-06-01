@@ -1,15 +1,23 @@
 //============== VARIABLES ==============//
-let usbport = {
+var usbport = {
   statustext_connect: '',
   statustext_sent: '',
   statustext_received: '',
-  connected: false,
-
+  
   USBDeviceType: '',
-  USBDeviceName: ''
+  USBDeviceName: '',
 };
-let serial = {};
-let selectedDevice;
+var arduinofilters = [
+  { vendorId: 0x2341, productId: 0x8036 },
+  { vendorId: 0x2341, productId: 0x8037 },
+  { vendorId: 0x2341, productId: 0x804d },
+  { vendorId: 0x2341, productId: 0x804e },
+  { vendorId: 0x2341, productId: 0x804f },
+  { vendorId: 0x2341, productId: 0x8050 },
+]
+
+var serial = {};
+var selectedDevice;
 var eyebuffer = {
   accumulateEye: 0,
   maxbufferlength_HARDCODED: 17,
@@ -21,38 +29,62 @@ var eyebuffer = {
   tstart: 0,
   tlast: 0,
 };
+
+var activedevices = [];
+var usbstatus = {connected: 0, makeconnection: 0, deviceind: -1}
+
+var bc = new BroadcastChannel("mkturk.com");
 //============== (END) VARIABLES ==============//
+
+bc.onmessage = (event) => {
+  console.log('BROADCAST: ' + event.data)
+  if (event.data == 'send me your device states'){
+    bc.postMessage(usbstatus.deviceind)
+  }
+  else if (event.data >= 0){
+    activedevices[event.data] = performance.now()
+  }//IF last time device was active needs to be updated
+}//broadcast.onmessage callback
+bc.postMessage('send me your device states')
+
+function pingBroadcast(){
+	if ( typeof(broadcastTimer) != "undefined"){
+    bc.postMessage(usbstatus.deviceind)
+  }//if timer expired & new data added
+	broadcastTimer = setTimeout(function(){ clearTimeout(broadcastTimer); pingBroadcast() },2000)
+}//FUNCTION pingBroadcast
 
 onmessage = async function(event) {
 let devices
-switch(event.data.action) {
-  // Open the device specified with vendorId and productId.
-  case 'get-device':
-    devices = await navigator.usb.getDevices();
-    for (let device of devices) {
-      if (device.vendorId === event.data.vendorId
-          && device.productId === event.data.productId) {
-        selectedDevice = device;
-        usbport = new serial.Port(selectedDevice); //return port
-        await usbport.connect();
-        usbport.statustext_connect = 'Worker -- USB DEVICE CONNECTED BY USER ACTION!';
-        postMessage({message: 'USBConnect', val: usbport.statustext_connect});
-        break;
-      }//IF
-    }//FOR  
-    break;
-
+console.log(event.data.action + ', ' + event.data.val)
+switch(event.data.action){
   case 'connect':
-    devices = await navigator.usb.getDevices();
-    let ports = devices.map((device) => new serial.Port(device)); //return port
+    devices = await navigator.usb.getDevices({ filters: arduinofilters });
+    let ntaken = 0
+    usbstatus.deviceind = -1
+    for (let i=devices.length-1; i>=0; i--){
+      if (typeof(activedevices[i]) == 'undefined' || performance.now() - activedevices[i] > 2500){
+        usbstatus.deviceind = i
+        console.log('Will take device' + usbstatus.deviceind)
+      }//if no recent broadcast from a tab using this device
+      else{
+        ntaken++
+        console.log('Device' + i + ' already in use')
+      }
+    }//FOR i devices, find an inactive device that is open
 
-    if (ports.length == 0) {
-      usbport.connected = false
-    }
+    if (devices.length == 0 || usbstatus.deviceind < 0) {
+      usbstatus.connected = 0
+      usbstatus.deviceind = -1
+    }//IF no available devices
     else {
-      usbport = ports[0];
+      let ports = devices.map((device) => new serial.Port(device)); //return port
+      usbport = ports[usbstatus.deviceind];
       try {
+        usbstatus.makeconnection = 1
         await usbport.connect();
+        usbstatus.connected = 1
+        usbstatus.makeconnection = 0
       } catch (error) {
         if (event.data.val == 'AutoConnect'){
           event.ports[0].postMessage({error: e});
@@ -60,19 +92,23 @@ switch(event.data.action) {
         console.log(error);
       }
     }//ELSE
+    usbport.statustext_connect = 'Worker -- USB DEVICE CONNECTED BY USER ACTION!';
+
     if (event.data.val == 'AutoConnect'){
-      if (usbport.connected == 0){
-        usbport.statustext_connect = 'Worker -- NO USB DEVICE automatically found on page load';
+      if (usbstatus.connected == 0){
+        usbport.statustext_connect = 'Worker -- NO USB DEVICE automatically connected on page load'+
+                                      ' found ' + devices.length + ' devices, ' + ntaken + ' already in use';
       }
-      else {
-        usbport.statustext_connect = 'Worker -- AUTO-CONNECTED USB DEVICE ON PAGE LOAD!';
+      else if (usbstatus.connected == 1) {
+        usbport.statustext_connect = 'Worker -- ' + event.data.val + 'ed ' + 'USB DEVICE ON PAGE LOAD!';
       }
-      event.ports[0].postMessage({message: 'USBConnect', val: usbport.statustext_connect, connected: usbport.connected}); // 2
-    }
+      event.ports[0].postMessage({message: 'USBConnect', val: usbport.statustext_connect,connected: usbstatus.connected});
+    }//IF AutoConnect
     else if (event.data.val == 'Reconnect'){
       usbport.statustext_connect = 'Worker -- RECONNECTED USB DEVICE!';
-      this.postMessage({message: 'USBConnect', val: usbport.statustext_connect, connected: usbport.connected})
+      this.postMessage({message: 'USBConnect', val: usbport.statustext_connect,connected: usbstatus.connected})
     }
+    console.log(usbstatus.connected + ', ' + usbstatus.deviceind + ', ' + activedevices)
     break;
   
   case 'writepumpdurationtoUSB':
@@ -87,27 +123,7 @@ switch(event.data.action) {
   case 'writeTrialCodetoUSB':
     usbport.writeTrialCodetoUSB(event.data.val)
     break;
-  
-  // Read data from the opened device and send to the page.
-  case 'read-device':
-    try {
-      await selectedDevice.selectConfiguration(1);
-      await selectedDevice.claimInterface(2);
-      await selectedDevice.controlTransferOut({
-        requestType: 'class',
-        recipient: 'interface',
-        request: 0x22,
-        value: 0x01,
-        index: 0x02
-      });
-      let result = await selectedDevice.transferIn(5, 64);
-      let decoder = new TextDecoder();
-      postMessage(decoder.decode(result.data));
-    } catch(error) {
-      postMessage(error);
-    }
-    break;
-}//SWITCH event.data.action
+  }//SWITCH event.data.action
 }//onmessage
 
 //PORT - attach device(s)
@@ -115,8 +131,11 @@ serial.Port = function (device) { this.device_ = device;};
 
 //PORT - connect
 serial.Port.prototype.connect = async function () {
-  await this.device_.open();
+  if (usbstatus.makeconnection == 0){
+    return
+  } //IF already connected to a device, don't connect to this new one
 
+  await this.device_.open();
   if (this.device_.configuration === null) {
       return this.device_.selectConfiguration(1);
   }
@@ -132,7 +151,7 @@ serial.Port.prototype.connect = async function () {
   }); //send controlTransferOut to work with channels
 
   postMessage({message: 'SerialPortConnect', devicetype: 'mi', devicename: 'ard'})
-  this.connected = true;
+  pingBroadcast();
   readLoop(this);
 };//port.connect
 
@@ -148,6 +167,7 @@ serial.Port.prototype.disconnect = async function () {
   this.device_.close();
 
   usbport.statustext_connect = 'Worker -- Port USB DEVICE DISCONNECTED';
+  usbstatus.deviceind = -1
   postMessage({message: 'USBDisconnect', val: usbport.statustext_connect});
 };//FUNCTION port.disconnect
 
@@ -332,9 +352,9 @@ serial.Port.prototype.writeTrialCodetoUSB = async function (data) {
 };//port.writeTrialcodetoUSB
 
 navigator.usb.onconnect = function (device) {
-  if (typeof usbport.connected == 'undefined' || usbport.connected == false) {
+  if (usbstatus.connected == 0) {
+    usbstatus.deviceind = -1
     usbport.statustext_connect = 'Worker -- New USB device connection detected...';
-    console.log(usbport.statustext_connect);
     let event = {data: {action: 'connect',val: 'Reconnect'}}
     onmessage(event)
   }//IF port !connected
@@ -342,7 +362,10 @@ navigator.usb.onconnect = function (device) {
 
 navigator.usb.ondisconnect = function (device) {
   // USB device disconnected
-  usbport.connected = false;
+  usbstatus.connected = 0;
+  usbstatus.deviceind = -1
   usbport.statustext_connect = 'Worker -- Navigator USB DEVICE DISCONNECTED';
-  postMessage({message: 'USBDisconnect', val: usbport.statustext_connect})
+
+  console.log(' D I S C O N N E C T: usbstatus.connected = false !!!!')
+  postMessage({message: 'USBDisconnect', val: usbport.statustext_connect});
 };//FUNCTION navigator.usb.ondisconnect

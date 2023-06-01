@@ -111,8 +111,8 @@ async function processData(data) {
     mkeye.boundingBoxes.test.bb[i] = [];
     mkeye.boundingBoxes.test.name[i] = [];
     for (let j=0; j<= Object.keys(mkeye.data.TRIALEVENTS.Test).length-1; j++){
-      mkeye.boundingBoxes.test.bb[i].push(...bbtest.bb[j])
-      mkeye.boundingBoxes.test.name[i].push(...bbtest.name[j])
+      mkeye.boundingBoxes.test.bb[i].push(...bbtest.bb[mkeye.data.TRIALEVENTS.Test[j][i]])
+      mkeye.boundingBoxes.test.name[i].push(...bbtest.name[mkeye.data.TRIALEVENTS.Test[j][i]])
     }//FOR j test boxes
   }//FOR i trials
 

@@ -485,7 +485,7 @@ function quickLoad_listener(event) {
   waitforClick.next(1);
 
   if (ENV.WebUSBAvailable) {
-    if (QuickLoad.connectusb == 1 && port.connect == false) {
+    if (QuickLoad.connectusb == 1 && port.connected == false) {
       findUSBDevice(event);
     } //automatically call USB device finder
     else if (QuickLoad.connectusb == 0) {

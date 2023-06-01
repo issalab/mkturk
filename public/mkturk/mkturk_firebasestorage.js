@@ -381,6 +381,7 @@ async function loadParametersfromFirebase(paramfile_path) {
         "/mkturkfiles/scenebags/objectome3d/camel/20200709_camel_token.js",
         "/mkturkfiles/scenebags/objectome3d/wrench/20200709_wrench_token.js"
     ]}
+    if (typeof TASK.SampleHoldDuration == 'undefined'){TASK.SampleHoldDuration = Infinity}
 
     // TEST SCREEN
     if (typeof TASK.ImageBagsTest == 'undefined'){
@@ -408,10 +409,12 @@ async function loadParametersfromFirebase(paramfile_path) {
     if (typeof TASK.ChoiceTimeOut == 'undefined'){TASK.ChoiceTimeOut = 5000;}
     if (typeof TASK.HideChoiceDistractors == 'undefined'){TASK.HideChoiceDistractors = 0;}
     if (typeof TASK.ChoiceOutsideGracePeriod == 'undefined'){TASK.ChoiceOutsideGracePeriod = TASK.ChoiceTimeOut+1}
+    if (typeof TASK.ChoiceHoldDuration == 'undefined'){TASK.ChoiceHoldDuration = 0}
 
     // SAMPLING STRATEGY
     if (typeof TASK.SamplingStrategy == 'undefined'){ TASK.SamplingStrategy = 'uniform_without_replacement'; }
     if (typeof TASK.NStimuliPerBagBlock == 'undefined'){ TASK.NStimuliPerBagBlock = 0; }
+    if (typeof TASK.NSecondsPerBagBlock == 'undefined'){ TASK.NSecondsPerBagBlock = 0; }
 
     // RESPONSE
     if (typeof TASK.Target == 'undefined'){TASK.Target = 'object';}
@@ -451,6 +454,7 @@ async function loadParametersfromFirebase(paramfile_path) {
     if (typeof TASK.CalibrateEyeCrossTerms == 'undefined'){TASK.CalibrateEyeCrossTerms = 0;}
     if (typeof TASK.CheckRFID == 'undefined'){TASK.CheckRFID = 0;}
     if (typeof TASK.InterTrialInterval == 'undefined'){TASK.InterTrialInterval = 0}
+    if (typeof TASK.MinTrialDuration_AfterSampleCommandTrigger == 'undefined'){TASK.MinTrialDuration_AfterSampleCommandTrigger = -1}
 
     return 0; //need2loadParameters
   } catch (error) {

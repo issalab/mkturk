@@ -3,19 +3,14 @@
   "name": "mkturk",
   "icons": [
     {
-      "src": "mkturklogo48.png",
+      "src": "mklogo_square_joined.png",
       "type": "image/png",
-      "sizes": "48x48"
+      "sizes": "142x142"
     },
     {
-      "src": "mkturklogo96.png",
+      "src": "mklogo_square_joined_hires.png",
       "type": "image/png",
-      "sizes": "96x96"
-    },
-    {
-      "src": "mkturklogo192.png",
-      "type": "image/png",
-      "sizes": "192x192"
+      "sizes": "425x425"
     }
   ],
   "start_url": "/mkturk/index.html",

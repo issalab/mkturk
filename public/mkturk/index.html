@@ -5,7 +5,7 @@
 	<meta name="viewport" content="width=device-width, user-scalable=no">
 	<!-- do not allow window rescaling.  To avoid window rescaling in portrait mode, added with=device-width from http://stackoverflow.com/questions/22771523/ipad-w-retina-safari-reported-dimensions-in-landscape-make-no-sense. Also, removes 300-350ms tap delay (https://developers.google.com/web/updates/2013/12/300ms-tap-delay-gone-away) -->
 	<link rel="manifest" href="mkturkmanifest.json">
-	<link rel="icon" href="mkturklogo48.png">
+	<link rel="icon" href="mklogo_square_joined.png">
 	<!-- Include Material Design Lite CDN hosted components -->
 	<!-- Gettign started @ https://getmdl.io/started/index.html -->
 	<!-- MDL color theme picker @ https://getmdl.io/customize/index.html -->
@@ -31,7 +31,6 @@
 		//loadScriptAsync
 
 		if (typeof (navigator.usb) == "object") {
-			var usbworker_scriptLoaded = loadScriptAsync('mkturk_usbworker.js');
 			var usb_scriptLoaded = loadScriptAsync('mkturk_usb.js');
 		}
 		if (typeof (navigator.bluetooth) == "object") {

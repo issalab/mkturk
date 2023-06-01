@@ -37,10 +37,7 @@ const provider = new GoogleAuthProvider();
 provider.addScope('https://www.googleapis.com/auth/contacts.readonly');
 getRedirectResult(auth).then((result) => {
   if (result) {
-    console.log(
-      'Sign-In Redirect Result, USER:',
-      result.user.email,
-      'is signed in'
+    console.log('Sign-In Redirect Result, USER:',result.user.email,'is signed in'
     );
   } else if (auth.currentUser) {
     console.log(
@@ -57,7 +54,8 @@ const functions = getFunctions(firebaseApp);
 const db = getFirestore(firebaseApp);
 const storage = getStorage(firebaseApp);
 const storageRef = ref(storage);
-const rootRef = ref(storageRef, 'mkturkfiles');
+const mkturkRootRef = ref(storageRef, 'mkturkfiles') 
+let rootRef = mkturkRootRef;
 const mturkRootRef = ref(storageRef, 'mkturkfiles_mturk');
 let isRoot = true;
 
@@ -89,23 +87,14 @@ let fieldSelector = document.querySelector(
 
 /* Quick Links */
 let homeLink = document.querySelector('#quick-link-home') as HTMLElement;
-let paramsLink = document.querySelector('#quick-link-params') as HTMLElement;
-let paramstorageLink = document.querySelector(
-  '#quick-link-paramstorage'
-) as HTMLElement;
-let sceneParamsLink = document.querySelector(
-  '#quick-link-sceneparams'
-) as HTMLElement;
-let dailyDataLink = document.querySelector(
-  '#quick-link-dailydata'
-) as HTMLElement;
-let marmosetsLink = document.querySelector(
-  '#quick-link-marmosets'
-) as HTMLElement;
+let taskparamsLink = document.querySelector('#quick-link-taskparams') as HTMLElement;
+let taskautomatorsLink = document.querySelector('#quick-link-taskautomators') as HTMLElement;
+let sceneparamsLink = document.querySelector('#quick-link-sceneparams') as HTMLElement;
+let dailyDataLink = document.querySelector('#quick-link-dailydata') as HTMLElement;
+let marmosetsLink = document.querySelector('#quick-link-marmosets') as HTMLElement;
 
 window.addEventListener('load', (evt: Event) => {
   evt.preventDefault();
-
   isRoot = false;
   qryLocSelc.value = 'mkturkfiles';
   qryLocSelc.dispatchEvent(new Event('change'));
@@ -126,24 +115,28 @@ marmosetsLink.addEventListener('click', (ev: Event) => {
   });
 });
 
-paramsLink.addEventListener('click' || 'pointerup', (ev: Event) => {
+taskparamsLink.addEventListener('click' || 'pointerup', (ev: Event) => {
   ev.preventDefault();
 
+  rootRef = ref(storageRef, 'mkturkfiles/parameterfiles/subjects')
   isRoot = false;
+
   qryLocSelc.value = 'mkturkfiles';
   qryLocSelc.dispatchEvent(new Event('change'));
   mkf.listStorageFiles(ref(storageRef, 'mkturkfiles/parameterfiles/subjects'));
+  rootRef = mkturkRootRef
 });
 
-paramstorageLink.addEventListener('click' || 'pointerup', (ev: Event) => {
+taskautomatorsLink.addEventListener('click' || 'pointerup', (ev: Event) => {
   ev.preventDefault();
 
+  rootRef = ref(storageRef, 'mkturkfiles/parameterfiles/automators')
   isRoot = false;
+
   qryLocSelc.value = 'mkturkfiles';
   qryLocSelc.dispatchEvent(new Event('change'));
-  mkf.listStorageFiles(
-    ref(storageRef, 'mkturkfiles/parameterfiles/params_storage')
-  );
+  mkf.listStorageFiles(ref(storageRef, 'mkturkfiles/parameterfiles/automators'));
+  rootRef = mkturkRootRef
 });
 
 homeLink.addEventListener('click' || 'pointerup', (ev: Event) => {
@@ -156,23 +149,33 @@ homeLink.addEventListener('click' || 'pointerup', (ev: Event) => {
   mkf.listStorageFiles(rootRef);
 });
 
-sceneParamsLink.addEventListener('click' || 'pointerup', (ev: Event) => {
+sceneparamsLink.addEventListener('click' || 'pointerup', (ev: Event) => {
   ev.preventDefault();
 
+  rootRef = ref(storageRef, 'mkturkfiles/scenebags/')
   isRoot = false;
+
   qryLocSelc.value = 'mkturkfiles';
   qryLocSelc.dispatchEvent(new Event('change'));
-  // mkf.listStorageFiles(storageRef.child("mkturkfiles/scenebags/objectome3d"));
-  mkf.listStorageFiles(ref(rootRef, 'scenebags/objectome3d'));
+
+  mkf.listStorageFiles(ref(storageRef, 'mkturkfiles/scenebags/'));
+  rootRef = mkturkRootRef
+  // qryLocSelc.value = 'mkturkfiles';
+  // qryLocSelc.dispatchEvent(new Event('change'));
+  // mkf.listStorageFiles(ref(storageRef, 'scenebags'));
 });
 
 dailyDataLink.addEventListener('click' || 'pointerup', (ev: Event) => {
   ev.preventDefault();
+
+  rootRef = ref(rootRef, 'mkdailydata');
   isRoot = false;
+
   qryLocSelc.value = 'mkturkfiles';
   qryLocSelc.dispatchEvent(new Event('change'));
   // mkf.listStorageFiles(storageRef.child('mkturkfiles/mkdailydata'));
   mkf.listStorageFiles(ref(rootRef, 'mkdailydata'));
+  rootRef = mkturkRootRef
 });
 
 qryLocSelc!.addEventListener('change', (ev) => {
@@ -185,7 +188,6 @@ qryLocSelc!.addEventListener('change', (ev) => {
   let plotY = document.querySelector('#quick-plot-y') as HTMLSelectElement;
   let plotBtn = document.querySelector('#plot-btn') as HTMLButtonElement;
   let queryResult: Promise<any[]>;
-
   switch (qryLocSelc.value) {
     case 'marmosets':
       fs.style.visibility = 'visible';
@@ -311,7 +313,6 @@ qryLocSelc!.addEventListener('change', (ev) => {
       break;
 
     case 'mkturkfiles':
-      console.log('qryLocSelc change mkturkfiles');
       fs.style.visibility = 'hidden';
       ki0.style.visibility = 'hidden';
       ki1.style.visibility = 'hidden';
@@ -328,6 +329,23 @@ qryLocSelc!.addEventListener('change', (ev) => {
       }
       break;
 
+      case 'scenebags':
+        fs.style.visibility = 'hidden';
+        ki0.style.visibility = 'hidden';
+        ki1.style.visibility = 'hidden';
+        ki2.style.visibility = 'hidden';
+        goBtn.style.visibility = 'hidden';
+        plotX.style.visibility = 'hidden';
+        plotY.style.visibility = 'hidden';
+        plotBtn.style.visibility = 'hidden';
+  
+        removeElementsByClassName('field-options');
+        mkf.listStorageFiles(rootRef);
+        if (isRoot) {
+          mkf.listStorageFiles(rootRef);
+        }
+        break;
+  
     case 'mkturkfiles_mturk':
       fs.style.visibility = 'hidden';
       ki0.style.visibility = 'hidden';

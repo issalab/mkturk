@@ -8,8 +8,8 @@ function index_init(){
 
   //Set SampleCommand line back to 0 before close window
   window.addEventListener('beforeunload', async (evt) => {
-    usbDeviceWorker.postMessage({ action: "writeSampleCommandTriggertoUSB", val: 0 });
-      await sleep(20)
+    usbDeviceWorker.postMessage({ action: "writeSampleCommandTriggertoUSB", val: 'b0' });
+    await sleep(20)
   });
 
   // Button callbacks for inline connection to arduino device
@@ -63,7 +63,6 @@ async function index_init_awaits(){
   document.querySelector('button[id=quickload]').addEventListener('click', quickLoad_listener, false); //for Safari
 
   if (ENV.WebUSBAvailable) {
-    await usbworker_scriptLoaded;
     await usb_scriptLoaded;
     document.querySelector('button[id=connectusb]').addEventListener('pointerup', findUSBDevice, false);
     document.querySelector('button[id=nousb]').addEventListener('pointerup', skipHardwareDevice, false);
@@ -122,10 +121,6 @@ async function index_init_awaits(){
   updateHeadsUpDisplay();
   //====================== (END) Retrieve device's screen properties ===========================//
 
-  if (ENV.WebUSBAvailable) {
-    await usbAutoConnectPromise
-  }
-
   //====================== Quickload Button Set-up ===========================//
   // GET PARAMFILE NAME
   var subjectlistobj = document.getElementById('subjectID_select');
@@ -147,17 +142,21 @@ async function index_init_awaits(){
     document.querySelector('button[id=quickload]').style.visibility = 'visible';
 
     if (QuickLoad.connectusb == 0) {
-      document.querySelector('button[id=quickload]').innerHTML =
-        QuickLoad.agent;
+      document.querySelector('button[id=quickload]').innerHTML = QuickLoad.agent;
     } else if (QuickLoad.connectusb == 1) {
-      document.querySelector('button[id=quickload]').innerHTML =
-        QuickLoad.agent + ' <i>USB</i>';
+      document.querySelector('button[id=quickload]').innerHTML = QuickLoad.agent + ' <i>USB</i>';
     }
   } else {
     // ELSE don't show button
     document.querySelector('button[id=quickload]').style.display = 'none';
   }
   //====================== (END) Quickload Set-up ===========================//
+
+  if (ENV.WebUSBAvailable){
+    if (typeof port.connected == 'undefined' || port.connected == false) {
+      await usbAutoConnectPromise()
+    }
+  }//(init) IF WebUSBAvailable, try to autoconnect
 
   return 1
 }//FUNCTION index_init_awaits()
@@ -283,15 +282,12 @@ async function index_init_params_screen_automator(){
   //====================== Connect USB ===========================//
   if (ENV.WebUSBAvailable) {
     if (typeof port.connected == 'undefined' || port.connected == false) {
-      var event = {};
-      event.type = 'AutoConnect';
-      findUSBDevice(event);
-    }//IF !port.connected, findUSBDevice
+      await usbAutoConnectPromise()
+    }//(subject params load) IF !port.connected, findUSBDevice
 
     if (
       (typeof port.connected == 'undefined' || port.connected == false) &&
-      (QuickLoad.load == 0 ||
-        (QuickLoad.load == 1 && QuickLoad.connectusb == 1))
+      (QuickLoad.load == 0 || (QuickLoad.load == 1 && QuickLoad.connectusb == 1))
     ) {
       //=============== AWAIT CONNECT TO HARDWARE (via USB) ===============//
       port.connected = false;
@@ -387,7 +383,7 @@ async function index_init_params_screen_automator(){
 
 async function index_reloadparameters(){
   if (port.connected) {
-    usbDeviceWorker.postMessage({ action: "writeSampleCommandTriggertoUSB", val: 0 });
+    usbDeviceWorker.postMessage({ action: "writeSampleCommandTriggertoUSB", val: 'b0' });
     usbDeviceWorker.postMessage({ action: "writepumptopauseeyetoUSB", val: '|' });//pause eyetracker
   }
   FLAGS.need2loadParameters = await loadParametersfromFirebase(ENV.ParamFileName);
@@ -547,8 +543,8 @@ async function index_loadScenes(){
         typeof(IMAGES.Sample[i]['LIGHTS']) != "undefined" ||
         typeof(IMAGES.Sample[i]['OBJECTS']) != "undefined"){
       FLAGS.usecanvas2D = 0;
-    } //IF
-  } //FOR i samplebags
+    }//IF
+  }//FOR i samplebags
 
   for (let i = 0; i < TASK.ImageBagsTest.length; i++) {
     IMAGES.Test[i] = await loadTextfromFirebase(TASK.ImageBagsTest[i]);
@@ -556,8 +552,8 @@ async function index_loadScenes(){
         typeof(IMAGES.Test[i]['LIGHTS']) != "undefined" ||
         typeof(IMAGES.Test[i]['OBJECTS']) != "undefined"){
       FLAGS.usecanvas2D = 0;
-    } //IF
-  } //FOR i testbags
+    }//IF
+  }//FOR i testbags
 
   // find the longest scene param array in IMAGES (ie # of stim)
   for (let i = 0; i < IMAGES.Sample.length; i++) {
@@ -587,9 +583,7 @@ if (!FLAGS.usecanvas2D)
       classLabel++
     ) {
       for (const obj in IMAGES[taskscreen][classLabel].OBJECTS) {
-        meshPaths.push(
-          IMAGES[taskscreen][classLabel].OBJECTS[obj].meshpath
-        );
+        meshPaths.push(IMAGES[taskscreen][classLabel].OBJECTS[obj].meshpath);
         meshIdxs.push([classLabel, obj]);
       }
     }
@@ -777,9 +771,9 @@ async function index_send_filecode(){
 ];
 
   for (let i=0; i<=time_digits.length-1; i++){
-    usbDeviceWorker.postMessage({ action: "writeSampleCommandTriggertoUSB", val: 1 });
+    usbDeviceWorker.postMessage({ action: "writeSampleCommandTriggertoUSB", val: 'f1' });
     await sleep(10*(time_digits[i]+1));
-    usbDeviceWorker.postMessage({ action: "writeSampleCommandTriggertoUSB", val: 0 });
+    usbDeviceWorker.postMessage({ action: "writeSampleCommandTriggertoUSB", val: 'f0' });
     await sleep(25);//milliseconds  
   }//FOR i digits
 
@@ -1087,6 +1081,16 @@ function index_housekeeping_exits(){
 
   return 0
 }//FUNCTION index_housekeeping_exits()
+
+function index_update_blocknum(){
+  //---- Sequential sampling of samplebags ----//
+  TQS.currentbag = TQS.currentbag + 1; //go to next bag
+  if (TQS.currentbag > Math.max(...TQS.samplebag_labels)){
+    TQS.currentbag = 0; //go back to first bag
+  }
+  CURRTRIAL.blocknum++
+  TQS.currentbag_starttime = -1;//update to Date.now() only when trigger in screenfunctions
+}//FUNCTION index_update_blocknum
 
 (function (window) {
   window.utils = {

@@ -16,7 +16,8 @@ constructor(samplingStrategy){
 	this.testq.filenames = []; 
 
 
-	this.currentbag = -1;
+	this.currentbag = 0;
+	this.currentbag_starttime = -1;
 
 	// ImageBuffer
 	this.IB = new ImageBuffer(); 
@@ -131,44 +132,12 @@ async generate_trials(n_trials){
 	var image_requests = []; 
 
 	for (var i = 0; i < n_trials; i++){
-		var newbagblock = 0;
-		if (TASK.NStimuliPerBagBlock <= 0){
-			// do nothing
-		} //use all bags in block
-		else if (TASK.NStimuliPerBagBlock > 0){
-			if (this.currentbag < 0 || this.ndrawn_per_bag[this.currentbag] == TASK.NStimuliPerBagBlock){
-				
-				// Increment bag
-				if (this.currentbag < 0){
-					this.currentbag = 0; //initialize with first bag
-				}
-				else{
-					this.ndrawn_per_bag[this.currentbag] = 0; //reset trials
-					this.currentbag = this.currentbag + 1; //go to next bag
-
-					if (this.currentbag >= this.ndrawn_per_bag.length){
-						this.currentbag = 0; //go back to first bag
-					}
-				}//IF
-				newbagblock = 1
-			}//IF ndrawn_per_bag exceeded
-		}//IF sample all bags vs blocks
-
 		//global bucket
-		if (this.samplebucket.length == 0 || newbagblock == 1){
+		if (this.samplebucket.length == 0){
 			this.samplebucket = []
-			if (TASK.NStimuliPerBagBlock > 0){
-				for (var j = 0; j <= this.samplebag_labels.length-1; j++){
-					if (this.samplebag_labels[j] == this.currentbag){
-						this.samplebucket.push(j)
-					}
-				}//FOR i sample images
-			}//IF blocked, then restrict to one object category
-			else{
-				for (var j = 0; j <= this.samplebag_labels.length-1; j++){
-					this.samplebucket.push(j)
-				}//FOR i sample images
-			}//ELSE interleaved, sample all categories
+			for (var j = 0; j <= this.samplebag_labels.length-1; j++){
+				this.samplebucket.push(j)
+			}//FOR j sample images, sample all categories
 		}//Need to make a new bucket
 
 		// Draw one (1) sample image from current samplebucket
@@ -379,7 +348,27 @@ async get_next_trial(){
 			break
 		}//ELSE not stick
 	}//WHILE not drawing correct response on opposite side of response bias (sticky side)
-
+	
+	if ( (TASK.NStimuliPerBagBlock > 0 || TASK.NMillisecondsPerBagBlock > 0) && FLAGS.savedata){
+		while(true){
+			if ( this.samplebag_labels[sample_index] != this.currentbag){
+				if (this.sampleq.filename.length == 0){
+					// console.log("Reached end of trial queue... generating one more in this.get_next_trial")
+					await this.generate_trials(1); 
+				}
+				// DRAW FROM INDEX LIST
+				sample_filename = this.sampleq.filename.shift(); 
+				sample_index = this.sampleq.index.shift(); 
+				test_filenames = this.testq.filenames.shift(); 
+				test_indices = this.testq.indices.shift(); 
+				test_correctIndex = this.testq.correctIndex.shift();
+			}//IF need to stick to a bag for NMillisecondsPerBagBlock, continue drawing trials till get one matching this.currentbag
+			else {
+				break
+			}//ELSE correct bag for this block is queued up
+		}//WHILE not drawing from bag matching this.currentbag
+	}//IF TASK.NMillisecondsPerBagBlock > 0
+	
 	// Get image from imagebag
 	if (typeof(sample_filename) != "undefined"){
 		var sample_image = []
@@ -412,11 +401,11 @@ async get_next_trial(){
 		for (var i = 0; i <= test_filenames.length-1; i++){
 			if (Array.isArray(test_filenames[i])){
 				for (var j = 0; j <= test_filenames[i].length-1;j++){
-					if (i==0){
+					if (i==0 || typeof(test_images[j]) == 'undefined'){
 						test_images[j] = []
 					}//IF first item in frame
 					if (test_filenames[i][j] !=""){
-						test_images[j].push(await this.IB.get_by_name(test_filenames[i][j])); 
+							test_images[j].push(await this.IB.get_by_name(test_filenames[i][j])); 
 					}//IF image
 				}//FOR j frames
 			}//IF isArray test filenames
@@ -438,10 +427,10 @@ async get_next_trial(){
 	var test_scenebag_indices = []
 
 	if (TASK.SameDifferent <= 0){
-	for (var j = 0; j < test_indices.length; j++){
-		test_scenebag_labels[j] = this.testbag_labels[test_indices[j]]; 
-		test_scenebag_indices[j] = this.testbag_indices[test_indices[j]];
-	} //for j test
+		for (var j = 0; j < test_indices.length; j++){
+			test_scenebag_labels[j] = this.testbag_labels[test_indices[j]]; 
+			test_scenebag_indices[j] = this.testbag_indices[test_indices[j]];
+		} //for j test
 	}
 	else if (TASK.SameDifferent > 0){
 		test_scenebag_labels.push(this.testbag_labels[test_indices])
@@ -455,7 +444,7 @@ async get_next_trial(){
 
 	return	[sample_image, sample_index, test_images, test_indices, test_correctIndex, sample_scenebag_label, sample_scenebag_index, test_scenebag_labels, test_scenebag_indices, sample_reward]
 // return [sample_image, sample_index]
-} //FUNCTION get_next_trial
+}//FUNCTION get_next_trial
 
 
 selectSampleImage(SampleBucket, SamplingStrategy){
@@ -545,12 +534,25 @@ selectTestImages(correct_label, testbag_labels){
 
 		// Get all unique labels 
 		var labelspace = []
-		for (var i = 0; i < testbag_labels.length; i++){
-			if(labelspace.indexOf(testbag_labels[i]) == -1 && 
-				testbag_labels[i] != correct_label){
-				labelspace.push(testbag_labels[i])
-			}
-		}
+
+		if (testbag_labels.length >= TASK.TestGridIndex.length){
+			for (var i = 0; i < testbag_labels.length; i++){
+				if(labelspace.indexOf(testbag_labels[i]) == -1 && testbag_labels[i] != correct_label){
+					labelspace.push(testbag_labels[i])
+				}//IF unique distractor
+			}//FOR i classes
+		}//IF number of object classes >= number of choices, choose unique classes
+		else if ( testbag_labels.length < TASK.TestGridIndex.length){
+			for (var i=0; i<=TASK.TestGridIndex.length-1; i++){
+				while(1){
+					var test_index = testbag_labels[Math.floor((testbag_labels.length)*Math.random())];
+					if (testbag_labels[test_index] != correct_label){
+						labelspace.push(testbag_labels[test_index])
+						break
+					}//IF distractor
+				}//while haven't drawn a distractor
+			}//FOR i test grid indices
+		}//ELSE IF fewer classes than choices, sample distractors with replacement
 
 		// Randomly select n-1 labels to serve as distractors 
 		var distractors = []
@@ -581,6 +583,3 @@ selectTestImages(correct_label, testbag_labels){
 }//FUNCTION selectTestImages
 
 } //CLASS TrialQueueScene
-
-
-
