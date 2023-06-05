@@ -654,8 +654,7 @@ function expandImage2DFrames(taskscreen)
 
       let durationMS = chooseArrayElement(IMAGES[taskscreen][classlabel].durationMS,i,0);
 
-      IMAGES[taskscreen][classlabel].IMAGES.imageidx[i] = 
-        interpParam_frames(imgIdx,"binary",durationMS,framerate);
+      IMAGES[taskscreen][classlabel].IMAGES.imageidx[i] = interpParam_frames(imgIdx,"binary",durationMS,framerate);
 
       for (let j = 0;
         j < IMAGES[taskscreen][classlabel].IMAGES.imageidx[i].length; j++)

@@ -621,20 +621,15 @@ if (!FLAGS.usecanvas2D)
 
   //============ 4: PRELOAD SHADERS (COMPILE) ============//
   for (let scenetype in scene) {
-    renderer.compile(
-      scene[scenetype],
-      scene[scenetype].getObjectByName('cam0')
-    );
+    renderer.compile(scene[scenetype],scene[scenetype].getObjectByName('cam0'));
   }
   console.log('3js: compiled scene');
   //============ (END) 4: PRELOAD SHADERS (COMPILE) ============//
 }//IF !FLAGS.usecanvas2D
 
 if (FLAGS.usecanvas2D){
-  for (let scenetype in IMAGES) {
-    expandImage2DFrames(scenetype)
-  }
-} //IF FLAGS.usecanvas2D
+  for (let scenetype in IMAGES) { expandImage2DFrames(scenetype) }
+}//IF FLAGS.usecanvas2D
 
   FLAGS.need2loadScenes = 0;
 
@@ -1278,7 +1273,7 @@ async function runPumpButtonCallback(str) {
     FLAGS.runPump = 1;
     if (str == 'flush') {
       dur = 5000; //milliseconds
-      npulse = 12*4; //4 minutes
+      npulse = (4*60*1000)/5000; //4 minutes
     } else if (str == 'trigger') {
       dur = TASK.RewardDuration //milliseconds
       npulse = 50;
@@ -1324,7 +1319,7 @@ async function runPumpButtonCallback(str) {
       updateHeadsUpDisplayDevices();
     } //if usb pump
 
-    await sleep(dur + 800);
+    await sleep(500);
     console.log('pulse' + i);
   } //for i pulses
 

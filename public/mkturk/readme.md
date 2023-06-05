@@ -447,7 +447,7 @@ Most variables except those marked * or ** can be changed on a per movie clip an
 **cannot be animated
 () meta appended to SCENES and saved into final data file (i.e., not user-specified in scene file)
 
-# CAMERAS
+### CAMERAS
 type*:
 fieldofview*:
 near*:
@@ -457,14 +457,14 @@ targetTHREEJS:
 visible:
 (targetInches):
 
-# LIGHTS
+### LIGHTS
 type*:
 color*:
 intensity:
 position:
 visible:
 
-# OBJECTS
+### OBJECTS
 meshpath*:
 objectdoc*:
 texture*:
@@ -490,13 +490,13 @@ target**: (default = 1 --> an object is a valid target) Allows user to toggle wh
 (sizeInches):
 (positionInches):
 
-# IMAGES
+### IMAGES
 imagebag*:
 imageidx:
 sizeTHREEJS:
 (boundingBoxCube2DPixels):
 
-# OBJECTFILTERS || IMAGEFILTERS
+### OBJECTFILTERS || IMAGEFILTERS
 blur: Applies a Gaussian blur to the input image in pixels.
 
 brightness: Applies a linear multiplier to the input image, making it appear more or less bright. Values are linear multipliers on the effect, with 0% creating a completely black image, 100% having no effect, and values over 100% brightening the image.
@@ -515,7 +515,7 @@ saturate: Saturates the image, with 0% being completely unsaturated, 100% leavin
 
 sepia: Converts the image to sepia, with a value of 100% making the image completely sepia and 0% making no change.
 
-# durationMS**
+### durationMS**
 Duration of a movie clip in milliseconds. Specifying as an array of values allows setting of different durations for each movie clip.
 (nimages)
 (nbackgroundimages)
