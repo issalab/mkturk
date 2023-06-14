@@ -32,12 +32,12 @@ var eyebuffer = {
 
 var activedevices = [];
 var usbstatus = {connected: 0, makeconnection: 0, deviceind: -1}
-
-var bc = new BroadcastChannel("mkturk.com");
 //============== (END) VARIABLES ==============//
 
+//============== BROADCAST CHANNEL ==============//
+var bc = new BroadcastChannel("mkturk.com");
 bc.onmessage = (event) => {
-  console.log('BROADCAST: ' + event.data)
+  // console.log('BROADCAST: ' + event.data)
   if (event.data == 'send me your device states'){
     bc.postMessage(usbstatus.deviceind)
   }
@@ -53,10 +53,10 @@ function pingBroadcast(){
   }//if timer expired & new data added
 	broadcastTimer = setTimeout(function(){ clearTimeout(broadcastTimer); pingBroadcast() },2000)
 }//FUNCTION pingBroadcast
+//============== (END) BROADCAST CHANNEL ==============//
 
 onmessage = async function(event) {
 let devices
-console.log(event.data.action + ', ' + event.data.val)
 switch(event.data.action){
   case 'connect':
     devices = await navigator.usb.getDevices({ filters: arduinofilters });
@@ -90,9 +90,9 @@ switch(event.data.action){
           event.ports[0].postMessage({error: e});
         }
         console.log(error);
-      }
+      }//catch(error)
     }//ELSE
-    usbport.statustext_connect = 'Worker -- USB DEVICE CONNECTED BY USER ACTION!';
+    usbport.statustext_connect = 'USB Worker -- USB DEVICE CONNECTED BY USER ACTION!';
 
     if (event.data.val == 'AutoConnect'){
       if (usbstatus.connected == 0){
@@ -364,7 +364,7 @@ navigator.usb.ondisconnect = function (device) {
   // USB device disconnected
   usbstatus.connected = 0;
   usbstatus.deviceind = -1
-  usbport.statustext_connect = 'Worker -- Navigator USB DEVICE DISCONNECTED';
+  usbport.statustext_connect = 'USB Worker -- Navigator USB DEVICE DISCONNECTED';
 
   console.log(' D I S C O N N E C T: usbstatus.connected = false !!!!')
   postMessage({message: 'USBDisconnect', val: usbport.statustext_connect});

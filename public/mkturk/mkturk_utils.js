@@ -759,12 +759,11 @@ async function index_send_filecode(){
   let ind_start = ENV.DataFileName.lastIndexOf('T');
   let ind_end = ENV.DataFileName.indexOf('_');
   let filetime = ENV.DataFileName.substring(ind_start + 1, ind_end);
-  let time_digits = [ 
+  let time_digits = [
     Number(filetime[0]), Number(filetime[1]), //hours
     Number(filetime[3]), Number(filetime[4]), //minutes
     Number(filetime[filetime.length-2]), Number(filetime[filetime.length-1]) //seconds
 ];
-
   for (let i=0; i<=time_digits.length-1; i++){
     usbDeviceWorker.postMessage({ action: "writeSampleCommandTriggertoUSB", val: 'f1' });
     await sleep(10*(time_digits[i]+1));
@@ -1224,9 +1223,47 @@ function toBytesInt16(num) {
   return arr;
 }
 
-function sleep(ms) {
+async function sleep(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
+
+
+// async function waitUntil(condition) {
+//   return await new Promise(resolve => {
+//     const interval = setInterval(() => {
+//       if (condition) {
+//         resolve('foo');
+//         clearInterval(interval);
+//       };
+//     }, 1000);
+//   });
+// }
+// const asyncInterval = async (callback, ms, triesLeft = 5) => {
+//   return new Promise((resolve, reject) => {
+//     const interval = setInterval(async () => {
+//       if (await callback()) {
+//         resolve();
+//         clearInterval(interval);
+//       } else if (triesLeft <= 1) {
+//         reject();
+//         clearInterval(interval);
+//       }
+//       triesLeft--;
+//     }, ms);
+//   });
+// }
+// const interval = setInterval(() => {
+//   const currentDate = Date.now()
+
+//   if (currentDate - startDate === 1000) {
+//     // it was a second
+
+//     clearInterval(interval)
+//     return
+//   } 
+
+//   // it was not a second
+// }, 50)
 
 // Async: play sound
 async function playSound(idx) {

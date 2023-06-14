@@ -801,7 +801,7 @@ index_init();
     console.log('||||||||||||||||||||  END OF TRIAL ', CURRTRIAL.num,' |||||||||||||||||||');
     if (endloop == 1){ return }//IF end task
 
-    if (updateBlockNum){ index_update_blocknum() } //updates CURRTRIAL.blocknum
+    if (updateBlockNum && FLAGS.savedata){ index_update_blocknum() } //updates CURRTRIAL.blocknum
     CURRTRIAL.num++;
     EVENTS.trialnum = CURRTRIAL.num;
   }//WHILE(true): Main Task Loop

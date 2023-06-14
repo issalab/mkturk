@@ -1,4 +1,3 @@
-//================== INITIALIZE VARIABLES ==================//
 var astat = {
   manualtriggerval: 0, trial: -1, plotdata: 0,
   tdrop: [], trise: [], dur: [], corr: [], tsc: [],
@@ -8,13 +7,118 @@ let fileMeta = {
   activeAgentList: [],
   activeAgent: '',
   filename: '',
-  trialnum: -1
+  trialnum: -1,
+  blocknum: -1,
 }
+
+//=============== USB DEVICE =============//
+var port = {
+  statustext_connect: '',
+  statustext_sent: '',
+  statustext_received: '',
+  connected: false,
+
+  USBDeviceType: '',
+  USBDeviceName: '',
+};
+let usbDeviceWorker = new Worker('mksensor_usbworker.js');
+
+async function usbAutoConnectPromise(){
+  return new Promise((res, rej) => {
+    const channel = new MessageChannel(); 
+
+    channel.port1.onmessage = ({data}) => {
+      if (data.connected == true){
+        port.connected = true
+        hideHardwareButton()
+      }
+      else { port.connected = false }
+      port.statustext_connect = data.val
+  
+      channel.port1.close();
+      if (data.error) {
+        rej(data.error);
+      }
+      else {
+        res(data.val);
+      }
+    };//channel.onmessage
+    usbDeviceWorker.postMessage({action: 'connect', val: 'AutoConnect'},[channel.port2]);
+  })
+}//FUNCTION usbAutoConnectPromise()
+
+async function findUSBDevice(event) {
+  //User manually connects to Port
+  if ( event.type == 'pointerup' || event.type == 'touchend' || event.type == 'mouseup')
+  {
+    event.preventDefault(); //prevents additional downstream call of click listener
+    try {
+      //STEP 1B: RequestPorts - User based
+      // -Get device list based on Arduino filter
+      // -Look for user activation to select device
+      const filters = [
+        { vendorId: 0x2341, productId: 0x8036 },
+        { vendorId: 0x2341, productId: 0x8037 },
+        { vendorId: 0x2341, productId: 0x804d },
+        { vendorId: 0x2341, productId: 0x804e },
+        { vendorId: 0x2341, productId: 0x804f },
+        { vendorId: 0x2341, productId: 0x8050 },
+      ];
+
+      device = await navigator.usb.requestDevice({ filters: filters });
+      if (port.connected == false){
+        usbDeviceWorker.postMessage({action: 'connect', val: 'ManualConnect'})//postMessage(get-device)        
+      }//(in case of a reconnect event) IF hadn't allready reconnected in time it took user to select
+    } catch (error) {
+      console.log(error);
+    }
+    waitforClick.next(1);
+  }//IF user select
+}//FUNCTION findUSBDevice
+
+// Update the pre element with output from the device.
+usbDeviceWorker.onmessage = function(event) {
+  console.log(event.data.message);
+  if (event.data.message == 'USBDisconnect'){
+    port.connected = false
+    port.statustext_connect = event.data.val
+    showHardwareButton()
+  }//IF disconnected usb
+
+  if (event.data.message == 'USBConnect'){
+    port.connected = true
+    port.statustext_connect = event.data.val
+    hideHardwareButton()
+  }//IF connected usb
+
+  if (event.data.message == 'SerialPortConnect'){
+    port.connected = true
+    port.USBDeviceType = event.data.devicetype;
+    port.USBDeviceName = event.data.devicename;
+  }//IF serialportconnect
+
+  if (event.data.message == 'zeroTrigger'){
+    astat.manualtriggerval = 0;
+  }
+
+  if (event.data.message == 'plotTrial'){
+    updatePlots(event.data.val)
+  }
+
+  if (event.data.message == 'trigger'){
+    rtdb.ref('instances/' + fileMeta.activeAgent).set({
+      '${event.data.inputline}_data': [
+        event.data.val.trialnum, event.data.val.tstart, event.data.val.tend, event.data.val.filecode,
+        event.data.val.mktrial, event.data.val.mkblock, event.data.val.mkfilecode]
+    })
+  }//IF trigger
+};//usbDeviceWorker.onmessage
+
 const rtdb = firebase.database();
 let rtdbBroadcastRef = rtdb.ref('instances');
 rtdbBroadcastRef.on('child_added', function(childSnapshot, prevChildKey) {
   getActiveAgents();
-  console.log(childSnapshot.key + ' is now live; adding agent to list.')
+  // console.log(childSnapshot.key + ' is now live; adding agent to list.')
 })//CALLBACK for when agents are added
 
 function getActiveAgents(){
@@ -42,7 +146,7 @@ function agentSelectionListener(event){
   fileMeta.activeAgent = event.target.value;
   rtdb.ref(`instances/${fileMeta.activeAgent}/trialnum`).on('value', (snap) => 
   {
-    fileMeta.trialnum = snap.val();
+    fileMeta.trial = snap.val();
   })
   rtdb.ref(`instances/${fileMeta.activeAgent}/filename`).on('value', (snap) => 
   {
@@ -55,59 +159,20 @@ function getFileMeta(){
   rtdb.ref(`instances/${fileMeta.activeAgent}`).once('value').then( (snap) =>{
     try {
       fileMeta.filename = snap.val()['filename'];
-      fileMeta.trialnum = snap.val()['trialnum'];
+      fileMeta.trial = snap.val()['trialnum'];
+      fileMeta.blocknum = snap.val()['blocknum'];
+      fileMeta.filecode = snap.val()['filecode'];
+      usbDeviceWorker.postMessage({ action: 'updateMkTurkMeta',
+                                    val: {trial: fileMeta.trial, block: fileMeta.blocknum, filecode: fileMeta.filecode}
+                                  })
     } catch (err) {
       console.error("error: trouble getting filename & trialnum from realtime db");
     }
   } )
 }//FUNCTION getFileMeta
 
-
-//=======(END)======= INITIALIZE VARIABLES =================//
-
-//---------------------------------------------//
-//----------- BOILERPLATE WEBUSB CODE ---------//
-//---------------------------------------------//
-
-// STEP 0: Port Initialization - Open (instantiate) port before assigning callbacks to it
-async function findUSBDevice(event) {
-  //User connects to Port
-  if ( event.type == 'pointerup' || event.type == 'touchend' || event.type == 'mouseup')
-  {
-    event.preventDefault(); //prevents additional downstream call of click listener
-    try {
-      //STEP 1B: RequestPorts - User based
-      // -Get device list based on Arduino filter
-      // -Look for user activation to select device
-      const filters = [
-        { vendorId: 0x2341, productId: 0x8036 },
-        { vendorId: 0x2341, productId: 0x8037 },
-        { vendorId: 0x2341, productId: 0x804d },
-        { vendorId: 0x2341, productId: 0x804e },
-        { vendorId: 0x2341, productId: 0x804f },
-        { vendorId: 0x2341, productId: 0x8050 },
-      ];
-
-      device = await navigator.usb.requestDevice({ filters: filters });
-      deviceWorker.postMessage({
-        action: 'get-device',
-        vendorId: device.vendorId,
-        productId: device.productId,
-      })//postMessage(get-device)      
-    } catch (error) {
-      console.log(error);
-    }
-    waitforClick.next(1);
-  }
-}//FUNCTION findUSBDevice
-//============= SERIAL OBJECT =====================//
-
-//----------------------------------------------------//
-//----(END)------- BOILERPLATE WEBUSB CODE ----------//
-//--------------------------------------------------//
-
 function updatePlots(abuff){
-  astat.trial[abuff.ntrials] = fileMeta.trialnum;
+  astat.trial[abuff.ntrials] = fileMeta.trial;
   astat.manualtriggerval = 0;
 
 //----- Sampling stats
@@ -132,7 +197,7 @@ function updatePlots(abuff){
 
 //----- MkTurk Meta
 document.getElementById('metatext').innerHTML = 
-          '<font color=blue> Trial_mk ' + fileMeta.trialnum + '</font>'+
+          '<font color=blue> Trial_mk ' + fileMeta.trial + '</font>'+
           ' (n=' + abuff.ntrials + ')'
 
 //----- Display stats
@@ -277,7 +342,7 @@ async function toggleTrigger(event){
     astat.manualtriggerval = 1; //ready to triggerdown
     document.querySelector('button[id=manualtrigger]').style.color = 'black';
   } 
-  deviceWorker.postMessage({action: "toggleTrigger", val: astat.manualtriggerval});
+  usbDeviceWorker.postMessage({action: "toggleTrigger", val: astat.manualtriggerval});
 }//FUNCTION toggleTrigger
 
 async function togglePlotData(event){
@@ -295,7 +360,7 @@ function saveTrialData(){
   const data = {
     agent: fileMeta.activeAgent,
     filename: fileMeta.filename,
-    trial_num: fileMeta.trialnum,
+    trial_num: fileMeta.trial,
     timestamp: abuff.t0,
     photodiode: abuff.ph,
     t: abuff.t
