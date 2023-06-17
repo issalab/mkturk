@@ -142,6 +142,8 @@ NRewardMax (default = 1 --> no bonus reward possible): Max number of rewards tha
 
 NRSVPMax (default = 0 --> no exponential reward for fixating NRSVP sequence longer): Works in tandem with TASK.NRSVP where TASK.NRSVP is the min # of images required to fixate for reward and a rsvp sequence of TASK.NRSVPMax images is queued up per trial. Exponentially more reward pulses given for longer fixations up to NRewardMax for fixating NRSVPMax images. No reward for less than NRSVP clips fixated, one reward pulse for NRSVP clips viewed, and NRewardMax pulses given for NRSVPMax.  Trial-by-Trial bonus reward for consecutive hits will be ignored if this option is on to reward more images fixated within a trial. NRSVPMax is ignored if set less than NRSVP. See TSequenceActualClip in TRIALEVENTS if want to determine which clips were fixated (-1 is registered for clip times if broke fixation). See TRIALEVENTS[NReward] to determine how many reward pulses were delivered. NOTE: If want to use bonus rewards & NRewardMax in the traditional trial-by-trial sense, then set NRSVPMax < NRSVP so that only one reward is given per NRSVP images shown and bonus is enacted based on multiple consecutive trial hits.
 
+RewardColor (default = #008000 = [0,128,0] --> green square): specify the reward square color in hex (eg, #FFFFFF for white or #000000 for black). Not required in param file. If not provided, defaults to a green square (#008000)
+
 ___________________________________________________________________________
 *ADD AUTOMATOR*
 ___________________________________________________________________________
@@ -572,7 +574,7 @@ A4,A5 (D6 led for trial code) - file code+sample command & trial code - IN3 (not
 
 <br>
 
-## ARDUINO V0.3 -- mkphotodiode/mksensor
+## ARDUINO V0.3 -- mksensor
 ### Digital Pins
 0 - RX
 
@@ -584,9 +586,9 @@ A4,A5 (D6 led for trial code) - file code+sample command & trial code - IN3 (not
 
 4 - unused
 
-5 - sample command led
+5 - digital in 0 led
 
-6 - unused led
+6 - digital in 1 led
 
 7 - unused led
 
@@ -604,13 +606,13 @@ A0 - unused
 
 A1 - unused
 
-A2 - unused
+A2 - digital in 0
 
-A3 - unused
+A3 - digital in 1
 
-A4 - Photodiode Receive
+A4 - Photodiode Receive (analog in)
 
-A5 - Sample Command Receive
+A5 - Future Analog In
 
 
 ### Lines
@@ -618,8 +620,8 @@ D8,D9 (D2 led) - unused - softwareserial2
 
 D10,D11 (D6 led) - unused - softwareserial1
 
-A2,A3 (D5 led) - unused - IN1
+A2,A3 (D5 led) - digital in 0, digital in 1 - IN1
 
 A0,A1 (D3 led) - unused - IN2
 
-A4,A5 - photodiode, sample command - IN3
+A4,A5 - photodiode, future analog in - IN3

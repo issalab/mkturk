@@ -87,14 +87,14 @@ async function index_init_awaits(){
   }//IF WEBBluetoothAvailable
 
   document.querySelector('button[id=donePracticingTask]').addEventListener('pointerup', donePracticingTask_listener, false);
-  document.querySelector('button[id=stressTest]').addEventListener('touchstart', stressTest_listener, false);
-  document.querySelector('button[id=gridPoints]').addEventListener('touchstart', gridPoints_listener, false);
+  document.querySelector('button[id=stressTest]').addEventListener('pointerup', stressTest_listener, false);
+  document.querySelector('button[id=gridPoints]').addEventListener('pointerup', gridPoints_listener, false);
 
-  //---- for Safari
-  document.querySelector('button[id=donePracticingTask]').addEventListener('click', donePracticingTask_listener, false);
-  document.querySelector('button[id=stressTest]').addEventListener('click', stressTest_listener, false);
-  document.querySelector('button[id=gridPoints]').addEventListener('click', gridPoints_listener, false);
-  //---- (END) for Safari
+  // //---- for Safari
+  // document.querySelector('button[id=donePracticingTask]').addEventListener('click', donePracticingTask_listener, false);
+  // document.querySelector('button[id=stressTest]').addEventListener('click', stressTest_listener, false);
+  // document.querySelector('button[id=gridPoints]').addEventListener('click', gridPoints_listener, false);
+  // //---- (END) for Safari
 
   //====================== Retrieve device's screen properties ===========================//
   ENV.WebAppUrl = window.location.href;
@@ -170,6 +170,7 @@ async function index_init_params_screen_automator(){
   document.querySelector('div[id=subjectID_div]').style.display = 'none';
 
   localStorage.setItem('Agent', ENV.Subject);
+  initializeRTDBCallbacks(ENV.Subject);
 
   if (ENV.MTurkWorkerId) {
     ENV.ParamFileName = PARAM_DIRPATH + ENV.MTurkWorkerId + '_' +
@@ -763,16 +764,25 @@ async function index_send_filecode(){
     Number(filetime[0]), Number(filetime[1]), //hours
     Number(filetime[3]), Number(filetime[4]), //minutes
     Number(filetime[filetime.length-2]), Number(filetime[filetime.length-1]) //seconds
-];
+  ];
+  FLAGS.filecode = time_digits;
+  rtdb.ref('instances/' + ENV.Subject).set({
+    'trialnum': CURRTRIAL.num, 'blocknum': CURRTRIAL.blocknum,
+    'filecode': FLAGS.filecode, 'filename': ENV.DataFileName,
+    'performance': -1 } );
+
   for (let i=0; i<=time_digits.length-1; i++){
     usbDeviceWorker.postMessage({ action: "writeSampleCommandTriggertoUSB", val: 'f1' });
-    await sleep(10*(time_digits[i]+1));
+    FLAGS.pulse_tstart = performance.now();
+    await waitUntil(10*(time_digits[i]+1))
+
     usbDeviceWorker.postMessage({ action: "writeSampleCommandTriggertoUSB", val: 'f0' });
-    await sleep(25);//milliseconds  
+    FLAGS.pulse_tstart = performance.now();
+    await waitUntil(25)
   }//FOR i digits
 
   FLAGS.filecodeSent = 1;
-  return 1
+  return time_digits
 }//FUNCTION index_send_filecode()
 
 async function index_send_trialcode(){
@@ -780,10 +790,12 @@ async function index_send_trialcode(){
 
   for (var i=0; i<=str.length-1; i++){
     usbDeviceWorker.postMessage({ action: "writeTrialCodetoUSB", val: 1 });
-    await sleep(10*(Number(str[i])+1));
+    FLAGS.pulse_tstart = performance.now();
+    await waitUntil(10*(Number(str[i])+1));
     usbDeviceWorker.postMessage({ action: "writeTrialCodetoUSB", val: 0 });
     if (i<str.length-1){
-      await sleep(25);//milliseconds
+      FLAGS.pulse_tstart = performance.now();
+      await waitUntil(25);//milliseconds
     }//postpend gap between digits
   }//FOR i digits
   return 1
@@ -1086,6 +1098,56 @@ function index_update_blocknum(){
   TQS.currentbag_starttime = -1;//update to Date.now() only when trigger in screenfunctions
 }//FUNCTION index_update_blocknum
 
+//REALTIME DATABASE (effector tracking)
+function initializeRTDBCallbacks(agent){
+  let linenum = ['digital0','digital1']
+
+  for (let i=0; i<=linenum.length-1; i++){
+    rtdb.ref(`daq/${agent}/`+linenum[i]).on('value', (snap) => {
+      EVENTS['timeseries']['DAQ'][linenum[i]]['treceived'].push(performance.now())
+      EVENTS['timeseries']['DAQ'][linenum[i]]['trial'].push(snap.val().trial)
+      EVENTS['timeseries']['DAQ'][linenum[i]]['tstart'].push(snap.val().tstart)
+      EVENTS['timeseries']['DAQ'][linenum[i]]['tend'].push(snap.val().tend)
+      EVENTS['timeseries']['DAQ'][linenum[i]]['filecode'].push(snap.val().filecode)
+      EVENTS['timeseries']['DAQ'][linenum[i]]['mktrial'].push(snap.val().mktrial)
+      EVENTS['timeseries']['DAQ'][linenum[i]]['mkblock'].push(snap.val().mkblock)
+      EVENTS['timeseries']['DAQ'][linenum[i]]['mkfilecode'].push(snap.val().mkfilecode)
+      console.log('-->from mksensor input' + linenum[i] + ' (digital)')
+    })//RTDB receive callback for digital line  
+  }//FOR i input lines
+
+  rtdb.ref(`daq/${agent}/ph`).on('value', (snap) => {
+    EVENTS['timeseries']['DAQ']['ph']['treceived'].push(performance.now())
+    EVENTS['timeseries']['DAQ']['ph']['trise'].push(snap.val().trise)
+    EVENTS['timeseries']['DAQ']['ph']['tdrop'].push(snap.val().tdrop)
+    EVENTS['timeseries']['DAQ']['ph']['threshrise'].push(snap.val().threshrise)
+    EVENTS['timeseries']['DAQ']['ph']['threshdrop'].push(snap.val().threshdrop)
+    EVENTS['timeseries']['DAQ']['ph']['dursamplecommand'].push(snap.val().dursamplecommand)
+    EVENTS['timeseries']['DAQ']['ph']['mktrial'].push(snap.val().mktrial)
+    EVENTS['timeseries']['DAQ']['ph']['mkblock'].push(snap.val().mkblock)
+    EVENTS['timeseries']['DAQ']['ph']['mkfilecode'].push(snap.val().mkfilecode)
+    console.log('-->from mksensor input ' + 'photodiode (analog)')
+  })//RTDB receive callback for digital line  
+
+  // rtdb.ref(`data/${mkeye.data.TASK.Agent}`).on('value', (snap) => {
+  //   if (typeof(mkeye.realtimescatter != "undefined")){
+  //     try{
+  //       mkeye.realtimescatter.update(snap.val())
+
+  //       mkeye.live.x = snap.val().x
+  //       mkeye.live.y = snap.val().y
+  //       mkeye.live.boundingBoxes = snap.val().boundingBoxes
+  //       mkeye.live.meta = snap.val().meta
+  //       mkeye.live.timestamp = new Date(snap.val().timestamp)
+  //     }
+  //     catch{
+  //       console.log('rtdb')
+  //     }
+  //   }//IF plot initialized
+  // })//ON CALLBACK for effector data
+}//FUNCTION initializeRTDBCallbacks()
+
+
 (function (window) {
   window.utils = {
     parseQueryString: function (str) {
@@ -1227,6 +1289,16 @@ async function sleep(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
+async function waitUntil(dur){
+  return await new Promise(resolve => {
+    const interval = setInterval(() => {
+      if (performance.now() - FLAGS.pulse_tstart>=dur) {
+        resolve('foo');
+        clearInterval(interval);
+      };
+    }, 1);
+  });
+}//FUNCTION waitUntil
 
 // async function waitUntil(condition) {
 //   return await new Promise(resolve => {

@@ -426,6 +426,7 @@ async function loadParametersfromFirebase(paramfile_path) {
     if (typeof TASK.NConsecutiveHitsforBonus == 'undefined'){TASK.NConsecutiveHitsforBonus = 0;}
     if (typeof TASK.NRewardMax == 'undefined'){TASK.NRewardMax = 1;}
     if (typeof TASK.NRSVPMax == 'undefined'){TASK.NRSVPMax = 0;}
+    if (typeof TASK.RewardColor == 'undefined'){TASK.RewardColor = '#008000';}
 
     // AUTOMATOR
     if (typeof TASK.Automator == 'undefined'){TASK.Automator = 0;}
@@ -603,6 +604,7 @@ async function saveBehaviorDatatoFirebase(TASK, ENV, CANVAS, EVENTS) {
         RFIDTag: EVENTS['timeseries']['RFIDTag'],
         Weight: EVENTS['timeseries']['Weight'],
         EffectorXY: EVENTS['timeseries']['EffectorData'],
+        DAQ: EVENTS['timeseries']['DAQ']
         // 'Arduino': EVENTS['timeseries']['Arduino'],
       },
     };//dataObj

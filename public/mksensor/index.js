@@ -17,6 +17,7 @@
   //================== CONNECT WEBUSB ==================//
   if (typeof navigator.usb == 'object') {
     await usb_scriptLoaded;
+    document.getElementById("agent-list").addEventListener("change",agentSelectionListener,false);
     document.querySelector('button[id=connectusb]').addEventListener('pointerup', findUSBDevice, false);
     document.querySelector('button[id=connectusb]').style.display = 'block';
     document.querySelector('button[id=connectusb]').style.visibility ='visible';
@@ -28,15 +29,13 @@
     if (typeof port.connected == 'undefined' || port.connected == false) {
         await usbAutoConnectPromise()
     }
-    await connectHardwareButtonPromise();
+    if (port.connected != true){
+      await connectHardwareButtonPromise();
+    }
   }//IF WebUSB API present
   else{
     console.log('WARNING: No WebUSB API found!')
   }
   //=======(END)========== CONNECT WEBUSB ==================//
-
-  //================== CONNECT REALTIMEDATABASE ==================//
-  // const rtdb = firebase.database();
-  document.getElementById("agent-list").addEventListener("change",agentSelectionListener,false);
 }//ASYNC function wrapper
 )();

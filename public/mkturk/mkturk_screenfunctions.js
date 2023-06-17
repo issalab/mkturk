@@ -582,9 +582,7 @@ if (typeof im != 'undefined' && typeof im[0] == 'object') {
   for (var j = 0; j <= ob[f].length - 1; j++) {
     var [filter_objs, filter_img, objFilterSingleFrame, imgFilterSingleFrame] =
       updateFilterSingleFrame(taskscreen, ob[f][j], id[f][j], fr[f], gr[f][j]);
-    if (filter_img){
-      VISIBLECANVAS.getContext('2d').filter = imgFilterSingleFrame;
-    }
+    if (filter_img){ VISIBLECANVAS.getContext('2d').filter = imgFilterSingleFrame; }
 
     var boundingBox = renderImage2D(im[j],taskscreen,
                                     ob[f][j],id[f][j],fr[f],
@@ -724,7 +722,7 @@ function renderShape2D(sc, gr, canvasobj,taskscreen) {
     case 'Choice':
       return bufferChoiceUsingCircleSquare(ENV.ChoiceColor,ENV.ChoiceRadius,gr,canvasobj);
     case 'Reward':
-      funcreturn = renderSquareOnCanvas('green', ENV.RewardSquareXY, ENV.RewardSquareWidth, canvasobj);
+      funcreturn = renderSquareOnCanvas(TASK.RewardColor, ENV.RewardSquareXY, ENV.RewardSquareWidth, canvasobj);
       funcreturn.class[0] = -1 //not a target
       funcreturn.grid[0] = -1
       return funcreturn

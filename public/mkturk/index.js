@@ -38,7 +38,11 @@ index_init();
       EVENTS['trialseries']['Response'].forEach( (element, index) => { if (element==EVENTS['trialseries']['CorrectItem'][index]){ncorrect++} })
       frac_correct = ncorrect/EVENTS['trialseries']['Response'].length
     }
-    rtdb.ref('instances/' + ENV.Subject).set( { 'trialnum': CURRTRIAL.num, 'filename': ENV.DataFileName, 'performance': frac_correct } );
+    rtdb.ref('instances/' + ENV.Subject).set({
+       'trialnum': CURRTRIAL.num, 'blocknum': CURRTRIAL.blocknum,
+       'filecode': FLAGS.filecode, 'filename': ENV.DataFileName,
+       'performance': frac_correct } );
+    console.log('<- send mkTrial' + CURRTRIAL.num)
 
     document.body.style.background = TASK.BackgroundColor2D;
     if (FLAGS.need2loadScenes) {
@@ -784,7 +788,8 @@ index_init();
     //Await remaining ITI
     let remainingInterTrialInterval = TASK.InterTrialInterval - (performance.now() - ITIstart);
     if (remainingInterTrialInterval > 0) {
-      await sleep(remainingInterTrialInterval);
+      FLAGS.pulse_tstart = performance.now();
+      await waitUntil(remainingInterTrialInterval);
     }
 
     if ( TASK.MinTrialDuration_AfterSampleCommandTrigger > 0 && TASK.RewardStage != 0){
@@ -794,7 +799,8 @@ index_init();
 
       remainingInterTrialInterval = TASK.MinTrialDuration_AfterSampleCommandTrigger - elapsedTime
       if (remainingInterTrialInterval > 0){
-        await sleep(remainingInterTrialInterval);
+        FLAGS.pulse_tstart = performance.now();
+        await waitUntil(remainingInterTrialInterval);
       }
     }//IF
 

@@ -284,7 +284,7 @@ async function donePracticingTask_listener(event) {
 
   if (port.connected && FLAGS.savedata) {
     if (FLAGS.filecodeSent <= 0){
-      await index_send_filecode(CURRTRIAL.starttime)
+      await index_send_filecode()
     }//IF first trial, send filecode pulse on sample command line
   }//IF
 

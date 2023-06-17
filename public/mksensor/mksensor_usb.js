@@ -3,13 +3,20 @@ var astat = {
   tdrop: [], trise: [], dur: [], corr: [], tsc: [],
 };
 
+var alldata = { 't0':[],'t': [], 'analog0': [], 'manualpulse': [], 'digital0pulse': {}, 'digital1pulse': {},
+                'starttrial': -1, 'nsamples': 0, 'nsamples_max': 500000 }
+alldata['digital0pulse'] = {treceived:[],trial:[],tstart:[],tend:[],filecode:[],mktrial:[],mkblock:[],mkfilecode:[],dur:[]}
+alldata['digital1pulse'] = {treceived:[],trial:[],tstart:[],tend:[],filecode:[],mktrial:[],mkblock:[],mkfilecode:[],dur:[]}
+              
 let fileMeta = { 
   activeAgentList: [],
   activeAgent: '',
   filename: '',
-  trialnum: -1,
-  blocknum: -1,
+  trial: -1,
+  block: -1,
+  filecode: [-1,-1,-1,-1,-1,-1],
 }
+const storage = firebase.storage();
 
 //=============== USB DEVICE =============//
 var port = {
@@ -101,16 +108,43 @@ usbDeviceWorker.onmessage = function(event) {
     astat.manualtriggerval = 0;
   }
 
+  if (event.data.message == 'saveTrialData'){
+    if (alldata.starttrial == -1){
+      alldata.starttrial = event.data.val.starttrial
+    }
+    saveAllData(event.data.val)
+    saveTrialData(event.data.val)
+  }
+
   if (event.data.message == 'plotTrial'){
     updatePlots(event.data.val)
   }
 
   if (event.data.message == 'trigger'){
-    rtdb.ref('instances/' + fileMeta.activeAgent).set({
-      '${event.data.inputline}_data': [
-        event.data.val.trialnum, event.data.val.tstart, event.data.val.tend, event.data.val.filecode,
-        event.data.val.mktrial, event.data.val.mkblock, event.data.val.mkfilecode]
-    })
+    let pulsedata = {
+      trial: event.data.val.trial, 
+      tstart: event.data.val.tstart,
+      tend: event.data.val.tend,
+      filecode: event.data.val.filecode,
+      mktrial: event.data.val.mktrial, 
+      mkblock: event.data.val.mkblock, 
+      mkfilecode: event.data.val.mkfilecode,
+      dur: Math.round(10*(event.data.val.tend - event.data.val.tstart))/10,
+    }
+
+    let linestr = 'digital'+event.data.val.inputkey + 'pulse'
+    console.log('Pushing into alldata.' + linestr)
+    alldata[linestr]['trial'].push(pulsedata.trial);
+    alldata[linestr]['tstart'].push(pulsedata.tstart);
+    alldata[linestr]['tend'].push(pulsedata.tend);
+    alldata[linestr]['filecode'].push(pulsedata.filecode);
+    alldata[linestr]['mktrial'].push(pulsedata.mktrial);
+    alldata[linestr]['mkblock'].push(pulsedata.mkblock);
+    alldata[linestr]['mkfilecode'].push(pulsedata.mkfilecode);
+    alldata[linestr]['dur'].push(pulsedata.dur);
+
+    rtdb.ref('daq/' + fileMeta.activeAgent + '/' + event.data.val.inputkey).set(pulsedata)
+    console.log('<--to MkTurk input' + event.data.val.inputkey + ' (digital pulse)')
   }//IF trigger
 };//usbDeviceWorker.onmessage
 
@@ -144,14 +178,55 @@ function getActiveAgents(){
 
 function agentSelectionListener(event){
   fileMeta.activeAgent = event.target.value;
+  if (fileMeta.activeAgent == ''){
+    document.getElementById('titletext').innerHTML = 'MkSensor'
+  }//IF no agent selected
+  else{
+    document.getElementById('titletext').innerHTML = 'MkSensor'
+    + '<font color=red><b>'
+    + '   (saving to ' + fileMeta.activeAgent + ')'
+    + '</b></font>'
+  }//ELSE agent, add saving in bold, red text
+
   rtdb.ref(`instances/${fileMeta.activeAgent}/trialnum`).on('value', (snap) => 
   {
     fileMeta.trial = snap.val();
-  })
+    usbDeviceWorker.postMessage({ action: 'updateMkTurkMeta',
+        val: {trial: fileMeta.trial, block: fileMeta.block, filecode: fileMeta.filecode}
+    })
+    console.log('-->Received from MkTurk (trial)')
+  })//listener for mktrial
+
+  rtdb.ref(`instances/${fileMeta.activeAgent}/blocknum`).on('value', (snap) => 
+  {
+    fileMeta.block = snap.val();
+    usbDeviceWorker.postMessage({ action: 'updateMkTurkMeta',
+        val: {trial: fileMeta.trial, block: fileMeta.block, filecode: fileMeta.filecode}
+    })
+    console.log('-->Received from MkTurk (block)')
+  })//listener for mkblock
+
+  rtdb.ref(`instances/${fileMeta.activeAgent}/filecode`).on('value', (snap) => 
+  {
+    fileMeta.filecode = snap.val();
+    usbDeviceWorker.postMessage({ action: 'updateMkTurkMeta',
+        val: {trial: fileMeta.trial, block: fileMeta.block, filecode: fileMeta.filecode}
+    })
+    console.log('-->Received from MkTurk (filecode)')
+  })//listener for mkfilecode
+
   rtdb.ref(`instances/${fileMeta.activeAgent}/filename`).on('value', (snap) => 
   {
+    if (fileMeta.filename != ''){
+      resetAllData()
+    }//IF this is a filename switch, then assume trial 0
     fileMeta.filename = snap.val();
-  })
+    usbDeviceWorker.postMessage({ action: 'updateMkTurkMeta',
+        val: {trial: fileMeta.trial, block: fileMeta.block, filecode: fileMeta.filecode}
+    })
+    console.log('-->Received from MkTurk (filename)')
+  })//listener for mkfilename
+
   getFileMeta()
 }//FUNCTION agentSelectionListener
 
@@ -160,10 +235,11 @@ function getFileMeta(){
     try {
       fileMeta.filename = snap.val()['filename'];
       fileMeta.trial = snap.val()['trialnum'];
-      fileMeta.blocknum = snap.val()['blocknum'];
+      fileMeta.block = snap.val()['blocknum'];
       fileMeta.filecode = snap.val()['filecode'];
+      console.log('-->Received from MkTurk (trial,block,filecode)')
       usbDeviceWorker.postMessage({ action: 'updateMkTurkMeta',
-                                    val: {trial: fileMeta.trial, block: fileMeta.blocknum, filecode: fileMeta.filecode}
+                                    val: {trial: fileMeta.trial, block: fileMeta.block, filecode: fileMeta.filecode}
                                   })
     } catch (err) {
       console.error("error: trouble getting filename & trialnum from realtime db");
@@ -189,27 +265,45 @@ function updatePlots(abuff){
   console.log('SR=' + Math.round(abuff.ph.length / pipe.dur ) + ' kHz (pipe: ' + Math.round(pipe.SR) + ')');
   console.log('ANALOG: dt=[' + Math.min(...abuff.dt) + ', ' + Math.max(...abuff.dt) + '] ms')
 
+  let titlestr = 'MkSensor'
+  if (fileMeta.activeAgent != ''){
+    titlestr = 'MkSensor'
+                + '<font color=red><b>'
+                + '   (saving to ' + fileMeta.activeAgent + ')'
+              + '</b></font>'
+  }//IF agent, add 'saving' in bold, red text
+
   document.getElementById('titletext').innerHTML = 
-          'MkSensor &nbsp&nbsp' + 
+          titlestr + '&nbsp&nbsp' + 
           "<font size=-1>" + Math.round(100*abuff.ph.length / pipe.dur )/100 + ' kHz ' +
           '(pipe: ' + Math.round(pipe.SR*100)/100 + ') __ ' + fileMeta.filename + '</font>'
 //----- Sampling stats
 
 //----- MkTurk Meta
-document.getElementById('metatext').innerHTML = 
-          '<font color=blue> Trial_mk ' + fileMeta.trial + '</font>'+
-          ' (n=' + abuff.ntrials + ')'
+  document.getElementById('metatext').innerHTML = 
+          '<font color=blue> Trial_mk ' + fileMeta.trial + '</font>'+' (n=' + abuff.ntrials + ')'
 
 //----- Display stats
   astat.tsc[abuff.ntrials] = abuff.t0;
   const isSmallNumber = (element) => element < 0.3*(Math.max(...abuff.ph) - Math.min(...abuff.ph)) + Math.min(...abuff.ph);
-  astat.tdrop[abuff.ntrials] = Math.round(abuff.t[abuff.ph.findIndex(isSmallNumber)])
+  astat.tdrop[abuff.ntrials] = Math.round(10*abuff.t[abuff.ph.findIndex(isSmallNumber)])/10
 
   const isLargeNumber = (element) => element > 0.7*(Math.max(...abuff.ph) - Math.min(...abuff.ph)) + Math.min(...abuff.ph);
-  astat.trise[abuff.ntrials] = Math.round(abuff.t[abuff.ph.findIndex(isLargeNumber)])
+  astat.trise[abuff.ntrials] = Math.round(10*abuff.t[abuff.ph.findIndex(isLargeNumber)])/10
   console.log('tRise~>' + astat.trise[abuff.ntrials] + ', tDrop~>' + astat.tdrop[abuff.ntrials] + ' ms');
 
   astat.dur[abuff.ntrials] = abuff.t[abuff.ph.length-1]
+
+  rtdb.ref('daq/' + fileMeta.activeAgent + '/ph').set({
+    trise: astat.trise[abuff.ntrials],
+    tdrop: astat.tdrop[abuff.ntrials],
+    threshrise: 0.7*(Math.max(...abuff.ph) - Math.min(...abuff.ph)) + Math.min(...abuff.ph),
+    threshdrop: 0.3*(Math.max(...abuff.ph) - Math.min(...abuff.ph)) + Math.min(...abuff.ph),
+    dursamplecommand: Math.round(10*astat.dur[abuff.ntrials])/10,
+    mktrial: fileMeta.trial, 
+    mkblock: fileMeta.block, 
+    mkfilecode: fileMeta.filecode,
+  })
 
   var prevind = abuff.indtrace - 1
   if (prevind < 0){prevind = abuff.ntraces-1};
@@ -356,8 +450,8 @@ async function togglePlotData(event){
     }//ELSE stop plotting
   }//FUNCTION togglePlotData
 
-function saveTrialData(){
-  const data = {
+function saveTrialData(abuff){
+  const bqdata = {
     agent: fileMeta.activeAgent,
     filename: fileMeta.filename,
     trial_num: fileMeta.trial,
@@ -366,6 +460,44 @@ function saveTrialData(){
     t: abuff.t
   }
   if (fileMeta.activeAgent !== '') {
-    bqInsertPhotodiodeData(data);
+    bqInsertPhotodiodeData(bqdata);
   }
 }//FUNCTION saveTrialData
+
+async function saveAllData(abuff){
+  alldata.t0.push(abuff.t0);
+  alldata.t.push(abuff.t);
+  alldata.analog0.push(new Uint8Array(abuff.ph))
+  alldata.nsamples = alldata.nsamples + abuff.ph.length
+
+  let blob = new Blob([JSON.stringify(alldata)], { type: 'application/json' });
+
+  let filename =  '/mkturkfiles/daq/'
+              + fileMeta.filename.substring(fileMeta.filename.lastIndexOf('datafiles/')+10, fileMeta.filename.lastIndexOf('.json'))
+              + '_daq' + alldata.starttrial.toString().padStart(4,'0') + '.json'
+  
+  // Create file metadata including the content type
+  let metadata = { contentType: 'application/json' };
+
+  // Upload the file and metadata
+  let response = await storage.ref().child(filename).put(blob, metadata);
+  // CURRTRIAL.lastFirebaseSave = new Date(response.metadata.updated);
+
+  //RESET ALLDATA WHEN TOO LARGE
+  if (alldata.nsamples > alldata.nsamples_max){
+    resetAllData()
+  }//IF alldata large, start new arrays and file
+}//FUNCTION saveAllData
+
+function resetAllData(){
+  alldata.t0 = []
+  alldata.t = []
+  alldata.analog0 = []
+  alldata.manualpulse = []
+  alldata['digital0pulse'] = {treceived:[],trial:[],tstart:[],tend:[],filecode:[],mktrial:[],mkblock:[],mkfilecode:[],dur:[]}
+  alldata['digital1pulse'] = {treceived:[],trial:[],tstart:[],tend:[],filecode:[],mktrial:[],mkblock:[],mkfilecode:[],dur:[]}
+  alldata.nsamples = 0;  
+
+  alldata.starttrial = -1;
+  console.log('STARTING NEW ALLDATA FILE')
+}//FUNCTION resetAllData

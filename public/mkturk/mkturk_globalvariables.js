@@ -174,6 +174,8 @@ FLAGS.automatortext = '';
 FLAGS.rtdbAgentNumConnections = 1;
 
 FLAGS.filecodeSent = 0;
+FLAGS.filecode = [-1,-1,-1,-1,-1,-1];
+FLAGS.pulse_tstart = -1;
 
 var CANVAS = {};
 var CANVAS = {
@@ -306,6 +308,10 @@ EVENTS.reset_timeseries = function () {
   this.timeseries.Arduino = {};
   this.timeseries.TouchData = {};
   this.timeseries.EffectorData= {t: [],x: [],y: [], w: [], a: [], q: [] };
+  this.timeseries.DAQ = {}
+  this.timeseries.DAQ['0'] = {treceived:[],trial:[],tstart:[],tend:[],filecode:[],mktrial:[],mkblock:[],mkfilecode:[]}
+  this.timeseries.DAQ['1'] = {treceived:[],trial:[],tstart:[],tend:[],filecode:[],mktrial:[],mkblock:[],mkfilecode:[]}
+  this.timeseries.DAQ['ph'] = {treceived:[],trise:[],tdrop:[],threshrise:[],threshdrop:[],dursamplecommand:[],mktrial:[],mkblock:[],mkfilecode:[]}
 
   //Initialize EffectordataLocal
   for (var i=0; i<ENV.MaxTrialsPerFile; i++){
@@ -321,18 +327,10 @@ EVENTS.reset_timeseries = function () {
   if (ENV.BatteryAPIAvailable) {
     //Monitor Battery - from: http://www.w3.org/TR/battery-status/
     navigator.getBattery().then(function (batteryobj) {
-      logEVENTS(
-        'Battery',
-        [batteryobj.level, batteryobj.dischargingTime],
-        'timeseries'
-      );
+      logEVENTS( 'Battery', [batteryobj.level, batteryobj.dischargingTime],'timeseries');
 
       batteryobj.addEventListener('levelchange', function () {
-        logEVENTS(
-          'Battery',
-          [batteryobj.level, batteryobj.dischargingTime],
-          'timeseries'
-        );
+        logEVENTS('Battery',[batteryobj.level, batteryobj.dischargingTime],'timeseries');
       }); //batteryobj.addEventListener
     }); //navigator.getBattery()
   } //IF battery API present
@@ -443,6 +441,7 @@ function purgeTrackingVariables(src) {
   FLAGS.consecutivehits = 0;
   FLAGS.firestorelastsavedtrial=0;
   FLAGS.filecodeSent = 0;
+  FLAGS.filecode = [-1,-1,-1,-1,-1,-1];
 
   return;
 }//FUNCTION purgeTrackingVariables

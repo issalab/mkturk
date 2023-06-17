@@ -15,16 +15,9 @@ const int sampleCommandLEDPin=5;//for Digitial IN1
 const int externalSyncLEDPin=6;//for Digital IN2
 
 //VALUES
-// int sampleCommandVal_old=0;
-int sampleCommandVal_new=0;
+int sampleCommandVal_new;
 int externalSyncVal_new;
 int photodiodeVal_new;
-
-// int sendInterval = 1000; //microseconds
-// unsigned long startTime = micros();
-unsigned long currentTime = micros();
-// unsigned long lastSendTime = currentTime;
-unsigned long dt = 0;
 
 void setup(){
   pinMode(sampleCommandPin, INPUT); //digital input
@@ -46,24 +39,14 @@ void loop(){
 }//LOOP
 
 void readInputs(){
-  currentTime = micros();
-  // sampleCommandVal_old = sampleCommandVal_new;
   sampleCommandVal_new = digitalRead(sampleCommandPin);
   externalSyncVal_new = digitalRead(externalSyncPin);
   photodiodeVal_new = analogRead(photodiodePin);
-
-  // if (sampleCommandVal_old == 0 && sampleCommandVal_new == 1){
-  //   startTime = currentTime;
-  // }
-  // dt = currentTime-startTime;
-  dt = 0;
 
   //LEDs
   digitalWrite(sampleCommandLEDPin,sampleCommandVal_new);
   digitalWrite(externalSyncLEDPin,externalSyncVal_new);
 
-  Serial.print('t');//timestamp
-  Serial.print(dt);
   Serial.print('s');
   Serial.print(sampleCommandVal_new);
   Serial.print('e');
@@ -71,8 +54,4 @@ void readInputs(){
   Serial.print('p');
   Serial.print(photodiodeVal_new);
   Serial.flush();
-
-  // if ( currentTime - lastSendTime > sendInterval || (sampleCommandVal_old == 0 && sampleCommandVal_new == 1) ){
-  //   lastSendTime = currentTime;
-  // }//IF time elapsed, send to browser
 }//READINPUTS

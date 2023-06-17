@@ -23,7 +23,7 @@ let abuff = {
   trec: [],
 
   //current
-  t0: 0, t: [], ph: [], sa: [], currind: 0, dt: [], prev_sa: 0,
+  t0: 0, t: [], ph: [], currind: 0, dt: [],
 
   //cumulative
   t_cum: [], ph_cum: [], ntraces: 2,
@@ -34,6 +34,7 @@ let abuff = {
   lastdraw: performance.now(),
   manualtriggerval: 0,
   manualtriggertime: 0,
+  starttrial: -1,
 };
 let dbuff = {
   sa: {t: [], x: []},
@@ -43,6 +44,7 @@ let pulse = {
   sa: {onset: [], offset: [], type: [], trial: -1,filecode: [-1], mktrial: [], mkblock: [], mkfilecode: [],},
   ex: {onset: [], offset: [], type: [], trial: -1,filecode: [-1], mktrial: [], mkblock: [], mkfilecode: [],},
 }
+let trigState = 0;
 let mkturkMeta = { trial: -1, block: -1, filecode: -1, }
 var activedevices = [];
 var usbstatus = {connected: 0, makeconnection: 0, deviceind: -1}
@@ -201,251 +203,266 @@ serial.Port.prototype.onReceive = (data) => {
   let textReceived = textDecoder.decode(data);
   usbport.statustext_received = textReceived;
 //---- Parse Arduino Data
-  var nt = textReceived.split('t').length - 1;
   var ns = textReceived.split('s').length - 1;
   var ne = textReceived.split('e').length - 1;
   var np = textReceived.split('p').length - 1;
 
-  if (nt != ns || ns != ne || ne != np){
+  if ( ns != ne || ne != np){
     console.log('FAILURE --> ' + usbport.statustext_received)
     return; //incomplete sample
   }
 
-  var indt = [];
-  var inds = [];
-  var inde = [];
-  var indp = [];
+  var inds = []; var inde = []; var indp = [];
   for (i=0; i<=textReceived.length-1; i++){
-    if (textReceived[i] == 't'){indt.push(i)}
     if (textReceived[i] == 's'){inds.push(i)}
     if (textReceived[i] == 'e'){inde.push(i)}
     if (textReceived[i] == 'p'){indp.push(i)}
   }//FOR i characters
-
-  var currvalt
-  var currvals
-  var currvalp
-  var currvale
 //---- (END) Parse Arduino Data
 
-  for (var s=0; s<=indt.length-1; s++){
-    // currvalt = Number(textReceived.slice(indt[s]+1,inds[s]))/1000 //microsec -> millisec
-    currvalt = performance.now();
+  var currvalt; var currvals; var currvalp; var currvale
+  for (var s=0; s<=inds.length-1; s++){
+    currvalt = Math.round(10*performance.now())/10; //tenth of a millisecond;
     currvals = Number(textReceived.slice(inds[s]+1,inde[s]))
-    if (abuff.manualtriggerval == 2){
-      currvals = 1; //overrided with manual triggering
-    }
     currvale = Number(textReceived.slice(inde[s]+1,indp[s]))
+    if (s <= inds.length-2){ currvalp = Number(textReceived.slice(indp[s]+1,inds[s+1])) }
+    else{ currvalp = Number(textReceived.slice(indp[s]+1,textReceived.length)) }
 
-    if (s <= indt.length-2){
-      currvalp = Number(textReceived.slice(indp[s]+1,indt[s+1]))
-    }
-    else{
-      currvalp = Number(textReceived.slice(indp[s]+1,textReceived.length))
-    }
     if (currvalp == NaN || currvals == NaN || currvale == NaN){
       if (currvalp == NaN){ currvalp = null }
       if (currvals == NaN){ currvals = null }
       console.log(textReceived)
     }//IF NaN, BigQuery prefers null over NaN
 
-  //--------- TRIGGER ---------//
-    var trigDown = 0;
-    if (currvals == 1 && abuff.prev_sa == 0){
-      //TRIGGERED UP -- start new trace
-      abuff.trigON = 1
-      abuff.indtrace++
-      if (abuff.indtrace >= abuff.ntraces){
-        abuff.indtrace = 0
-      }//IF >ntraces, wrap back around
-
-      //Delete any existing trace in that position in the stack
-      abuff.t_cum[abuff.indtrace] = []
-      abuff.ph_cum[abuff.indtrace] = []
-      abuff.ttrig[abuff.indtrace] = onReceiveTime;
-      abuff.t0 = performance.now()
-
-      abuff.trec = []
-      abuff.nrec = []
-
-      abuff.t=[];
-      abuff.ph=[];
-      abuff.sa=[];
-      abuff.currind=0;
-      abuff.dt=[0];
-
-      abuff.ntrials++
-
-      console.log('\n')
-      console.log('***** TRIGGERED UP')
-    }//IF received trigger
-    else if (currvals == 0 && abuff.prev_sa == 1){
-      var trigDown = 1;
+    if (pulse.ex.onset.length > pulse.ex.offset.length){
+      console.log('ext: ' + currvale + '  sc: ' + currvals)
     }
-    else if (currvals == 0){
-      //TRIGGERED DOWN
-      abuff.trigON = 0; //stop storing until next trigger
-    }//IF trigger OFF
-    abuff.prev_sa = currvals
-  //--------- TRIGGER ---------//
+
+  //--------- PULSE DETECTION ---------//
+  //--------- PULSE DETECTION ---------//
+  //--------- PULSE DETECTION ---------//
+    if (abuff.manualtriggerval == 2){
+      currvals = 1; //overrided with manual triggering
+    }//XX
+
+    //Digital Buffer
+    dbuff.sa.t.push(currvalt)
+    dbuff.sa.x.push(currvals)
+    dbuff.ex.t.push(currvalt)
+    dbuff.ex.x.push(currvale)
+
+    let nsamples; let npulses;
+    let nkeep = 5;
+    nsamples = dbuff.sa.x.length
+    if (nsamples>nkeep){
+      for (let i=nsamples-(nkeep+1); i>=0; i--){
+        dbuff.sa.t.shift()
+        dbuff.sa.x.shift()
+        dbuff.ex.t.shift()
+        dbuff.ex.x.shift()
+      }
+    }//If accumulated >5, only keep 5
+
+    //SAMPLE COMMAND
+    nsamples = dbuff.sa.x.length
+    if (nsamples >= 4){
+      //WHEN GOES HIGH
+      if (dbuff.sa.x[nsamples-1]==1 && dbuff.sa.x[nsamples-2]==1 &&
+        dbuff.sa.x[nsamples-3]==0 && dbuff.sa.x[nsamples-4]==0){
+    //  if (dbuff.sa.x[nsamples-1]==1 && dbuff.sa.x[nsamples-2]==1 && dbuff.sa.x[nsamples-3]==0){
+        pulse.sa.mktrial.push(mkturkMeta.trial)
+        pulse.sa.mkblock.push(mkturkMeta.block);
+        pulse.sa.mkfilecode.push(mkturkMeta.filecode)
+        pulse.sa.onset.push(dbuff.sa.t[ nsamples-2 ])
+        trigState = 1;
+        console.log('up: mktrial = ' + mkturkMeta.trial)
+        startAnalogDataCollection(onReceiveTime) //trig up -- start new trace
+      }//IF 0,0,1,1 (triggered up), store current mkturk meta
+
+      //WHEN GOES LOW
+      npulses = pulse.sa.onset.length
+      if (dbuff.sa.x[nsamples-1]==0 && dbuff.sa.x[nsamples-2]==0 
+        && dbuff.sa.x[nsamples-3]==1 && dbuff.sa.x[nsamples-4]==1){
+    // if (dbuff.sa.x[nsamples-1]==0 && dbuff.sa.x[nsamples-2]==0 && dbuff.sa.x[nsamples-3]==1){
+        if (npulses > pulse.sa.offset.length){
+          pulse.sa.offset.push(dbuff.sa.t[ nsamples-2 ])
+          if (pulse.sa.onset[npulses-1] - pulse.sa.offset[npulses-2] < 50){
+            pulse.sa.type[npulses-1] = 'f'
+            pulse.sa.type[npulses-2] = 'f'
+          }//IF filecode
+          else{
+            pulse.sa.type[npulses-1] = 't'
+            console.log('down: mktrial = ' + mkturkMeta.trial)
+            analyzePulses('sa')
+            trigState = -1; //dropped
+          }//ELSE trigger  
+        }//IF onset present
+        else{
+          //ignore because no preceding onset
+        }
+      }//IF 1,1,0,0 (triggered down), pulse completed
+    }//IF at least 3 samples
+
+    //EXTERNAL SYNC
+    nsamples = dbuff.ex.x.length
+    if (nsamples >= 4){
+      //WHEN GOES HIGH
+      if (dbuff.ex.x[nsamples-1]==1 && dbuff.ex.x[nsamples-2]==1 &&
+        dbuff.ex.x[nsamples-3]==0 && dbuff.ex.x[nsamples-4]==0){
+        // if (dbuff.ex.x[nsamples-1]==1 && dbuff.ex.x[nsamples-2]==1 && dbuff.ex.x[nsamples-3]==0){
+        pulse.ex.mktrial.push(mkturkMeta.trial)
+        pulse.ex.mkblock.push(mkturkMeta.block);
+        pulse.ex.mkfilecode.push(mkturkMeta.filecode)
+        pulse.ex.onset.push(dbuff.ex.t[ nsamples-2 ])
+      }//IF 0,0,1,1 (triggered up), store current mkturk meta
+
+      //WHEN GOES LOW
+      npulses = pulse.ex.onset.length
+      if (dbuff.ex.x[nsamples-1]==0 && dbuff.ex.x[nsamples-2]==0 
+        && dbuff.ex.x[nsamples-3]==1 && dbuff.ex.x[nsamples-4]==1){
+      // if (dbuff.ex.x[nsamples-1]==0 && dbuff.ex.x[nsamples-2]==0 && dbuff.ex.x[nsamples-3]==1){
+        if (npulses > pulse.ex.offset.length){
+          pulse.ex.offset.push(dbuff.ex.t[ nsamples-2 ])
+          if (pulse.ex.onset[npulses-1] - pulse.ex.offset[npulses-2] < 50){
+            pulse.ex.type[npulses-1] = 'f'
+            pulse.ex.type[npulses-2] = 'f'
+          }//IF filecode
+          else{
+            pulse.ex.type[npulses-1] = 't'
+            analyzePulses('ex')
+          }//ELSE trigger    
+        }//IF onset present
+        else{
+          //ignore because no preceding onset
+        }
+      }//IF 1,1,0,0 (triggered down), pulse completed
+    }//IF at least 4 samples
+  //--------- (END) PULSE DETECTION ---------//
+  //--------- (END) PULSE DETECTION ---------//
+  //--------- (END) PULSE DETECTION ---------//
 
   //--------- CURRENT ---------//
-    if (abuff.manualtriggerval==0){
-      var dt=currvalt - abuff.t0;  
-    }//IF zeroed on arduino already
-    else{
-      if (abuff.currind == 0){
-        abuff.manualtriggertime = currvalt;
-      }
-      var dt = currvalt - abuff.manualtriggertime; 
-    }//ELSE manualtrigger, zero arduino time
-    
+    var dt=currvalt - abuff.t0;  
+      
     if (typeof(abuff.ttrig[abuff.indtrace]) != "undefined"){
       var dtpipe = onReceiveTime - abuff.ttrig[abuff.indtrace]
     }//IF trigger
-    else{ var dtpipe = onReceiveTime} //no triggers yet
-
-    if (trigDown){console.log('***** TRIGGERED DOWN ' + Math.round(dt) + ' ms')}
-    
-    abuff.t[abuff.currind] = dt;
-    if (abuff.currind > 0){ abuff.dt[abuff.currind-1] = abuff.t[abuff.currind] - abuff.t[abuff.currind-1] }
-    abuff.sa[abuff.currind] = currvals;
+    else{
+      var dtpipe = onReceiveTime
+    }//no triggers yet
+      
+    abuff.t[abuff.currind] = Math.round(100*dt)/100;
+    if (abuff.currind > 0){
+      abuff.dt[abuff.currind-1] = abuff.t[abuff.currind] - abuff.t[abuff.currind-1]
+    }
     abuff.ph[abuff.currind] = currvalp;
     abuff.trec[abuff.currind] = dtpipe;
-
-    if (abuff.trigON){
-      abuff.currind++
-    }
   //--------- CURRENT ---------//
 
-//--------- PULSE DETECTION ---------//
-//--------- PULSE DETECTION ---------//
-//--------- PULSE DETECTION ---------//
-  // //Digital Buffer
-  // dbuff.sa.t.push(currvalt)
-  // dbuff.sa.x.push(currvals)
-  // dbuff.ex.t.push(currvalt)
-  // dbuff.ex.x.push(currvale)
-
-  // let nsamples
-  // let npulses
-
-  // // //SAMPLE COMMAND
-  // nsamples = dbuff.sa.x.length
-  // if (nsamples>3){
-  //   for (let i=nsamples-4; i>=0; i--){
-  //     dbuff.sa.t.shift()
-  //     dbuff.sa.x.shift()
-  //     dbuff.ex.t.shift()
-  //     dbuff.ex.x.shift()
-  //   }
-  // }//If accumulated >3, only keep 3
-
-  // nsamples = dbuff.sa.x.length
-  // if (nsamples >= 3){
-  //   //WHEN GOES HIGH
-  //   if (dbuff.sa.x[nsamples-1]==1 && dbuff.sa.x[nsamples-2]==1 && dbuff.sa.x[nsamples-3]==0){
-  //     pulse.sa.mktrial.push(mkturkMeta.trial)
-  //     pulse.sa.mkblock.push(mkturkMeta.block);
-  //     pulse.sa.mkfilecode.push(mkturkMeta.filecode)
-  //     pulse.sa.onset.push(dbuff.sa.t[ nsamples-2 ])
-  //   }//IF 0,1,1 (triggered up), store current mkturk meta
-
-  //   //WHEN GOES LOW
-  //   npulses = pulse.sa.onset.length
-  //   if (dbuff.sa.x[nsamples-1]==0 && dbuff.sa.x[nsamples-2]==0 && dbuff.sa.x[nsamples-3]==1){
-  //     if (npulses > pulse.sa.offset.length){
-  //       pulse.sa.offset.push(dbuff.sa.t[ nsamples-2 ])
-  //       if (pulse.sa.onset[npulses-1] - pulse.sa.offset[npulses-2] < 120){
-  //         pulse.sa.type[npulses-1] = 'f'
-  //         pulse.sa.type[npulses-2] = 'f'
-  //       }//IF filecode
-  //       else{
-  //         pulse.sa.type[npulses-1] = 't'
-  //         // analyzePulses('sa')
-  //       }//ELSE trigger    
-  //     }//IF onset present
-  //     else{
-  //       //ignore because no preceding onset
-  //     }
-  //   }//IF 1,0,0 (triggered down), pulse completed
-  // }//IF at least 3 samples
-
-  //EXTERNAL SYNC
-
-//--------- (END) PULSE DETECTION ---------//
-//--------- (END) PULSE DETECTION ---------//
-//--------- (END) PULSE DETECTION ---------//
-
-  //--------- CUMULATIVE ---------//
-    if (abuff.trigON){
+    if (trigState == 1){
+      //--------- Multi-trace ---------//
       if (abuff.ph_cum.length < abuff.indtrace+1){
         abuff.t_cum[abuff.indtrace] = [];
         abuff.ph_cum[abuff.indtrace] = []
       }
       abuff.t_cum[abuff.indtrace][abuff.t_cum[abuff.indtrace].length] = dt
       abuff.ph_cum[abuff.indtrace][abuff.ph_cum[abuff.indtrace].length] = currvalp
-    }//IF triggered
-  //--------- CUMULATIVE ---------//
-
-    if (trigDown){
+      
+      abuff.currind++
+    }//IF trigger high
+    else if (trigState == -1){
       abuff.manualtriggerval = 0;
 
       postMessage({message: "zeroTrigger", val: 0})
+      postMessage({message: "saveTrialData", val: abuff})
       postMessage({message: "plotTrial", val: abuff});
-      //postMessage({action: "saveTrialData", val: XX})
       
       abuff.lastdraw = performance.now();
-    }//IF triggered down, then plot
+      trigState = 0;
+    }//ELSE IF triggered down, then plot
+    else if (trigState == 0){
+      //do nothing
+    }//ELSE IF trigger low
   }//FOR s samples
 }//FUNCTION onReceive(data)
 
-// function analyzePulses(inputLine){
-//   let npulses = pulse[inputLine].onset.length
+function analyzePulses(inputLine){
+  let npulses = pulse[inputLine].onset.length
 
-//   //Check if trigger preceded by filecode
-//   if (npulses>=2 && x[inputLine].type[npulses-2] == 'f'){
-//     let filecode = []
-//     let indstart = -1
-//     for (let i=npulses-2; i>=0; i--){
-//       if (pulse[inputLine].type[i] == 'f'){
-//         indstart = i
-//         filecode.push(Math.round((pulse[inputLine].offset[i] - pulse[inputLine].onset[i])/10))
-//       }
-//       else {  break; }
-//     }//for i pulses
-//     pulse[inputLine].filecode = filecode.reverse()
-//     pulse[inputLine].trial = -1;
+  let inputLineKey
+  if (inputLine == 'sa'){ inputLineKey = '0' }
+  else if (inputLine == 'ex'){inputLineKey = '1' }
 
-//     // postMessage({
-//     //   message: "trigger",
-//     //   val: {trialnum: pulse[inputLine].trial,
-//     //         tstart: pulse[inputLine.onset[indstart]],
-//     //         tend: pulse[inputLine].offset[npulses-2],
-//     //         filecode: pulse[inputLine].filecode,
-//     //         mktrial: pulse[inputLine].mktrial[indstart],
-//     //         mkblock: pulse[inputLine].mkblock[indstart], 
-//     //         mkfilecode: pulse[inputLine].mkfilecode[indstart],
-//     //     }//val
-//     //   })//postMessage filecode
-//   }//IF preceded by end of a filecode
+  //Check if trigger preceded by filecode
+  if (npulses>=2 && pulse[inputLine].type[npulses-2] == 'f'){
+    let filecode = []
+    let indstart = -1
+    for (let i=npulses-2; i>=0; i--){
+      if (pulse[inputLine].type[i] == 'f'){
+        indstart = i
+        filecode.push(Math.round(10*(pulse[inputLine].offset[i] - pulse[inputLine].onset[i]))/10)
+      }
+      else {  break; }
+    }//for i pulses
+    pulse[inputLine].filecode = filecode.reverse()
+    pulse[inputLine].trial = -1;
 
-//   dbuff[inputLine].t = []
-//   dbuff[inputLine].x = []
+    postMessage({
+      message: "trigger",
+      val: {trial: pulse[inputLine].trial,
+            tstart: pulse[inputLine].onset[indstart],
+            tend: pulse[inputLine].offset[npulses-2],
+            filecode: pulse[inputLine].filecode,
+            mktrial: pulse[inputLine].mktrial[indstart],
+            mkblock: pulse[inputLine].mkblock[indstart], 
+            mkfilecode: pulse[inputLine].mkfilecode[indstart],
+            inputline: inputLineKey,
+          }//val
+      })//postMessage filecode
+  }//IF preceded by end of a filecode
 
-//   pulse[inputLine].trial++
-//   // postMessage({
-//   //   message: "trigger",
-//   //   val: {trialnum: pulse[inputLine].trial,
-//   //         tstart: pulse[inputLine].onset[npulses-1],
-//   //         tend: pulse[inputLine].offset[npulses-1],
-//   //         filecode: pulse[inputLine].filecode,
-//   //         mktrial: pulse[inputLine].mktrial[npulses-1],
-//   //         mkblock: pulse[inputLine].mkblock[npulses-1], 
-//   //         mkfilecode: pulse[inputLine].mkfilecode[npulses-1],
-//   //     }//val
-//   //   })//postMessage trial trigger
-// }//FUNCTION analyzePulses(x,inputLine)
+  pulse[inputLine].trial++
+  postMessage({
+    message: "trigger",
+    val: {trial: pulse[inputLine].trial,
+          tstart: pulse[inputLine].onset[npulses-1],
+          tend: pulse[inputLine].offset[npulses-1],
+          filecode: pulse[inputLine].filecode,
+          mktrial: pulse[inputLine].mktrial[npulses-1],
+          mkblock: pulse[inputLine].mkblock[npulses-1], 
+          mkfilecode: pulse[inputLine].mkfilecode[npulses-1],
+          inputkey: inputLineKey,
+      }//val
+    })//postMessage trial trigger
+}//FUNCTION analyzePulses(x,inputLine)
+
+function startAnalogDataCollection(onReceiveTime){
+  abuff.trigON = 1
+  abuff.indtrace++
+  if (abuff.indtrace >= abuff.ntraces){
+    abuff.indtrace = 0
+  }//IF >ntraces, wrap back around
+
+  //Delete any existing trace in that position in the stack
+  abuff.t_cum[abuff.indtrace] = []
+  abuff.ph_cum[abuff.indtrace] = []
+  abuff.ttrig[abuff.indtrace] = onReceiveTime;
+  abuff.t0 = Math.round(100*performance.now())/100
+
+  abuff.trec = []
+  abuff.nrec = []
+
+  abuff.t=[];
+  abuff.ph=[];
+  abuff.currind=0;
+  abuff.dt=[0];
+
+  abuff.starttrial = mkturkMeta.trial
+
+  abuff.ntrials++
+
+  console.log('***** TRIGGERED UP -- collect analog')
+}//FUNCTION startAnalogDataCollection
 
 //PORT - onReceiveError
 serial.Port.prototype.onReceiveError = (error) => {console.log(error);};
