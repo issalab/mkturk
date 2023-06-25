@@ -605,8 +605,8 @@ return boundingBoxes
 function renderImage2D( im, sc, ob, id, fr, gr, canvasobj) {
   // var sz = chooseArrayElement(IMAGES[sc][ob].IMAGES.sizeTHREEJS * ENV.THREEJStoInches, id, 0);
   var sz = chooseArrayElement(IMAGES[sc][ob].IMAGES.sizeInches, id, 0);
-  var wdpixels = (sz * ENV.ViewportPPI) / ENV.CanvasRatio;
-  var htpixels = (wdpixels * im.height) / im.width;
+  var wdpixels = Math.round((sz * ENV.ViewportPPI) / ENV.CanvasRatio);
+  var htpixels = Math.round((wdpixels * im.height) / im.width);
   var context = canvasobj.getContext('2d');
   var xleft = NaN;
   var ytop = NaN;

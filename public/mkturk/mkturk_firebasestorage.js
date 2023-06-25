@@ -21,13 +21,51 @@ if (FLAGS.usecanvas2D){
       function(resolve, reject){
         try {
           var image = new Image(); 
+          image.decoding = 'sync'
+          image.loading = 'eager'
           image.crossOrigin = "Anonymous"; //to allow saving of a 'tainted canvas', see https://developer.mozilla.org/en-US/docs/Web/HTML/CORS_enabled_image
+          image.src = url
           image.onload = function(){
             updateImageLoadingAndDisplayText('Loaded: ' + imagefile_path)
             console.log('Loaded IMG: ' + imagefile_path)
             resolve(image)        
           }
-          image.src = url
+          
+          // IMAGE.DECODE() INSTEAD OF IMAGE.ONLOAD
+          // console.log(imagefile_path)
+          // try{
+          //   image.decode().then(()=>
+          //   {
+          //     document.body.appendChild(image);
+          //     VISIBLECANVAS.appendChild(image);
+          //     console.log('DECODED IMG: ' + imagefile_path)
+          //     updateImageLoadingAndDisplayText('Loaded: ' + imagefile_path)
+          //     resolve(image)
+          //   })  
+          // }
+          // catch(error){
+          //   console.log(imagefile_path)
+          // }
+
+          // // TO BASE64 URL INSTEAD OF IMAGE.DECODE
+          // var image = new Image();
+          // image.crossOrigin = 'Anonymous';
+          // image.loading = 'eager';
+          // image.src = url;
+          // image.onload = () => {
+          //   updateImageLoadingAndDisplayText('Loaded: ' + imagefile_path)
+          //   console.log('Loaded IMG: ' + imagefile_path)
+          //   // resolve(image)  
+
+          //   var canvas = document.createElement('canvas');
+          //   canvas.width = image.width;
+          //   canvas.height = image.height;
+          //   var ctx = canvas.getContext('2d');
+          //   ctx.drawImage(image, 0, 0);
+          //   var base64data = canvas.toDataURL('image/png');
+          //   delete(canvas)
+          //   resolve([image,base64data]) //Need to return whole image not just set image.src
+          // };
         } //TRY
         catch (error){
           console.log(error)
@@ -283,7 +321,8 @@ async function loadImageArrayfromFirebase(imagepathlist) {
         var partial_image_array = await Promise.all(partial_image_requests);
         image_array.push(...partial_image_array);
       }
-    } else {
+    }
+    else {
       // If number of images is less than MAX_SIMULTANEOUS_REQUESTS, request them all simultaneously:
       for (var i = 0; i < 3; i++) {
         var image_requests = imagepathlist.map(loadImagefromFirebase);
@@ -293,6 +332,16 @@ async function loadImageArrayfromFirebase(imagepathlist) {
         var image_array = await Promise.all(image_requests)
           .catch(function (error) { console.log(error);})
           .then();
+
+        // var image_array = []
+        // for (q=0; q<=imagepathlist.length-1; q++){
+        //   console.log('trying to load ' + imagepathlist[q])
+        //   var p = loadImagefromFirebase(imagepathlist[q]);
+        //   // image_array[q] = await p.catch(function (error) { console.log(error);}).then();
+        //   let funcreturn = await p.catch(function (error) { console.log(error);}).then();
+        //    image_array[q] = funcreturn[0]
+        //    image_array[q].src = funcreturn[1]
+        // }//FOR q items
 
         var load_success = 1;
         for (var j = 0; j < image_array.length; j++) {

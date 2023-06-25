@@ -1100,10 +1100,11 @@ function index_update_blocknum(){
 
 //REALTIME DATABASE (effector tracking)
 function initializeRTDBCallbacks(agent){
-  let linenum = ['digital0','digital1']
+  let linenum = ['d0','d1']
 
   for (let i=0; i<=linenum.length-1; i++){
     rtdb.ref(`daq/${agent}/`+linenum[i]).on('value', (snap) => {
+      if (snap.val() == null){return}
       EVENTS['timeseries']['DAQ'][linenum[i]]['treceived'].push(performance.now())
       EVENTS['timeseries']['DAQ'][linenum[i]]['trial'].push(snap.val().trial)
       EVENTS['timeseries']['DAQ'][linenum[i]]['tstart'].push(snap.val().tstart)
@@ -1117,6 +1118,7 @@ function initializeRTDBCallbacks(agent){
   }//FOR i input lines
 
   rtdb.ref(`daq/${agent}/ph`).on('value', (snap) => {
+    if (snap.val() == null){return}
     EVENTS['timeseries']['DAQ']['ph']['treceived'].push(performance.now())
     EVENTS['timeseries']['DAQ']['ph']['trise'].push(snap.val().trise)
     EVENTS['timeseries']['DAQ']['ph']['tdrop'].push(snap.val().tdrop)
@@ -1127,24 +1129,7 @@ function initializeRTDBCallbacks(agent){
     EVENTS['timeseries']['DAQ']['ph']['mkblock'].push(snap.val().mkblock)
     EVENTS['timeseries']['DAQ']['ph']['mkfilecode'].push(snap.val().mkfilecode)
     console.log('-->from mksensor input ' + 'photodiode (analog)')
-  })//RTDB receive callback for digital line  
-
-  // rtdb.ref(`data/${mkeye.data.TASK.Agent}`).on('value', (snap) => {
-  //   if (typeof(mkeye.realtimescatter != "undefined")){
-  //     try{
-  //       mkeye.realtimescatter.update(snap.val())
-
-  //       mkeye.live.x = snap.val().x
-  //       mkeye.live.y = snap.val().y
-  //       mkeye.live.boundingBoxes = snap.val().boundingBoxes
-  //       mkeye.live.meta = snap.val().meta
-  //       mkeye.live.timestamp = new Date(snap.val().timestamp)
-  //     }
-  //     catch{
-  //       console.log('rtdb')
-  //     }
-  //   }//IF plot initialized
-  // })//ON CALLBACK for effector data
+  })//RTDB receive callback for digital line
 }//FUNCTION initializeRTDBCallbacks()
 
 

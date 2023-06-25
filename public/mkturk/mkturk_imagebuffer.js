@@ -66,7 +66,6 @@ async cache_these_images(imagenames){
 				return 
 			}
 		}
-
 		else if (typeof(imagenames) == "object"){
 			var requested_imagenames = []
 			for (var i = 0; i < imagenames.length; i ++){

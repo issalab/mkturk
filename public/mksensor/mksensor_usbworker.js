@@ -41,8 +41,8 @@ let dbuff = {
   ex: {t: [], x: []},
 }
 let pulse = {
-  sa: {onset: [], offset: [], type: [], trial: -1,filecode: [-1], mktrial: [], mkblock: [], mkfilecode: [],},
-  ex: {onset: [], offset: [], type: [], trial: -1,filecode: [-1], mktrial: [], mkblock: [], mkfilecode: [],},
+  sa: {onset: [], offset: [], type: [], trial: -1,filecode: [-1], mktrial: [], mkblock: [], mkfilecode: [],rtdbsend:[],ncloudsave:-1},
+  ex: {onset: [], offset: [], type: [], trial: -1,filecode: [-1], mktrial: [], mkblock: [], mkfilecode: [],rtdbsend:[],ncloudsave:-1},
 }
 let trigState = 0;
 let mkturkMeta = { trial: -1, block: -1, filecode: -1, }
@@ -218,7 +218,6 @@ serial.Port.prototype.onReceive = (data) => {
     if (textReceived[i] == 'e'){inde.push(i)}
     if (textReceived[i] == 'p'){indp.push(i)}
   }//FOR i characters
-//---- (END) Parse Arduino Data
 
   var currvalt; var currvals; var currvalp; var currvale
   for (var s=0; s<=inds.length-1; s++){
@@ -237,6 +236,7 @@ serial.Port.prototype.onReceive = (data) => {
     if (pulse.ex.onset.length > pulse.ex.offset.length){
       console.log('ext: ' + currvale + '  sc: ' + currvals)
     }
+  //---- (END) Parse Arduino Data
 
   //--------- PULSE DETECTION ---------//
   //--------- PULSE DETECTION ---------//
@@ -266,61 +266,63 @@ serial.Port.prototype.onReceive = (data) => {
     //SAMPLE COMMAND
     nsamples = dbuff.sa.x.length
     if (nsamples >= 4){
-      //WHEN GOES HIGH
-      if (dbuff.sa.x[nsamples-1]==1 && dbuff.sa.x[nsamples-2]==1 &&
-        dbuff.sa.x[nsamples-3]==0 && dbuff.sa.x[nsamples-4]==0){
-    //  if (dbuff.sa.x[nsamples-1]==1 && dbuff.sa.x[nsamples-2]==1 && dbuff.sa.x[nsamples-3]==0){
+      //WHEN GOES HIGH (0011)
+      if (dbuff.sa.x[nsamples-1]==1 && dbuff.sa.x[nsamples-2]==1 && dbuff.sa.x[nsamples-3]==0 && dbuff.sa.x[nsamples-4]==0){
         pulse.sa.mktrial.push(mkturkMeta.trial)
         pulse.sa.mkblock.push(mkturkMeta.block);
         pulse.sa.mkfilecode.push(mkturkMeta.filecode)
         pulse.sa.onset.push(dbuff.sa.t[ nsamples-2 ])
+        pulse.sa.rtdbsend.push(0)
         trigState = 1;
-        console.log('up: mktrial = ' + mkturkMeta.trial)
         startAnalogDataCollection(onReceiveTime) //trig up -- start new trace
       }//IF 0,0,1,1 (triggered up), store current mkturk meta
 
-      //WHEN GOES LOW
+      //WHEN GOES LOW (1100)
       npulses = pulse.sa.onset.length
-      if (dbuff.sa.x[nsamples-1]==0 && dbuff.sa.x[nsamples-2]==0 
-        && dbuff.sa.x[nsamples-3]==1 && dbuff.sa.x[nsamples-4]==1){
-    // if (dbuff.sa.x[nsamples-1]==0 && dbuff.sa.x[nsamples-2]==0 && dbuff.sa.x[nsamples-3]==1){
+      if (dbuff.sa.x[nsamples-1]==0 && dbuff.sa.x[nsamples-2]==0 && dbuff.sa.x[nsamples-3]==1 && dbuff.sa.x[nsamples-4]==1){
         if (npulses > pulse.sa.offset.length){
           pulse.sa.offset.push(dbuff.sa.t[ nsamples-2 ])
           if (pulse.sa.onset[npulses-1] - pulse.sa.offset[npulses-2] < 50){
             pulse.sa.type[npulses-1] = 'f'
             pulse.sa.type[npulses-2] = 'f'
-          }//IF filecode
+          }//IF part of filecode
           else{
             pulse.sa.type[npulses-1] = 't'
-            console.log('down: mktrial = ' + mkturkMeta.trial)
-            analyzePulses('sa')
-            trigState = -1; //dropped
+            pulse.sa.rtdbsend[npulses-1] = 1
+            rtdbSendPulse('sa')
+            trigState = -1;//dropped
           }//ELSE trigger  
         }//IF onset present
         else{
           //ignore because no preceding onset
         }
       }//IF 1,1,0,0 (triggered down), pulse completed
-    }//IF at least 3 samples
+
+      //WHEN STAYS LOW (0000)
+      npulses = pulse.sa.offset.length
+      if (dbuff.sa.x[nsamples-1]==0 && dbuff.sa.x[nsamples-2]==0 && dbuff.sa.x[nsamples-3]==0 && dbuff.sa.x[nsamples-4]==0){
+        if (pulse.sa.type[npulses-1] == 'f' && pulse.sa.rtdbsend[npulses-1] == 0 && performance.now() > (50 + pulse.sa.offset[npulses-1])){
+          pulse.sa.rtdbsend[npulses-1] = 1
+          getFileCode('sa')
+        }//IF filecode completed
+      }//IF 0,0,0,0 (staying down)
+    }//IF at least 4 samples
 
     //EXTERNAL SYNC
     nsamples = dbuff.ex.x.length
     if (nsamples >= 4){
-      //WHEN GOES HIGH
-      if (dbuff.ex.x[nsamples-1]==1 && dbuff.ex.x[nsamples-2]==1 &&
-        dbuff.ex.x[nsamples-3]==0 && dbuff.ex.x[nsamples-4]==0){
-        // if (dbuff.ex.x[nsamples-1]==1 && dbuff.ex.x[nsamples-2]==1 && dbuff.ex.x[nsamples-3]==0){
+      //WHEN GOES HIGH (0011)
+      if (dbuff.ex.x[nsamples-1]==1 && dbuff.ex.x[nsamples-2]==1 && dbuff.ex.x[nsamples-3]==0 && dbuff.ex.x[nsamples-4]==0){
         pulse.ex.mktrial.push(mkturkMeta.trial)
         pulse.ex.mkblock.push(mkturkMeta.block);
         pulse.ex.mkfilecode.push(mkturkMeta.filecode)
         pulse.ex.onset.push(dbuff.ex.t[ nsamples-2 ])
+        pulse.ex.rtdbsend.push(0)
       }//IF 0,0,1,1 (triggered up), store current mkturk meta
 
-      //WHEN GOES LOW
+      //WHEN GOES LOW (1100)
       npulses = pulse.ex.onset.length
-      if (dbuff.ex.x[nsamples-1]==0 && dbuff.ex.x[nsamples-2]==0 
-        && dbuff.ex.x[nsamples-3]==1 && dbuff.ex.x[nsamples-4]==1){
-      // if (dbuff.ex.x[nsamples-1]==0 && dbuff.ex.x[nsamples-2]==0 && dbuff.ex.x[nsamples-3]==1){
+      if (dbuff.ex.x[nsamples-1]==0 && dbuff.ex.x[nsamples-2]==0 && dbuff.ex.x[nsamples-3]==1 && dbuff.ex.x[nsamples-4]==1){
         if (npulses > pulse.ex.offset.length){
           pulse.ex.offset.push(dbuff.ex.t[ nsamples-2 ])
           if (pulse.ex.onset[npulses-1] - pulse.ex.offset[npulses-2] < 50){
@@ -329,19 +331,29 @@ serial.Port.prototype.onReceive = (data) => {
           }//IF filecode
           else{
             pulse.ex.type[npulses-1] = 't'
-            analyzePulses('ex')
+            pulse.ex.rtdbsend[npulses-1] = 1
+            rtdbSendPulse('ex')
           }//ELSE trigger    
         }//IF onset present
         else{
           //ignore because no preceding onset
         }
       }//IF 1,1,0,0 (triggered down), pulse completed
+
+      //WHEN STAYS LOW (0000)
+      npulses = pulse.ex.offset.length
+      if (dbuff.ex.x[nsamples-1]==0 && dbuff.ex.x[nsamples-2]==0 && dbuff.ex.x[nsamples-3]==0 && dbuff.ex.x[nsamples-4]==0){
+        if (pulse.ex.type[npulses-1] == 'f' && pulse.ex.rtdbsend[npulses-1] == 0 && performance.now() > (50 + pulse.ex.offset[npulses-1])){
+          pulse.ex.rtdbsend[npulses-1] = 1;
+          getFileCode('ex')
+        }//IF filecode completed
+      }//IF 0,0,0,0 (staying down)
     }//IF at least 4 samples
   //--------- (END) PULSE DETECTION ---------//
   //--------- (END) PULSE DETECTION ---------//
   //--------- (END) PULSE DETECTION ---------//
 
-  //--------- CURRENT ---------//
+  //--------- CURRENT TRACE---------//
     var dt=currvalt - abuff.t0;  
       
     if (typeof(abuff.ttrig[abuff.indtrace]) != "undefined"){
@@ -357,7 +369,7 @@ serial.Port.prototype.onReceive = (data) => {
     }
     abuff.ph[abuff.currind] = currvalp;
     abuff.trec[abuff.currind] = dtpipe;
-  //--------- CURRENT ---------//
+  //--------- (END) CURRENT TRACE ---------//
 
     if (trigState == 1){
       //--------- Multi-trace ---------//
@@ -374,53 +386,68 @@ serial.Port.prototype.onReceive = (data) => {
       abuff.manualtriggerval = 0;
 
       postMessage({message: "zeroTrigger", val: 0})
-      postMessage({message: "saveTrialData", val: abuff})
-      postMessage({message: "plotTrial", val: abuff});
+
+      postMessage({message: "saveData", val: abuff})
+      pulse.sa.ncloudsave = pulse.sa.offset.length;
+      pulse.ex.ncloudsave = pulse.ex.offset.length;
       
+      postMessage({message: "plotTrial", val: abuff});
       abuff.lastdraw = performance.now();
       trigState = 0;
-    }//ELSE IF triggered down, then plot
+    }//ELSE IF triggered down, then save & plot
     else if (trigState == 0){
       //do nothing
     }//ELSE IF trigger low
+
+    //regardless of sample command trigger, save data if getting stale
+    if ( (pulse.sa.ncloudsave < pulse.sa.offset.length && performance.now() > 4000 + pulse.sa.offset[pulse.sa.offset.length-1])
+      || (pulse.ex.ncloudsave < pulse.ex.offset.length && performance.now() > 4000 + pulse.ex.offset[pulse.ex.offset.length-1]) )
+    {
+          postMessage({message: "saveData", val: abuff})
+          pulse.sa.ncloudsave = pulse.sa.offset.length;
+          pulse.ex.ncloudsave = pulse.ex.offset.length;
+    }//IF usaved digital pulses getting stale
   }//FOR s samples
 }//FUNCTION onReceive(data)
 
-function analyzePulses(inputLine){
-  let npulses = pulse[inputLine].onset.length
-
+function getFileCode(inputLine){
   let inputLineKey
-  if (inputLine == 'sa'){ inputLineKey = '0' }
-  else if (inputLine == 'ex'){inputLineKey = '1' }
+  if (inputLine == 'sa'){ inputLineKey = 'd0' }
+  else if (inputLine == 'ex'){inputLineKey = 'd1' }
 
-  //Check if trigger preceded by filecode
-  if (npulses>=2 && pulse[inputLine].type[npulses-2] == 'f'){
-    let filecode = []
-    let indstart = -1
-    for (let i=npulses-2; i>=0; i--){
-      if (pulse[inputLine].type[i] == 'f'){
-        indstart = i
-        filecode.push(Math.round(10*(pulse[inputLine].offset[i] - pulse[inputLine].onset[i]))/10)
-      }
-      else {  break; }
-    }//for i pulses
-    pulse[inputLine].filecode = filecode.reverse()
-    pulse[inputLine].trial = -1;
+  let npulses = pulse[inputLine].onset.length
+  let filecode = []
+  let indstart = -1
+  for (let i=npulses-1; i>=0; i--){
+    if (pulse[inputLine].type[i] == 'f'){
+      indstart = i
+      filecode.push(Math.round(10*(pulse[inputLine].offset[i] - pulse[inputLine].onset[i]))/10)
+    }
+    else {  break; }
+  }//for i pulses
+  pulse[inputLine].filecode = filecode.reverse()
 
-    postMessage({
-      message: "trigger",
-      val: {trial: pulse[inputLine].trial,
-            tstart: pulse[inputLine].onset[indstart],
-            tend: pulse[inputLine].offset[npulses-2],
-            filecode: pulse[inputLine].filecode,
-            mktrial: pulse[inputLine].mktrial[indstart],
-            mkblock: pulse[inputLine].mkblock[indstart], 
-            mkfilecode: pulse[inputLine].mkfilecode[indstart],
-            inputline: inputLineKey,
-          }//val
-      })//postMessage filecode
-  }//IF preceded by end of a filecode
+  pulse[inputLine].trial = -1;
+  postMessage({
+    message: "trigger",
+    val: {trial: pulse[inputLine].trial,
+          tstart: pulse[inputLine].onset[indstart],
+          tend: pulse[inputLine].offset[npulses-1],
+          filecode: pulse[inputLine].filecode,
+          mktrial: pulse[inputLine].mktrial[indstart],
+          mkblock: pulse[inputLine].mkblock[indstart], 
+          mkfilecode: pulse[inputLine].mkfilecode[indstart],
+          inputkey: inputLineKey,
+        }//val
+    })//postMessage filecode
+}//FUNCTION getFileCode(inputLine)
 
+function rtdbSendPulse(inputLine){
+  let inputLineKey
+  if (inputLine == 'sa'){ inputLineKey = 'd0' }
+  else if (inputLine == 'ex'){inputLineKey = 'd1' }
+
+  let npulses = pulse[inputLine].onset.length
   pulse[inputLine].trial++
   postMessage({
     message: "trigger",
@@ -433,7 +460,7 @@ function analyzePulses(inputLine){
           mkfilecode: pulse[inputLine].mkfilecode[npulses-1],
           inputkey: inputLineKey,
       }//val
-    })//postMessage trial trigger
+  })//postMessage trial trigger
 }//FUNCTION analyzePulses(x,inputLine)
 
 function startAnalogDataCollection(onReceiveTime){

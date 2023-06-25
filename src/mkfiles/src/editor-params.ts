@@ -264,6 +264,11 @@ export const taskParamSchema = {
       type: 'integer',
       default: '1',
     },
+    RewardColor: {
+      type: 'string',
+      default: '#008000 = [0,128,0]',
+      examples: ['#000000 (black)','#7F7F7F (gray)','#FFFFFF (white)'],
+    },
     SampleHoldDuration: {
       type: 'integer',
       default: "Infinity (enter as a string with quotes)",

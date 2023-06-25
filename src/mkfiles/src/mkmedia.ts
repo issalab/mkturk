@@ -263,6 +263,7 @@ export class Mkeditor {
         'NStimuliPerBagBlock',
         'ObjectGridIndex',
         'Photodiode',
+        'RewardColor',
         'SampleHoldDuration',
         'SampleGridIndex',
         'SampleOFF',

@@ -3,10 +3,10 @@ var astat = {
   tdrop: [], trise: [], dur: [], corr: [], tsc: [],
 };
 
-var alldata = { 't0':[],'t': [], 'analog0': [], 'manualpulse': [], 'digital0pulse': {}, 'digital1pulse': {},
+var alldata = { 't0':[],'t': [], 'a0': [], 'manualpulse': [], 'd0pulse': {}, 'd1pulse': {},
                 'starttrial': -1, 'nsamples': 0, 'nsamples_max': 500000 }
-alldata['digital0pulse'] = {treceived:[],trial:[],tstart:[],tend:[],filecode:[],mktrial:[],mkblock:[],mkfilecode:[],dur:[]}
-alldata['digital1pulse'] = {treceived:[],trial:[],tstart:[],tend:[],filecode:[],mktrial:[],mkblock:[],mkfilecode:[],dur:[]}
+alldata['d0pulse'] = {trial:[],tstart:[],tend:[],filecode:[],mktrial:[],mkblock:[],mkfilecode:[],dur:[]}
+alldata['d1pulse'] = {trial:[],tstart:[],tend:[],filecode:[],mktrial:[],mkblock:[],mkfilecode:[],dur:[]}
               
 let fileMeta = { 
   activeAgentList: [],
@@ -108,9 +108,15 @@ usbDeviceWorker.onmessage = function(event) {
     astat.manualtriggerval = 0;
   }
 
-  if (event.data.message == 'saveTrialData'){
+  if (event.data.message == 'saveData'){
     if (alldata.starttrial == -1){
-      alldata.starttrial = event.data.val.starttrial
+      if (event.data.starttrial >=0){
+        alldata.starttrial = event.data.val.starttrial
+      }//IF trialnum recorded concurrent with sample command pulse
+      else{
+        alldata.starttrial = fileMeta.trial
+        console.log('!! WARNING: mkturk was not open to receive data; but async external pulse sent to mksensor')
+      }//ELSE sample command not received yet (external trig), just use rtdb trialnum
     }
     saveAllData(event.data.val)
     saveTrialData(event.data.val)
@@ -132,7 +138,7 @@ usbDeviceWorker.onmessage = function(event) {
       dur: Math.round(10*(event.data.val.tend - event.data.val.tstart))/10,
     }
 
-    let linestr = 'digital'+event.data.val.inputkey + 'pulse'
+    let linestr = event.data.val.inputkey + 'pulse'
     console.log('Pushing into alldata.' + linestr)
     alldata[linestr]['trial'].push(pulsedata.trial);
     alldata[linestr]['tstart'].push(pulsedata.tstart);
@@ -467,7 +473,7 @@ function saveTrialData(abuff){
 async function saveAllData(abuff){
   alldata.t0.push(abuff.t0);
   alldata.t.push(abuff.t);
-  alldata.analog0.push(new Uint8Array(abuff.ph))
+  alldata.a0.push(new Uint8Array(abuff.ph))
   alldata.nsamples = alldata.nsamples + abuff.ph.length
 
   let blob = new Blob([JSON.stringify(alldata)], { type: 'application/json' });
@@ -492,10 +498,10 @@ async function saveAllData(abuff){
 function resetAllData(){
   alldata.t0 = []
   alldata.t = []
-  alldata.analog0 = []
+  alldata.a0 = []
   alldata.manualpulse = []
-  alldata['digital0pulse'] = {treceived:[],trial:[],tstart:[],tend:[],filecode:[],mktrial:[],mkblock:[],mkfilecode:[],dur:[]}
-  alldata['digital1pulse'] = {treceived:[],trial:[],tstart:[],tend:[],filecode:[],mktrial:[],mkblock:[],mkfilecode:[],dur:[]}
+  alldata['d0pulse'] = {trial:[],tstart:[],tend:[],filecode:[],mktrial:[],mkblock:[],mkfilecode:[],dur:[]}
+  alldata['d1pulse'] = {trial:[],tstart:[],tend:[],filecode:[],mktrial:[],mkblock:[],mkfilecode:[],dur:[]}
   alldata.nsamples = 0;  
 
   alldata.starttrial = -1;

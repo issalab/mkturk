@@ -70,6 +70,10 @@ function updateBasicStatsText(){
                                 mkeye.stats.pctCorrect + '% (n=' + mkeye.stats.trials + ')  ' + 
                                 mkeye.stats.effector + 'track '
                                 + mkeye.file.active
+                                + '  [∆hardware,∆software,trialtrig]=[' 
+                                + mkeye.live.display_trise + ',' 
+                                + mkeye.live.sample_softwarecliptimes + ','
+                                + mkeye.live.samplecommand_duration + ' ms]'
 }//FUNCTION updateBasicStatsText()
 
 class RealtimeScatter{

@@ -309,8 +309,8 @@ EVENTS.reset_timeseries = function () {
   this.timeseries.TouchData = {};
   this.timeseries.EffectorData= {t: [],x: [],y: [], w: [], a: [], q: [] };
   this.timeseries.DAQ = {}
-  this.timeseries.DAQ['0'] = {treceived:[],trial:[],tstart:[],tend:[],filecode:[],mktrial:[],mkblock:[],mkfilecode:[]}
-  this.timeseries.DAQ['1'] = {treceived:[],trial:[],tstart:[],tend:[],filecode:[],mktrial:[],mkblock:[],mkfilecode:[]}
+  this.timeseries.DAQ['d0'] = {treceived:[],trial:[],tstart:[],tend:[],filecode:[],mktrial:[],mkblock:[],mkfilecode:[]}
+  this.timeseries.DAQ['d1'] = {treceived:[],trial:[],tstart:[],tend:[],filecode:[],mktrial:[],mkblock:[],mkfilecode:[]}
   this.timeseries.DAQ['ph'] = {treceived:[],trise:[],tdrop:[],threshrise:[],threshdrop:[],dursamplecommand:[],mktrial:[],mkblock:[],mkfilecode:[]}
 
   //Initialize EffectordataLocal

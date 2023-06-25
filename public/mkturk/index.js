@@ -38,10 +38,15 @@ index_init();
       EVENTS['trialseries']['Response'].forEach( (element, index) => { if (element==EVENTS['trialseries']['CorrectItem'][index]){ncorrect++} })
       frac_correct = ncorrect/EVENTS['trialseries']['Response'].length
     }
+    let software_cliptimes = []
+    if (TASK.RewardStage>0 && CURRTRIAL.num>0 && typeof(EVENTS['trialseries']['TSequenceActualClip'][0][CURRTRIAL.num-1]) != 'undefined'){
+      software_cliptimes = EVENTS['trialseries']['TSequenceActualClip'][0][CURRTRIAL.num-1]
+    }
     rtdb.ref('instances/' + ENV.Subject).set({
        'trialnum': CURRTRIAL.num, 'blocknum': CURRTRIAL.blocknum,
        'filecode': FLAGS.filecode, 'filename': ENV.DataFileName,
-       'performance': frac_correct } );
+       'performance': frac_correct, 'cliptimes': software_cliptimes,
+      } );
     console.log('<- send mkTrial' + CURRTRIAL.num)
 
     document.body.style.background = TASK.BackgroundColor2D;
