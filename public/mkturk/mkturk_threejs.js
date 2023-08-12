@@ -617,6 +617,7 @@ async function addToScene(taskscreen) {
     if (IMAGES[taskscreen][classlabel].OBJECTFILTERS !== undefined) {
       if (taskscreen == "Sample" || taskscreen == "Test") {
         for (let i = 0; i < IMAGES[taskscreen][classlabel].nimages; i++) {
+          let durationMS = chooseArrayElement(IMAGES[taskscreen][classlabel].durationMS,i,0);
           for (let key in IMAGES[taskscreen][classlabel].OBJECTFILTERS) {
             if (IMAGES[taskscreen][classlabel].OBJECTFILTERS[key] !== undefined &&
                 Array.isArray(IMAGES[taskscreen][classlabel].OBJECTFILTERS[key][i])

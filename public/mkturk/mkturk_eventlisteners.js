@@ -30,6 +30,10 @@ function hold_promise_simple(touchduration, outsideGracePeriod, broadcast_over_r
     while (true) {
       touchevent = yield touchevent;
       let boundingBoxes = FLAGS.bbTarget //fetch latest target bounding box
+      if (FLAGS.bbTarget.taskscreen.length == 0){
+        console.log('CONTINUE in hold_promise: no targets --> ignore agent event')
+        continue
+      }//IF no targets displayed yet, ignore any events (e.g., during transition between touchfix and sample)
 
       //0a-EVENT COORDS, 0b-EVENT BOX
       //1a-INITIATE, 1b-CLICKED/DRAGGED, 1c-RELEASED
@@ -81,7 +85,6 @@ function hold_promise_simple(touchduration, outsideGracePeriod, broadcast_over_r
             holdstart = Date.now() - ENV.CurrentDate.valueOf();
             CURRTRIAL.xhold = []
             CURRTRIAL.yhold = []
-            // console.log('HoldPromise -- INITIATED IN BOX, holddur=0ms')
           }//IF clicked in box
         }//ONLY IF fixation screen && mouse || touch, then have to click to initiate trial
         else{
@@ -89,7 +92,6 @@ function hold_promise_simple(touchduration, outsideGracePeriod, broadcast_over_r
             holdstart = Date.now() - ENV.CurrentDate.valueOf();
             CURRTRIAL.xhold = []
             CURRTRIAL.yhold = []
-            // console.log('HoldPromise -- INITIATED IN BOX, holddur=0ms')
           }//IF went into box or clicked in box  
         }//ELSE in all other cases, can drag to activate target
       }//IF hadn't moved into box or clicked in box yet
@@ -222,7 +224,8 @@ function hold_promise_simple(touchduration, outsideGracePeriod, broadcast_over_r
       FLAGS.effectorState.xmedian, FLAGS.effectorState.ymedian,
       FLAGS.effectorState.timestamp
     ];
-    console.log('HoldPromise -- RESOLVE HOLD_SIMPLE --> ' + return_event.type + '__' + return_event.cxyt)
+    console.log('RESOLVE HOLD_PROMISE_SIMPLE --> ' + return_event.type + '__' + return_event.cxyt)
+    FLAGS.bbTarget = { taskscreen: [], indscreen: [], grid: [], x: [], y: [], ID: [], class: [], asset: [] } //Stale since have used and need to refresh with new ones from new display
     resolveFunc(return_event);
   }//Generator
   FLAGS.effectorState.holdstart = -1
@@ -232,7 +235,7 @@ function hold_promise_simple(touchduration, outsideGracePeriod, broadcast_over_r
   waitforEvent = waitforeventGenerator(); // start async function
   let tStartGenerator = performance.now()
   FLAGS.touchGeneratorCreated = 1;
-  console.log('HoldPromise --  STARTING GENERATOR HOLD_SIMPLE')
+  console.log('STARTING HOLD_PROMISE_SIMPLE')
     
   waitforEvent.next(); //move out of default state
   return {p, cancel};

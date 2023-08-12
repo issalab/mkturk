@@ -76,6 +76,7 @@ usbDeviceWorker.onmessage = function(event) {
     console.log(event.data.val);
     port.statustext_connect = event.data.val
     updateHeadsUpDisplayDevices();
+    return
   }//IF disconnected usb
   
   if (event.data.message == 'USBConnect'){
@@ -86,12 +87,14 @@ usbDeviceWorker.onmessage = function(event) {
     console.log(event.data.val);
     port.statustext_connect = event.data.val
     updateHeadsUpDisplayDevices();
+    return
   }//IF connected usb
 
   if (event.data.message == 'SerialPortConnect'){
     port.connected = true
     ENV.USBDeviceType = event.data.devicetype;//XX
-    ENV.USBDeviceName = event.data.devicename;  
+    ENV.USBDeviceName = event.data.devicename;
+    return
   }//IF serialportconnect
 
   if (event.data.message == 'EyeRead'){
@@ -110,7 +113,7 @@ usbDeviceWorker.onmessage = function(event) {
       xy = ['null', 'null'];
       console.log('recording null eye values')
     }
-
+return
     // STORE calibrated eye signal
     logEVENTS('EyeData',[ numeyes,xy[0],xy[1],w,a,null,null,null,null ],'timeseries',timestamp);
 
@@ -147,6 +150,7 @@ usbDeviceWorker.onmessage = function(event) {
       };
       waitforEvent.next(event_xytt); //send to hold_promise generator
     }//IF TrackEye
+    return
   }//IF EyeRead
 
   if (event.data.message == 'EyeSuccessRate'){
@@ -155,13 +159,15 @@ usbDeviceWorker.onmessage = function(event) {
     if (FLAGS.savedata == 0) {
       updateImageLoadingAndDisplayText('');
     }
+    return
   }//IF EyeSuccessRate
 
   if (event.data.message == 'OtherRead'){
     console.log(event.data.val);
     port.statustext_received = event.data.val
     updateHeadsUpDisplayDevices()
-  }
+    return
+  }//IF OtherRead
 
   if (event.data.message == 'RFIDRead'){
     var tagend = event.data.val.indexOf('}', 0);
@@ -188,7 +194,8 @@ usbDeviceWorker.onmessage = function(event) {
     if (ENV.Subject == '') {
       queryRFIDTagonFirestore(EVENTS['timeseries']['RFIDTag'][nrfid - 1][2]);
     } //IF no subject chosen yet, auto-find in firestore based on their RFIDTag, which will then QuickLoad the page
-    updateHeadsUpDisplayDevices();    
+    updateHeadsUpDisplayDevices();
+    return 
   }//IF RFIDRead
 
   if (event.data.message == 'SampleCommandReturn'){
@@ -198,12 +205,14 @@ usbDeviceWorker.onmessage = function(event) {
     else if (event.data.val.includes('0')){
       logEVENTS('SampleCommandOffReturnTime',event.data.time - ENV.CurrentDate.valueOf(),'trialseries');
     }
+    return
   }//IF SampleCommandReturn
 
   if (event.data.message == 'SerialPortWrite'){
     console.log(event.data.val)
     port.statustext_sent = event.data.val
     updateHeadsUpDisplayDevices()
+    return
   }//IF SerialPortWrite
 };//FUNCTION usbDeviceWorker.onmessage
 

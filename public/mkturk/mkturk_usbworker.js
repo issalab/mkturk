@@ -250,16 +250,21 @@ serial.Port.prototype.onReceive = (data) => {
     if (n_character_close > 0) {
       var x = eyebuffer.buffer.slice(0, 4); //pupil x_center
       var y = eyebuffer.buffer.slice(4, 8); //pupil y_center
-      var w = eyebuffer.buffer.slice(9, 12); //pupil diameter
-      var a = eyebuffer.buffer.slice(13, 16); //pupil aspect ratio
+      var w = eyebuffer.buffer.slice(8, 12); //pupil diameter
+      var a = eyebuffer.buffer.slice(12, 16); //pupil aspect ratio
 
-      x = parseInt('0x' + x) / 32767; //Raw
-      y = parseInt('0x' + y) / 32767; //Raw
+      x = parseInt('0x' + x) / 32767 - 0.5; //Raw, centered
+      y = parseInt('0x' + y) / 32767 - 0.5; //Raw, centered
       w = parseInt('0x' + w) / 32767; //Raw
       a = parseInt('0x' + a) / 32767; //Raw
-      postMessage({message: 'EyeRead', 
-                    x: x, y: y, w: w, a: a, numeyes: eyebuffer.numeyes_HARDCODED, time: onReceiveTime})
 
+      if ( x != 'NaN' && y != 'NaN'){
+        postMessage({message: 'EyeRead', 
+        x: x, y: y, w: w, a: a, numeyes: eyebuffer.numeyes_HARDCODED, time: onReceiveTime})
+      }
+      else{
+        console.log('at least one EYE NaN')
+      }
       eyebuffer.success = eyebuffer.success + 1;
       if (n_character_close == 1) {
         eyebuffer.buffer = '';

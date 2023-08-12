@@ -71,9 +71,9 @@ function updateBasicStatsText(){
                                 mkeye.stats.effector + 'track '
                                 + mkeye.file.active
                                 + '  [∆hardware,∆software,trialtrig]=[' 
-                                + mkeye.live.display_trise + ',' 
-                                + mkeye.live.sample_softwarecliptimes + ','
-                                + mkeye.live.samplecommand_duration + ' ms]'
+                                + Math.round(mkeye.live.sample_trise) + ', ' 
+                                + Math.round(mkeye.live.sample_softwarecliptimes) + ', '
+                                + Math.round(mkeye.live.samplecommand_dur) + ' ms]'
 }//FUNCTION updateBasicStatsText()
 
 class RealtimeScatter{
@@ -536,23 +536,26 @@ class ScatterXY{
         (this.plotname.toLowerCase() == 'fixation' || this.plotname.toLowerCase() == 'samplefixation')
     ){
       let screen = this.plotname.toLowerCase()
-      instantCalib(this.plotname,this.variablename);
-      for (let i=0; i<=mkeye.instantCalib[screen].xparam.length-1; i++){
+      try{
+        instantCalib(this.plotname,this.variablename);
+        for (let i=0; i<=mkeye.instantCalib[screen].xparam.length-1; i++){
+          if (mkeye.instantCalib[screen].xparam != []){
+            for (let j=0; j<=mkeye.instantCalib[screen].xpred[i].length-1; j++){
+              this.chart.data.datasets[ this.targets.g.length + i ].data[j] = 
+                            { x: mkeye.instantCalib[screen].xpred[i][j], y: mkeye.instantCalib[screen].ypred[i][j]}
+            }//FOR j targets
+          }//IF successful calibration (determinant != 0 in mkeye_analysis fitting function)
+        }//FOR i calib types
         if (mkeye.instantCalib[screen].xparam != []){
-          for (let j=0; j<=mkeye.instantCalib[screen].xpred[i].length-1; j++){
-            this.chart.data.datasets[ this.targets.g.length + i ].data[j] = 
-                          { x: mkeye.instantCalib[screen].xpred[i][j], y: mkeye.instantCalib[screen].ypred[i][j]}
-          }//FOR j targets
-        }//IF successful calibration (determinant != 0 in mkeye_analysis fitting function)
-      }//FOR i calib types
-      if (mkeye.instantCalib[screen].xparam != []){
-        this.updateCalibText(this.plotname)
-        document.querySelector("textarea[id=instantCalib" + this.plotname + "_text]").style.display = 'block'
-        document.querySelector("textarea[id=instantCalib" + this.plotname + "_text]").style.visibility = 'visible'
+          this.updateCalibText(this.plotname)
+          document.querySelector("textarea[id=instantCalib" + this.plotname + "_text]").style.display = 'block'
+          document.querySelector("textarea[id=instantCalib" + this.plotname + "_text]").style.visibility = 'visible'
+        }
+        else{
+          document.querySelector("textarea[id=instantCalib" + this.plotname + "_text]").style.display = 'none' //if do style.visibility=hidden, element will still occupy space
+        }
       }
-      else{
-        document.querySelector("textarea[id=instantCalib" + this.plotname + "_text]").style.display = 'none' //if do style.visibility=hidden, element will still occupy space
-      }
+      catch{ console.log('problem doing instant calib given eye data, SKIPPING instantCALIB.....')}
     }//IF fixation screen
 
     this.chart.update()

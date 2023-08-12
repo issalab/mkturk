@@ -28,7 +28,8 @@ char receivedSampleCmdCharsEye[numChars];
 boolean newSampleCmd = false;
 
 //Sync pin for external devices
-const int sampleCmdPin = A4;
+const int sampleCmdPin1 = A4;
+const int sampleCmdPin2 = 10;
 const int sampleCmdLEDPin=5;
 
 //Trigger pins for external devices
@@ -47,7 +48,8 @@ char sampleCmdOutMarker[] = "sa";
 // TRIAL# LINE
 char receivedTrialNumCmdChars[numChars];
 boolean newTrialNumCmd = false;
-const int trialNumCmdPin = A5;
+const int trialNumCmdPin1 = A5;
+const int trialNumCmdPin2 = 11;
 const int trialNumCmdLEDPin=6;
 int trialNumCmd;
 int prevTrialNumCmd = 0;
@@ -64,8 +66,10 @@ void setup() {
   pinMode(pumpPin, OUTPUT);
   pinMode(pumpLEDPin, OUTPUT);
 
-  pinMode(sampleCmdPin, OUTPUT);
-  pinMode(trialNumCmdPin, OUTPUT);
+  pinMode(sampleCmdPin1, OUTPUT);
+  pinMode(sampleCmdPin2, OUTPUT);
+  pinMode(trialNumCmdPin1, OUTPUT);
+  pinMode(trialNumCmdPin2, OUTPUT);
   pinMode(trialTriggerPin1, OUTPUT);
   pinMode(trialTriggerPin2, OUTPUT);
   pinMode(blockTriggerPin1, OUTPUT);
@@ -239,13 +243,15 @@ void turnOnOffExternalDevice() {
       Serial.print(1);
       Serial.flush();
       if (receivedSampleCmdSecondChar == 'f'){
-        digitalWrite(sampleCmdPin, HIGH);
+        digitalWrite(sampleCmdPin1, HIGH);
+        digitalWrite(sampleCmdPin2, HIGH);
 
         //LED
         digitalWrite(sampleCmdLEDPin, HIGH);
       }//IF file, send to sync
       else if (receivedSampleCmdSecondChar == 't'){
-        digitalWrite(sampleCmdPin, HIGH);
+        digitalWrite(sampleCmdPin1, HIGH);
+        digitalWrite(sampleCmdPin2, HIGH);
         digitalWrite(trialTriggerPin1, HIGH);
         digitalWrite(trialTriggerPin2, HIGH);
 
@@ -253,7 +259,8 @@ void turnOnOffExternalDevice() {
         digitalWrite(sampleCmdLEDPin, HIGH);
       }//ELSE IF trial, send to sync, trial trigger
       else if (receivedSampleCmdSecondChar == 'b'){
-        digitalWrite(sampleCmdPin, HIGH);
+        digitalWrite(sampleCmdPin1, HIGH);
+        digitalWrite(sampleCmdPin2, HIGH);
         digitalWrite(trialTriggerPin1, HIGH);
         digitalWrite(trialTriggerPin2, HIGH);
         digitalWrite(blockTriggerPin1, HIGH);
@@ -269,13 +276,15 @@ void turnOnOffExternalDevice() {
       Serial.print(0);
       Serial.flush();
       if (receivedSampleCmdSecondChar == 'f'){
-        digitalWrite(sampleCmdPin, LOW);
+        digitalWrite(sampleCmdPin1, LOW);
+        digitalWrite(sampleCmdPin2, LOW);
 
         //LED
         digitalWrite(sampleCmdLEDPin, LOW);
       }//IF file, send to sync
       else if (receivedSampleCmdSecondChar == 't'){
-        digitalWrite(sampleCmdPin, LOW);
+        digitalWrite(sampleCmdPin1, LOW);
+        digitalWrite(sampleCmdPin2, LOW);
         digitalWrite(trialTriggerPin1, LOW);
         digitalWrite(trialTriggerPin2, LOW);
 
@@ -283,7 +292,8 @@ void turnOnOffExternalDevice() {
         digitalWrite(sampleCmdLEDPin, LOW);
       }//ELSE IF trial, send to sync, trial trigger
       else if (receivedSampleCmdSecondChar == 'b'){
-        digitalWrite(sampleCmdPin, LOW);
+        digitalWrite(sampleCmdPin1, LOW);
+        digitalWrite(sampleCmdPin2, LOW);
         digitalWrite(trialTriggerPin1, LOW);
         digitalWrite(trialTriggerPin2, LOW);
         digitalWrite(blockTriggerPin1, LOW);
@@ -305,14 +315,16 @@ void turnOnOffTrialLine() {
       Serial.print(trialNumCmdOutMarker);
       Serial.print(1);
       Serial.flush();
-      digitalWrite(trialNumCmdPin, HIGH);
+      digitalWrite(trialNumCmdPin1, HIGH);
+      digitalWrite(trialNumCmdPin2, HIGH);
       digitalWrite(trialNumCmdLEDPin, HIGH);//co-opts samplecmd LED
     }//IF 1
     else {
       Serial.print(trialNumCmdOutMarker);
       Serial.print(0);
       Serial.flush();
-      digitalWrite(trialNumCmdPin, LOW);
+      digitalWrite(trialNumCmdPin1, LOW);
+      digitalWrite(trialNumCmdPin2, LOW);
       digitalWrite(trialNumCmdLEDPin, LOW);//co-opts samplecmd LED
     }//IF 0
     newTrialNumCmd = false;

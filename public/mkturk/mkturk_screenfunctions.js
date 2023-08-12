@@ -224,7 +224,7 @@ function displayTrial(ti, gr, cl, fr, sc, ob, id, ims, mkm, trig) {
         }//IF Choice/Reward/Punish, renderShape
 
     //Blue Fixation Circle
-        if ( taskscreen == 'Touchfix' ){
+        if ( taskscreen == 'Touchfix' && ENV.FixationRadius > 0 && gr[f] >= 0){
           let bbTarget = renderShape2D(taskscreen, gr[f], VISIBLECANVAS);
           for (let j=0; j <= bbTarget.x.length-1; j++){
             FLAGS.bbDisplay.taskscreen.push(taskscreen)
@@ -240,10 +240,26 @@ function displayTrial(ti, gr, cl, fr, sc, ob, id, ims, mkm, trig) {
         }//IF touchfix, renderShape
 
     //OVERLAY White Fixation Square
-        if ( taskscreen == 'Touchfix' || taskscreen == 'Sample' || taskscreen == 'Blank' )
+        if ( (taskscreen == 'Touchfix' || taskscreen == 'Sample' || taskscreen == 'Blank') && ENV.FixationDotRadius)
         {
-          if (typeof gr[f] == 'number') { renderShape2D('FixationDot', gr[f], VISIBLECANVAS); }
-          else { renderShape2D('FixationDot', gr[f][0], VISIBLECANVAS); }
+          let gr_fixsquare
+          if (typeof gr[f] == 'number'){ gr_fixsquare = gr[f]}
+          else {gr_fixsquare = gr[f][0]}
+          
+          if (gr_fixsquare >= 0){
+            let bbTarget = renderShape2D('FixationDot', gr_fixsquare, VISIBLECANVAS)
+            for (let j=0; j <= bbTarget.x.length-1; j++){
+              FLAGS.bbDisplay.taskscreen.push(taskscreen)
+              FLAGS.bbDisplay.indscreen.push(s)
+              FLAGS.bbDisplay.grid.push(bbTarget.grid[j])
+              FLAGS.bbDisplay.ID.push(bbTarget.ID[j])
+              FLAGS.bbDisplay.class.push(bbTarget.class[j])
+              FLAGS.bbDisplay.asset.push(bbTarget.asset[j])
+              FLAGS.bbDisplay.x.push(bbTarget.x[j])
+              FLAGS.bbDisplay.y.push(bbTarget.y[j])
+              FLAGS.bbDisplay.sceneTarget.push(1)
+            }//FOR j rendered items
+          }//IF grid>=0
         }//IF touchfix || sample
       }//FOR s screens within frame
 
@@ -350,8 +366,8 @@ function updateTargetBoundingBoxes(boundingBoxes){
     bbTarg.ID.push(boundingBoxes.ID[i])
 
     if (TASK.Target == 'gridwindow'){
-      bbTarg.x.push([gridCenter.x-ENV.FixationWindowRadius,gridCenter.x+ENV.FixationWindowRadius])
-      bbTarg.y.push([gridCenter.y-ENV.FixationWindowRadius,gridCenter.y+ENV.FixationWindowRadius])
+      bbTarg.x.push([gridCenter.x-ENV.FixationWindowRadius+CANVAS.offsetleft,gridCenter.x+ENV.FixationWindowRadius+CANVAS.offsetleft])
+      bbTarg.y.push([gridCenter.y-ENV.FixationWindowRadius+CANVAS.offsettop,gridCenter.y+ENV.FixationWindowRadius+CANVAS.offsettop])
       bbTarg.asset.push(boundingBoxes.asset[i] + '_gridwindow')
     }//IF gridwindow
     else if (TASK.Target == 'objectwindow'){
@@ -422,18 +438,23 @@ function broadcastBoundingBoxes(boundingBoxes,areTarg){
       }//FOR y coords
     }//FOR i bounding boxes
 
-    rtdb.ref('data/' + ENV.Subject).set({
-      x: FLAGS.effectorState.x,
-      y: FLAGS.effectorState.y,
-      touchevent: FLAGS.effectorState.touchevent,
-      state: FLAGS.effectorState.state,
-      chosenbox: FLAGS.effectorState.chosenbox,
-      choice: FLAGS.effectorState.choice,
-      holdduration: FLAGS.effectorState.holdduration,
-      boundingBoxes: boundingBoxesRtdb,
-      meta: areTarg,
-      timestamp: new Date().toJSON(),
-    });//RTDB.set
+    if ( !isNaN(FLAGS.effectorState.x) && !isNaN(FLAGS.effectorState.y) ){
+      rtdb.ref('data/' + ENV.Subject).set({
+        x: FLAGS.effectorState.x,
+        y: FLAGS.effectorState.y,
+        touchevent: FLAGS.effectorState.touchevent,
+        state: FLAGS.effectorState.state,
+        chosenbox: FLAGS.effectorState.chosenbox,
+        choice: FLAGS.effectorState.choice,
+        holdduration: FLAGS.effectorState.holdduration,
+        boundingBoxes: boundingBoxesRtdb,
+        meta: areTarg,
+        timestamp: new Date().toJSON(),
+      });//RTDB.set  
+    }
+    else{
+      console.log('!!!! Received NaN on effectorState')
+    }
   }//IF realtime database
   else{
     console.log('no RTDB connection for this Agent')

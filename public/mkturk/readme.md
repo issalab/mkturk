@@ -545,7 +545,11 @@ Duration of a movie clip in milliseconds. Specifying as an array of values allow
 
 8,9 - eye serial
 
-10,11 - rfid serial
+10 - sample command2
+
+11 - trial code2
+
+(10,11) - rfid serial
 
 12 - unused
 
@@ -558,8 +562,8 @@ A1 - block trigger
 A2 - trial trigger
 A3 - trial trigger
 
-A4 - sample command
-A5 - trial code
+A4 - sample command1
+A5 - trial code2
 
 ### Lines
 D8,D9 (D2 led) - eye - softwareserial2

@@ -271,8 +271,8 @@ export const taskParamSchema = {
     },
     SampleHoldDuration: {
       type: 'integer',
-      default: "Infinity (enter as a string with quotes)",
-      examples: ['in milliseconds (duration of fixation hold)', 'Infinity (view target through whole sample sequence -- follow mode)', '0 (immediately reward upon finding target -- find mode)'],
+      default: "86400000 (24 hrs)",
+      examples: ['in milliseconds (duration of fixation hold)', '0 (immediately reward upon finding target -- find mode)'],
     },
     SampleGridIndex: {
       type: 'integer',

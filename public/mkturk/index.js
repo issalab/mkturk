@@ -245,6 +245,7 @@ index_init();
         let p2 = choiceTimeOut(TASK.FixationTimeOut);
 
         race_return = await Promise.race([p1.p, p2]);
+        waitforEvent.return();
         p1.cancel()
         if (race_return.type.includes('held')){
           FLAGS.waitingforTouches--
@@ -376,6 +377,7 @@ index_init();
       else{
         race_return = await p2;
       }//ELSE STRESSTEST
+      waitforEvent.return();
       p1.cancel()
 
       //Determine number of clips fixated
@@ -588,6 +590,7 @@ index_init();
           let p1 = hold_promise_simple(TASK.ChoiceHoldDuration, TASK.ChoiceOutsideGracePeriod,1);
           let p2 = choiceTimeOut(TASK.ChoiceTimeOut);
           race_return = await Promise.race([p1.p, p2]);
+          waitforEvent.return();
           p1.cancel();
         }//ELSE !RSVP, require choice
       }//ELSE !STRESSTEST
@@ -689,6 +692,7 @@ index_init();
           usbDeviceWorker.postMessage({ action: "writepumpdurationtoUSB", val: Math.round(TASK.RewardDuration) });
           await Promise.all([p0, p1]);
         }//ELSE IF USB
+        waitforEvent.return();
         p0.cancel()
       }//FOR i rewards
     }//ELSE IF Reward, then reward (blank, reward, blank)
@@ -730,6 +734,7 @@ index_init();
 
       let p0 = hold_promise_simple(Infinity, Infinity,0);//to broadcast x,y coord
       await Promise.all([p0, p1, p2]);
+      waitforEvent.return();
       p0.cancel()
     }//ELSE IF PUNISH, then timeout (Blank, Punish, Blank)
 
@@ -809,7 +814,7 @@ index_init();
       }
     }//IF
 
-    console.log('||||||||||||||||||||  END OF TRIAL ', CURRTRIAL.num,' |||||||||||||||||||');
+    console.log('||||||||||||||  END OF TRIAL ', CURRTRIAL.num,' |||||||||||||');
     if (endloop == 1){ return }//IF end task
 
     if (updateBlockNum && FLAGS.savedata){ index_update_blocknum() } //updates CURRTRIAL.blocknum
