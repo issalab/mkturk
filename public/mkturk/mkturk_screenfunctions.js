@@ -123,7 +123,10 @@ function displayTrial(ti, gr, cl, fr, sc, ob, id, ims, mkm, trig) {
         else if (port.connected && newbagblock == 1){
           usbDeviceWorker.postMessage({ action: "writeSampleCommandTriggertoUSB", val: 'b1' });
         }//ELSE new block, activate both trial & block trigger lines in addition to sample command sync line
-      }//IF showing sample trigger frame
+      }//IF showing sample trigger frame=1
+      if (ENV.Eye.TrackEye){
+        waitforEvent.next(FLAGS.effectorState.event_xytt)
+      }
     }//IF showing frame
 
     //---------------- RENDER THE NEXT FRAME ------------------//
@@ -313,7 +316,7 @@ function displayTrial(ti, gr, cl, fr, sc, ob, id, ims, mkm, trig) {
     //------(END)-------- RENDER THE NEXT FRAME ------------------//
 
     //IF prematurely ending movies externally
-    if (frame.current >= frame.shown.length) { frame.current = frame.shown.length;} 
+    if (frame.current >= frame.shown.length) { frame.current = frame.shown.length;}
     if (frame.shown[frame.shown.length - 1] != 1) {
       window.requestAnimationFrame(updateCanvas);
     } //IF frames left to show

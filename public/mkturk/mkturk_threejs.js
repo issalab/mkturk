@@ -762,6 +762,9 @@ async function addToScene(taskscreen) {
 
 function updateSingleFrame3D(taskscreen,classlabels,index,movieframe,gridindex,cubeTexture,show_objs,show_im)
 {
+  let scenecenterX = ENV.XGridCenter[gridindex];
+  let scenecenterY = ENV.YGridCenter[gridindex];
+
   //==== TURN OFF ALL ITEMS
   for (let sceneElem in scene[taskscreen]["children"]) {
     scene[taskscreen]["children"][sceneElem].visible = false;
@@ -990,8 +993,6 @@ function updateSingleFrame3D(taskscreen,classlabels,index,movieframe,gridindex,c
 
       if (nextvisible == 1) { objects.visible = true; } //IF visible
       else { objects.visible = false; } //ELSE !visible
-      var scenecenterX = ENV.XGridCenter[gridindex];
-      var scenecenterY = ENV.YGridCenter[gridindex];
 
       var box = scene[taskscreen].getObjectByName(obj + "_" + taskscreen + "_" + classlabel + "_" + "boxhelper");
       var [objPosition, objSize, boundingBox] = updateObjectSingleFrame(

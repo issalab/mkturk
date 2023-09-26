@@ -88,6 +88,7 @@ let fieldSelector = document.querySelector(
 /* Quick Links */
 let homeLink = document.querySelector('#quick-link-home') as HTMLElement;
 let taskparamsLink = document.querySelector('#quick-link-taskparams') as HTMLElement;
+let taskstorageLink = document.querySelector('#quick-link-taskstorage') as HTMLElement;
 let taskautomatorsLink = document.querySelector('#quick-link-taskautomators') as HTMLElement;
 let sceneparamsLink = document.querySelector('#quick-link-sceneparams') as HTMLElement;
 let dailyDataLink = document.querySelector('#quick-link-dailydata') as HTMLElement;
@@ -124,6 +125,18 @@ taskparamsLink.addEventListener('click' || 'pointerup', (ev: Event) => {
   qryLocSelc.value = 'mkturkfiles';
   qryLocSelc.dispatchEvent(new Event('change'));
   mkf.listStorageFiles(ref(storageRef, 'mkturkfiles/parameterfiles/subjects'));
+  rootRef = mkturkRootRef
+});
+
+taskstorageLink.addEventListener('click' || 'pointerup', (ev: Event) => {
+  ev.preventDefault();
+
+  rootRef = ref(storageRef, 'mkturkfiles/parameterfiles/params_storage')
+  isRoot = false;
+
+  qryLocSelc.value = 'mkturkfiles';
+  qryLocSelc.dispatchEvent(new Event('change'));
+  mkf.listStorageFiles(ref(storageRef, 'mkturkfiles/parameterfiles/params_storage'));
   rootRef = mkturkRootRef
 });
 

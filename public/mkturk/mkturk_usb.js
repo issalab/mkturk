@@ -113,7 +113,6 @@ usbDeviceWorker.onmessage = function(event) {
       xy = ['null', 'null'];
       console.log('recording null eye values')
     }
-return
     // STORE calibrated eye signal
     logEVENTS('EyeData',[ numeyes,xy[0],xy[1],w,a,null,null,null,null ],'timeseries',timestamp);
 
@@ -140,7 +139,7 @@ return
 
         xy[0] = X_mdn;
         xy[1] = Y_mdn;
-      } //compute median
+      }//IF >=4 samples, compute median
 
       var event_xytt = {
         x_val: xy[0],
@@ -148,7 +147,7 @@ return
         time: Date.now(),
         type: 'eye',
       };
-      waitforEvent.next(event_xytt); //send to hold_promise generator
+      FLAGS.effectorState.event_xytt = event_xytt; //hold value, wait for display (updateCanvas calls event listener)
     }//IF TrackEye
     return
   }//IF EyeRead

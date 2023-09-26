@@ -974,7 +974,6 @@ function index_housekeeping_effector_data(){
     let y = [];
     let w = [];
     let a = [];
-    let q = [];
 
     let nsamples = Object.keys(EVENTS[eventtype][eventname]).length;
     for (let i=0; i<=nsamples-1; i++ ){
@@ -986,23 +985,20 @@ function index_housekeeping_effector_data(){
         if (eventname == 'EyeData'){
           x.push(EVENTS[eventtype][eventname][i][3])
           y.push(EVENTS[eventtype][eventname][i][4])
-          // w.push(EVENTS[eventtype][eventname][i][5])
-          // a.push(EVENTS[eventtype][eventname][i][6])
+          w.push(EVENTS[eventtype][eventname][i][5])
+          a.push(EVENTS[eventtype][eventname][i][6])
         }//IF Eye
         else if (eventname == 'TouchData'){
           x.push( EVENTS[eventtype][eventname][i][2] + CANVAS.offsetleft )
           y.push( -EVENTS[eventtype][eventname][i][3] + ENV.ViewportPixels[1] )
-          // q.push(EVENTS[eventtype][eventname][i][4])
         }//IF Touch
       }//IF within ENV.EffectorSaveJSONDataRelativetoFixationDotDisplayMS of currtrial
     }//FOR i times sampled
-// console.log('N=' + t.length + '  t_effector ' + [...t] )
     EVENTS['timeseries']['EffectorData'].t[CURRTRIAL.num] = new Int16Array(t)
     EVENTS['timeseries']['EffectorData'].x[CURRTRIAL.num] = new Int16Array(x)
     EVENTS['timeseries']['EffectorData'].y[CURRTRIAL.num] = new Int16Array(y)
-    // EVENTS['timeseries']['EffectorData'].w[CURRTRIAL.num] = new Int16Array(w)
-    // EVENTS['timeseries']['EffectorData'].a[CURRTRIAL.num] = new Int16Array(a)
-    // EVENTS['timeseries']['EffectorData'].q[CURRTRIAL.num] = new Int16Array(q)
+    EVENTS['timeseries']['EffectorData'].w[CURRTRIAL.num] = new Int16Array(w)
+    EVENTS['timeseries']['EffectorData'].a[CURRTRIAL.num] = new Int16Array(a)
 }//FUNCTION index_housekeeping_effector_xyt
 
 function index_housekeeping_cloudstorage(){

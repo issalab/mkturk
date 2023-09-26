@@ -56,14 +56,14 @@ export const taskParamSchema = {
     },
     ImageBagsSample: {
       type: 'array',
-      default: '/mkturkfiles/scenebags/objectome3d/camel/20200709_camel_token.js, /mkturkfiles/scenebags/objectome3d/wrench/20200709_wrench_token.js',
+      default: '/mkturkfiles/scenebags/objectome3d/camel/20200709_camel_token.js, /mkturkfiles/scenebags/objectome3d/wrench/20200709_camel_token.js',
       items: {
         type: 'string',
       },
     },
     ImageBagsTest: {
       type: 'array',
-      default: '/mkturkfiles/scenebags/objectome3d/camel/20200709_camel_token.js, /mkturkfiles/scenebags/objectome3d/wrench/20200709_wrench_token.js',
+      default: 'filled with same number as ImageBagsSample using /mkturkfiles/scenebags/objectome3d/camel/20200709_camel_token.js',
       items: {
         type: 'string',
       },

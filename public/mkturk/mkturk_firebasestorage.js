@@ -428,16 +428,17 @@ async function loadParametersfromFirebase(paramfile_path) {
     if (typeof TASK.ImageBagsSample == 'undefined'){
       TASK.ImageBagsSample = [
         "/mkturkfiles/scenebags/objectome3d/camel/20200709_camel_token.js",
-        "/mkturkfiles/scenebags/objectome3d/wrench/20200709_wrench_token.js"
-    ]}
+        "/mkturkfiles/scenebags/objectome3d/wrench/20200709_camel_token.js"
+    ]}//IF ImageBagsSample undefined
     if (typeof TASK.SampleHoldDuration == 'undefined'){TASK.SampleHoldDuration = 86400000}//24 hours in milliseconds
 
     // TEST SCREEN
     if (typeof TASK.ImageBagsTest == 'undefined'){
-      TASK.ImageBagsTest = [
-        "/mkturkfiles/scenebags/objectome3d/camel/20200709_camel_token.js",
-        "/mkturkfiles/scenebags/objectome3d/wrench/20200709_wrench_token.js"
-    ]}
+      TASK.ImageBagsTest = []
+      for (let i=0; i<=TASK.ImageBagsSample.length-1; i++){
+        TASK.ImageBagsTest.push("/mkturkfiles/scenebags/objectome3d/camel/20200709_camel_token.js")
+      }//FOR i samplebags
+    }//IF ImageBagsTest undefined
     if (typeof TASK.TestGridIndex == 'undefined'){ 
       if (TASK.ImageBagsTest.length == 1){
         TASK.TestGridIndex = [0]        

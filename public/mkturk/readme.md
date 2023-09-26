@@ -122,7 +122,7 @@ Target (default = object): Type of target bounding box to use during Fixation, S
   
     (3) 'object' -- dynamic location, dynamic size -- window follows object position and aspect ratio/size. It's the object bounding box whether the object is the blue fixation dot or the foreground objects in a scene render, OR 
   
-    (4) 'scene' -- dynamic location, dynamic size -- the overall scene bounding box which would encompass both object and background.
+    **DO NOT USE, NOT FULLY IMPLEMENTED USE gridwindow instead** (4) 'scene' -- dynamic location, dynamic size -- the overall scene bounding box which would encompass both object and background.
   
     Note that 'objectwindow', 'object', and 'scene' are dynamic bounding boxes where each frame render will compute a bounding box whereas 'gridwindow' is a static bounding box applied to a grid position independent of rendered assets (shape, image, object, cubemap). For now, the TASK.Target parameter is task-wide, could always be done specific to each screen (e.g., Fixation vs. Sample) to provide more flexibility in the future.
 

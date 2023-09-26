@@ -160,6 +160,7 @@ index_init();
     FLAGS.waitingforTouches = TASK.NFixations;
 
     while (FLAGS.waitingforTouches > 0) {
+      let race_return
       //Fixation grid index
       if (TASK.FixationGridIndex >= 0) {
         CURRTRIAL.fixationgridindex = TASK.FixationGridIndex;
@@ -168,6 +169,30 @@ index_init();
         CURRTRIAL.fixationgridindex = Math.floor( Math.random() * ENV.XGridCenter.length );
       }//ELSE randomly choose fixation position
       logEVENTS('FixationGridIndex',CURRTRIAL.fixationgridindex,'trialseries');
+
+      //============ SET UP FIXATION SEQUENCE ============//
+      // function displayTrial(ti, gr, cl, fr, sc, ob, id, ims, mkm, trig) {
+      //   // ti=time, gr=grid, cl=clip, fr=frame, sc=screen, ob=scenebag, id=renderparam_index
+
+      // when & where to display
+      CURRTRIAL.fixationtsequencedesired = [];
+      CURRTRIAL.fixationsequencegridindex = [];
+
+      // what to display
+      CURRTRIAL.fixationsequenceclip = []; //movieclip# in RSVP
+      CURRTRIAL.fixationsequenceframe = []; //frame# in movie
+      CURRTRIAL.fixationsequencetaskscreen = [];
+      CURRTRIAL.fixationsequencelabel = []; //image class
+      CURRTRIAL.fixationsequenceindex = []; //image index
+
+      let [ movie_sequence, movie_tsequence, movie_framenum ] = createMovieSeq_frames('Touchfix', 0, TASK.FixationTimeOut, 0, ENV.FrameRateMovie);
+      CURRTRIAL.fixationtsequencedesired.push(...movie_tsequence);
+      CURRTRIAL.fixationsequencegridindex.push(...Array(movie_tsequence.length).fill(CURRTRIAL.fixationgridindex));
+      CURRTRIAL.fixationsequenceclip.push(...Array(movie_tsequence.length).fill(0));
+      CURRTRIAL.fixationsequenceframe.push(...movie_framenum);
+      CURRTRIAL.fixationsequencetaskscreen.push(...movie_sequence);
+      CURRTRIAL.fixationsequencelabel.push(...Array(movie_tsequence.length).fill(0));
+      CURRTRIAL.fixationsequenceindex.push(...Array(movie_tsequence.length).fill(0));
 
       if (TASK.FixationUsesSample <= 0) {
         // IF !FixationUsesSample, show fixation dot
@@ -209,8 +234,7 @@ index_init();
       playSound(0);
 
       if (!TASK.FixationUsesSample) {
-        await displayTrial(CANVAS.tsequencepre,[CURRTRIAL.fixationgridindex],[0],[0],CANVAS.sequencepre,[0],[0],[],mkm);
-      }//IF !FixationUsesSample, show fixation dot
+      }//IF !FixationUsesSample
       else if (TASK.FixationUsesSample) {
         displayTrial(
           CURRTRIAL.tsequencedesired,
@@ -229,8 +253,22 @@ index_init();
       audiocontext.suspend();
 
       //========= AWAIT HOLD FIXATION TOUCH =========//
-      let race_return;
       if (ENV.StressTest == 1) {
+        //need to display one frame to get target bounding boxes
+        // await displayTrial(CANVAS.tsequencepre,[CURRTRIAL.fixationgridindex],[0],[0],CANVAS.sequencepre,[0],[0],[],mkm);
+        frame.reset([CANVAS.sequencepre[0]])
+        await displayTrial(
+          [CURRTRIAL.fixationtsequencedesired[0]],
+          [CURRTRIAL.fixationsequencegridindex[0]],
+          [CURRTRIAL.fixationsequenceclip[0]],
+          [CURRTRIAL.fixationsequenceframe[0]],
+          [CURRTRIAL.fixationsequencetaskscreen[0]],
+          [CURRTRIAL.fixationsequencelabel[0]],
+          [CURRTRIAL.fixationsequenceindex[0]],
+          [],
+          mkm
+        )
+
         race_return = { type: 'held' };
         let x = FLAGS.bbTarget.x[0][0] +
                 Math.round( Math.random() * (FLAGS.bbTarget.x[0][1] - FLAGS.bbTarget.x[0][0]) );
@@ -241,23 +279,41 @@ index_init();
         FLAGS.waitingforTouches--;
       }//IF StressTest, automate fixation
       else {
-        let p1 = hold_promise_simple(TASK.FixationDuration, TASK.FixationOutsideGracePeriod,1);
-        let p2 = choiceTimeOut(TASK.FixationTimeOut);
-
+        let p1 = hold_promise_simple(TASK.FixationDuration, TASK.FixationOutsideGracePeriod,0);                
+        frame.reset(CURRTRIAL.fixationsequencetaskscreen)
+        let p2 = displayTrial(
+          CURRTRIAL.fixationtsequencedesired,
+          CURRTRIAL.fixationsequencegridindex,
+          CURRTRIAL.fixationsequenceclip,
+          CURRTRIAL.fixationsequenceframe,
+          CURRTRIAL.fixationsequencetaskscreen,
+          CURRTRIAL.fixationsequencelabel,
+          CURRTRIAL.fixationsequenceindex,
+          [],
+          mkm
+        );
         race_return = await Promise.race([p1.p, p2]);
+
         waitforEvent.return();
         p1.cancel()
-        if (race_return.type.includes('held')){
+
+        if (typeof race_return.type == 'undefined') {
+          console.log('undefined fixation race_return')
+        }//IF did not initiate hold, re-display dot
+        else if (!race_return.type.includes('held')){
+        }
+        else if (race_return.type.includes('held')){
           FLAGS.waitingforTouches--
+          console.log(race_return.type)
         }//IF held
       }//ELSE await fixation hold
-
+      
       if (FLAGS.movieplaying == 1) {
         frame.current = frame.shown.length - 1;
         frame.shown[frame.current] = 1;
         await moviefinish_promise();
       }//IF movie still playing after acquire fixation, stop movie
-
+      console.log(race_return.type)
       try {
         CURRTRIAL.fixationtouchevent = race_return.type;
         CURRTRIAL.fixationxyt = [ race_return.cxyt[1], race_return.cxyt[2], race_return.cxyt[3] ];
@@ -266,6 +322,7 @@ index_init();
         CURRTRIAL.fixationtouchevent = 'broke';
         CURRTRIAL.fixationxyt = [-1, -1, -1];
       }
+      console.log(race_return.type)
       logEVENTS('FixationTouchEvent',CURRTRIAL.fixationtouchevent,'trialseries');
       logEVENTS('FixationXYT', CURRTRIAL.fixationxyt, 'trialseries');
 
@@ -289,6 +346,10 @@ index_init();
       }//IF waiting for more touches
     } //WHILE waiting for NFixations
     //============ (end) WHILE RUN FIXATION SCREEN ============//
+
+    //add blank, helps with vsync for sample display
+    frame.reset(CANVAS.sequenceblank)
+    await displayTrial(CANVAS.tsequenceblank,[-1],[0],[0],CANVAS.sequenceblank,[0],[0],[],mkm);
 
     //SAMPLE TEST    SAMPLE TEST    SAMPLE TEST    SAMPLE TEST    SAMPLE TEST    //
     //SAMPLE TEST    SAMPLE TEST    SAMPLE TEST    SAMPLE TEST    SAMPLE TEST    //
@@ -370,7 +431,6 @@ index_init();
         CURRTRIAL.images,
         mkm,FLAGS.savedata
       );
-      let race_return = [];
       if (ENV.StressTest <= 0){
         race_return = await Promise.race([p1.p, p2]);
       }

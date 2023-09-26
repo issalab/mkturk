@@ -158,7 +158,8 @@ FLAGS.effectorState = {x: 0, y: 0, xmedian: 0, ymedian: 0,
                         chosenbox: -1, choice: -1,
                         holdstart: -1, holdduration: 0,
                         touchevent: '', state: '',
-                        timestamp: Date.now() - ENV.CurrentDate.valueOf()
+                        timestamp: Date.now() - ENV.CurrentDate.valueOf(),
+                        event_xytt: [],
                       }//FLAGS.effectorState
 
 
@@ -307,7 +308,7 @@ EVENTS.reset_timeseries = function () {
   this.timeseries.EyeData = {};
   this.timeseries.Arduino = {};
   this.timeseries.TouchData = {};
-  this.timeseries.EffectorData= {t: [],x: [],y: [], w: [], a: [], q: [] };
+  this.timeseries.EffectorData= {t: [],x: [],y: [], w: [], a: [] };
   this.timeseries.DAQ = {}
   this.timeseries.DAQ['d0'] = {treceived:[],trial:[],tstart:[],tend:[],filecode:[],mktrial:[],mkblock:[],mkfilecode:[]}
   this.timeseries.DAQ['d1'] = {treceived:[],trial:[],tstart:[],tend:[],filecode:[],mktrial:[],mkblock:[],mkfilecode:[]}
@@ -320,7 +321,6 @@ EVENTS.reset_timeseries = function () {
     this.timeseries.EffectorData.y[i] = new Int16Array(0)
     this.timeseries.EffectorData.w[i] = new Int16Array(0)
     this.timeseries.EffectorData.a[i] = new Int16Array(0)
-    this.timeseries.EffectorData.q[i] = new Int16Array(0)
   }//FOR i max trials per file
 
   // Initialize battery value

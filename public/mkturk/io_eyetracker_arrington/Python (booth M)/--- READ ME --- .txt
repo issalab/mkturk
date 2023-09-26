@@ -1,0 +1,22 @@
+ViewPoint Python Interface
+
+1. Edit py_DLL_path.py so that it correctly points to the ViewPoint DLL.
+
+2. Add a copy of file  opencv_world310.dll to this Python folder. 
+	This file can be found in the ViewPoint folder.
+
+3. Run:  py_Demo-UserData-.py
+	You should see sine wave data in the penPlot window.
+
+4. Run:  py_QuerytFileName.py
+	You will be prompted for a Data file name
+	and a command to this new Data file will be sent to ViewPoint.
+	The Controls window > Record tab should show the Data file recording.
+
+4. Do NOT modify file:  py_ViewPointLib.py
+
+For more details see file: 
+  "ViewPoint/Interfaces/ViewPoint-Client WARNING & NOTES .rtf"
+	
+
+

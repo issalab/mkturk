@@ -255,8 +255,8 @@ serial.Port.prototype.onReceive = (data) => {
 
       x = parseInt('0x' + x) / 32767 - 0.5; //Raw, centered
       y = parseInt('0x' + y) / 32767 - 0.5; //Raw, centered
-      w = parseInt('0x' + w) / 32767; //Raw
-      a = parseInt('0x' + a) / 32767; //Raw
+      w = parseInt('0x' + w); //int16
+      a = parseInt('0x' + a); //int16
 
       if ( x != 'NaN' && y != 'NaN'){
         postMessage({message: 'EyeRead', 
