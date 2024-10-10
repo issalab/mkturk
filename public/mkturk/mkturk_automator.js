@@ -68,10 +68,10 @@ async function automateTask(automatorData, trialhistory) {
   // If transition criteria are met,
   if (    
     ( TASK.Agent !='SaveImages' &&
-      ENV.StagePctCorrect > ENV.MinPercentCriterion && ENV.StageNTrials >= ENV.MinTrialsCriterion )
+      ENV.StagePctCorrect >= ENV.MinPercentCriterion && ENV.StageNTrials >= ENV.MinTrialsCriterion )
     ||
     ( TASK.Agent =='SaveImages' && TASK.NRSVP>1 && typeof(TQS) !='undefined' &&
-      CURRTRIAL.num >= Math.ceil(TQS.samplebag_indices.length/TASK.NRSVP)
+      CURRTRIAL.num >= Math.ceil(TQS.samplebag_indices.length/TASK.NRSVP) - 1
       )
     ||
     ( TASK.Agent =='SaveImages' && !(TASK.NRSVP>1) && typeof(TQS) !='undefined' &&

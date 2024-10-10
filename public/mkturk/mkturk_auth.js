@@ -65,8 +65,7 @@ if (window.location.search) {
 console.log('mturkUserConfig:', mturkUserConfig);
 
 let provider = new firebase.auth.GoogleAuthProvider();
-provider.addScope('https://www.googleapis.com/auth/user.emails.read');
-provider.addScope('https://www.googleapis.com/auth/userinfo.email');
+provider.addScope('https://www.googleapis.com/auth/contacts.readonly');
 
 auth.getRedirectResult().then((redirectResult) => {
     if (redirectResult.user) {

@@ -1312,6 +1312,23 @@ function updateImageLoadingAndDisplayText(str) {
     eyedataratestr;
 }//FUNCTION updateImageLoadingAndDisplayText
 
+async function updateImageLoadingAndDisplayTextwithRFIDBio(biodata) {
+  var textobj = document.getElementById('headsuptext'); //hijack the headsup loading text to show subject
+  textobj.innerHTML =
+  '<font size=+2>' + '<br>' + '<br>' + '<br>' + '<br>' + 
+    '<font color=red><bold>' + biodata.name + '</bold></font><br>' +
+    '<font color=red>'+ new Date(biodata.birthdate.seconds*1000).toLocaleDateString() + '<br>' +
+    biodata.sex + '<br>' + 
+    biodata.rfid +
+  '</font>'
+  await sleep(1000)
+
+  //After pause showing auto-detected subject,
+  //this will now quick load the subject's params & task
+  QuickLoad.load = 1;
+  waitforClick.next(1);
+}//FUNCTION updateImageLoadingAndDisplayText
+
 function displayPhysicalSizeText(displayobject_coord, canvasobj) {
   var visible_ctxt = canvasobj.getContext('2d');
   visible_ctxt.textBaseline = 'hanging';

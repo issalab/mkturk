@@ -428,7 +428,7 @@ async function loadParametersfromFirebase(paramfile_path) {
     if (typeof TASK.ImageBagsSample == 'undefined'){
       TASK.ImageBagsSample = [
         "/mkturkfiles/scenebags/objectome3d/camel/20200709_camel_token.js",
-        "/mkturkfiles/scenebags/objectome3d/wrench/20200709_camel_token.js"
+        "/mkturkfiles/scenebags/objectome3d/wrench/20200709_wrench_token.js"
     ]}//IF ImageBagsSample undefined
     if (typeof TASK.SampleHoldDuration == 'undefined'){TASK.SampleHoldDuration = 86400000}//24 hours in milliseconds
 

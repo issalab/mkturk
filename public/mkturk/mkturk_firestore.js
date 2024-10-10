@@ -107,15 +107,17 @@ async function loadAgentRFIDfromFirestore(subject, species) {
 } //FUNCTION loadAgentRFIDfromFirestore
 
 async function queryRFIDTagonFirestore(tag) {
-  var query = await db
-    .collection(FIRESTORECOLLECTION.AGENTS)
-    .where('rfid', '==', tag);
-  var querySnapshot = query.get().then(function (querySnapshot) {
+  var query = await db.collection(FIRESTORECOLLECTION.AGENTS).where('rfid', '==', tag);
+  query.get().then(function (querySnapshot) {
     querySnapshot.forEach(function (doc) {
       ENV.Subject = doc.data().name;
+      ENV.AgentBirthdate =  new Date(doc.data().birthdate.seconds*1000).toLocaleDateString();
+      ENV.AgentSex = doc.data().sex;
+      ENV.AgentRFID = doc.data().rfid;
       console.log('AUTO-FOUND AGENT ' + ENV.Subject);
-      QuickLoad.load = 1;
-      waitforClick.next(1);
+      updateImageLoadingAndDisplayTextwithRFIDBio(doc.data())
+      // QuickLoad.load = 1;
+      // waitforClick.next(1);
     }); //forEach
   }); //.then
 } //FUNCTION queryRFIDTagonFirestore

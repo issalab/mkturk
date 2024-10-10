@@ -28,6 +28,13 @@ var eyebuffer = {
   dt: 0,
   tstart: 0,
   tlast: 0,
+  x: [],
+  y: [],
+  w: [],
+  a: [],
+  onReceiveTime: [],
+  transmitInterval_HARDCODED: 11,
+  tlastTransmit: performance.now(),
 };
 
 var activedevices = [];
@@ -224,7 +231,6 @@ serial.Port.prototype.onReceive = (data) => {
   if (tagstart >= 0) {
     //rfid: arduino sends whole tag at once
     var tagend = usbport.statustext_received.indexOf('}', 0);
-    logEVENTS('RFIDTag',usbport.statustext_received.slice(tagstart + 4, tagend),'timeseries');
     postMessage({message: 'RFIDRead', val: usbport.statustext_received})
   }//IF RFID Tag
 
@@ -259,12 +265,28 @@ serial.Port.prototype.onReceive = (data) => {
       a = parseInt('0x' + a); //int16
 
       if ( x != 'NaN' && y != 'NaN'){
-        postMessage({message: 'EyeRead', 
-        x: x, y: y, w: w, a: a, numeyes: eyebuffer.numeyes_HARDCODED, time: onReceiveTime})
-      }
+        eyebuffer.x.push(x)
+        eyebuffer.y.push(y)
+        eyebuffer.w.push(w)
+        eyebuffer.a.push(a)
+        eyebuffer.onReceiveTime.push(onReceiveTime)
+        if (performance.now() - eyebuffer.tlastTransmit >= eyebuffer.transmitInterval_HARDCODED && eyebuffer.x.length>0){
+          postMessage({message: 'EyeRead', 
+                      x: eyebuffer.x, y: eyebuffer.y, w: eyebuffer.w, a: eyebuffer.a, 
+                      numeyes: eyebuffer.numeyes_HARDCODED, time: eyebuffer.onReceiveTime})
+          // console.log('transmitting ' + eyebuffer.x.length + ' values, dt=' + (performance.now() - eyebuffer.tlastTransmit))
+          eyebuffer.x = [];
+          eyebuffer.y = [];
+          eyebuffer.w = [];
+          eyebuffer.a = [];
+          eyebuffer.onReceiveTime = [];
+          eyebuffer.tlastTransmit = performance.now() 
+        }//Transmit
+      }//IF !NaN
       else{
         console.log('at least one EYE NaN')
-      }
+      }//ELSE NaN
+
       eyebuffer.success = eyebuffer.success + 1;
       if (n_character_close == 1) {
         eyebuffer.buffer = '';
@@ -284,12 +306,11 @@ serial.Port.prototype.onReceive = (data) => {
     if (eyebuffer.fail + eyebuffer.success >= 900) {
       eyedataratestr =
         '<font color=green>' +
-        'EYE: Success=' +
+          'EYE: Success=' +
             Math.round( (1000 * eyebuffer.success) / (eyebuffer.fail + eyebuffer.success)) / 10 + '%' +
-        ' (dt_u = ' +
-            Math.round( (10 * (performance.now() - eyebuffer.tstart)) /
-                        (eyebuffer.success + eyebuffer.fail) )/10 +
-        ' ms)' + '</font>';
+          ' (dt_u = ' +
+            Math.round( (10 * (performance.now() - eyebuffer.tstart)) / (eyebuffer.success + eyebuffer.fail) )/10 +' ms)' +
+        '</font>';
 
       usbport.statustext_received = eyedataratestr;
       postMessage({message: 'EyeSuccessRate', val: eyedataratestr})

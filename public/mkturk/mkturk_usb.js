@@ -99,22 +99,24 @@ usbDeviceWorker.onmessage = function(event) {
 
   if (event.data.message == 'EyeRead'){
     ENV.Eye.TrackEye = 1;
-    let x = event.data.x
-    let y = event.data.y
-    let w = event.data.w
-    let a = event.data.a
-    let numeyes = event.data.numeyes
-    let timestamp = event.data.time
+    for (let i=0; i<=event.data.x.length-1; i++){
+      let x = event.data.x[i]
+      let y = event.data.y[i]
+      let w = event.data.w[i]
+      let a = event.data.a[i]
+      let numeyes = event.data.numeyes
+      let timestamp = event.data.time[i]
 
-    if (ENV.Eye.CalibXTransform.length > 0) {
-      var xy = applyLinearTransform(x,y,ENV.Eye.CalibXTransform,ENV.Eye.CalibYTransform); //Calibrated
-    }
-    else {
-      xy = ['null', 'null'];
-      console.log('recording null eye values')
-    }
-    // STORE calibrated eye signal
-    logEVENTS('EyeData',[ numeyes,xy[0],xy[1],w,a,null,null,null,null ],'timeseries',timestamp);
+      if (ENV.Eye.CalibXTransform.length > 0) {
+        var xy = applyLinearTransform(x,y,ENV.Eye.CalibXTransform,ENV.Eye.CalibYTransform); //Calibrated
+      }
+      else {
+        xy = ['null', 'null'];
+        console.log('recording null eye values')
+      }
+      // STORE calibrated eye signal
+      logEVENTS('EyeData',[ numeyes,xy[0],xy[1],w,a,null,null,null,null ],'timeseries',timestamp);
+    }//FOR i received samples
 
     if (ENV.Eye.TrackEye > 0 && FLAGS.touchGeneratorCreated == 1) {
       //Send calibrated signal, convert from eye coordinates to tablet coordinates
@@ -169,7 +171,8 @@ usbDeviceWorker.onmessage = function(event) {
   }//IF OtherRead
 
   if (event.data.message == 'RFIDRead'){
-    var tagend = event.data.val.indexOf('}', 0);
+    let tagstart = event.data.val.indexOf('{tag', 0);
+    let tagend = event.data.val.indexOf('}', 0);
     logEVENTS('RFIDTag',event.data.val.slice(tagstart + 4, tagend),'timeseries');
 
     var nrfid = Object.keys(EVENTS['timeseries']['RFIDTag']).length;
@@ -179,10 +182,33 @@ usbDeviceWorker.onmessage = function(event) {
         new Date(EVENTS['timeseries']['RFIDTag'][nrfid - 2][1]);
     }
     port.statustext_received = 
-      'Parsed TAG ' + EVENTS['timeseries']['RFIDTag'][nrfid - 1][2] +
+      'Parsed TAG <br>' + EVENTS['timeseries']['RFIDTag'][nrfid - 1][2] +
       ' @ ' + new Date().toLocaleTimeString('en-US') +
       ' dt=' + dt + 'ms';
-
+    
+    var textobj = document.getElementById('headsuptext'); //hijack the headsup loading text to show subject
+    if (ENV.Subject == ''){
+      textobj.innerHTML =
+        '<font size=+2>' + '<br>' + '<br>' + '<br>' + '<br>' +
+          port.statustext_received +
+        '</font>'
+    }//IF no subject chosen or detected yet
+    else if (ENV.Subject != '' && !FLAGS.savedata){
+      textobj.innerHTML = 
+        '<font size=+2>' + '<br>' + '<br>' + '<br>' + '<br>' + 
+          '<font color=red><bold>' + ENV.Subject + '</bold></font><br>' +
+          '<font color=red>'+ ENV.AgentBirthdate + '<br>' +
+          ENV.AgentSex + '<br>' + 
+          ENV.AgentRFID + '<br>' + 
+        '</font>' +
+        '<font color=white>' +
+          port.statustext_received +
+        '</font>'
+    }
+    else if (ENV.Subject != '' && FLAGS.savedata){
+      updateHeadsUpDisplay()
+    }//stop hijacking
+      
     if (FLAGS.RFIDGeneratorCreated == 1) {
       var event = {
         tag: EVENTS['timeseries']['RFIDTag'][nrfid - 1][2],
@@ -192,7 +218,7 @@ usbDeviceWorker.onmessage = function(event) {
     }
     if (ENV.Subject == '') {
       queryRFIDTagonFirestore(EVENTS['timeseries']['RFIDTag'][nrfid - 1][2]);
-    } //IF no subject chosen yet, auto-find in firestore based on their RFIDTag, which will then QuickLoad the page
+    }//IF no subject chosen yet, auto-find in firestore based on their RFIDTag, which will then QuickLoad the page
     updateHeadsUpDisplayDevices();
     return 
   }//IF RFIDRead

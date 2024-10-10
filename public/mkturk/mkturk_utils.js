@@ -1056,7 +1056,7 @@ function index_housekeeping_exits(){
   if ( TASK.Agent == 'SaveImages' && TASK.Automator == 0)
   {
     if (TASK.NRSVP > 1){
-      if (CURRTRIAL.num >= Math.ceil(TQS.samplebag_indices.length/TASK.NRSVP)) { 
+      if (CURRTRIAL.num >= Math.ceil(TQS.samplebag_indices.length/TASK.NRSVP)-1) { 
         console.log('MKTURK EXITING -- all images shown once for SaveImages')
         return 1
       }

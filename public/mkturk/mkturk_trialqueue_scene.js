@@ -521,7 +521,7 @@ selectTestImages(correct_label, testbag_labels){
 			// Determine which location that grid index corresponds to in testIndices: 
 			var order_idx = TASK.TestGridIndex.indexOf(object_grid_index)
 			if (order_idx < 0){
-				console.log("ERROR: Could not find object's grid index in testgridinices, make sure ObjectGridIndex has same indices as TestGridIndex in parameter file.")
+				console.log("ERROR: Could not find object's grid index in TestGridIndices, make sure ObjectGridIndex has same indices as TestGridIndex in parameter file.")
 			}
 
 			// Place the selected test image in the appropriate location in testIndices. 
