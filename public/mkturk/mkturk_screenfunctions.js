@@ -123,7 +123,10 @@ function displayTrial(ti, gr, cl, fr, sc, ob, id, ims, mkm, trig) {
         else if (port.connected && newbagblock == 1){
           usbDeviceWorker.postMessage({ action: "writeSampleCommandTriggertoUSB", val: 'b1' });
         }//ELSE new block, activate both trial & block trigger lines in addition to sample command sync line
-      }//IF showing sample trigger frame
+      }//IF showing sample trigger frame=1
+      if (ENV.Eye.TrackEye){
+        waitforEvent.next(FLAGS.effectorState.event_xytt)
+      }
     }//IF showing frame
 
     //---------------- RENDER THE NEXT FRAME ------------------//
@@ -224,7 +227,7 @@ function displayTrial(ti, gr, cl, fr, sc, ob, id, ims, mkm, trig) {
         }//IF Choice/Reward/Punish, renderShape
 
     //Blue Fixation Circle
-        if ( taskscreen == 'Touchfix' ){
+        if ( taskscreen == 'Touchfix' && ENV.FixationRadius > 0 && gr[f] >= 0){
           let bbTarget = renderShape2D(taskscreen, gr[f], VISIBLECANVAS);
           for (let j=0; j <= bbTarget.x.length-1; j++){
             FLAGS.bbDisplay.taskscreen.push(taskscreen)
@@ -240,10 +243,26 @@ function displayTrial(ti, gr, cl, fr, sc, ob, id, ims, mkm, trig) {
         }//IF touchfix, renderShape
 
     //OVERLAY White Fixation Square
-        if ( taskscreen == 'Touchfix' || taskscreen == 'Sample' || taskscreen == 'Blank' )
+        if ( (taskscreen == 'Touchfix' || taskscreen == 'Sample' || taskscreen == 'Blank') && ENV.FixationDotRadius)
         {
-          if (typeof gr[f] == 'number') { renderShape2D('FixationDot', gr[f], VISIBLECANVAS); }
-          else { renderShape2D('FixationDot', gr[f][0], VISIBLECANVAS); }
+          let gr_fixsquare
+          if (typeof gr[f] == 'number'){ gr_fixsquare = gr[f]}
+          else {gr_fixsquare = gr[f][0]}
+          
+          if (gr_fixsquare >= 0){
+            let bbTarget = renderShape2D('FixationDot', gr_fixsquare, VISIBLECANVAS)
+            for (let j=0; j <= bbTarget.x.length-1; j++){
+              FLAGS.bbDisplay.taskscreen.push(taskscreen)
+              FLAGS.bbDisplay.indscreen.push(s)
+              FLAGS.bbDisplay.grid.push(bbTarget.grid[j])
+              FLAGS.bbDisplay.ID.push(bbTarget.ID[j])
+              FLAGS.bbDisplay.class.push(bbTarget.class[j])
+              FLAGS.bbDisplay.asset.push(bbTarget.asset[j])
+              FLAGS.bbDisplay.x.push(bbTarget.x[j])
+              FLAGS.bbDisplay.y.push(bbTarget.y[j])
+              FLAGS.bbDisplay.sceneTarget.push(1)
+            }//FOR j rendered items
+          }//IF grid>=0
         }//IF touchfix || sample
       }//FOR s screens within frame
 
@@ -297,7 +316,7 @@ function displayTrial(ti, gr, cl, fr, sc, ob, id, ims, mkm, trig) {
     //------(END)-------- RENDER THE NEXT FRAME ------------------//
 
     //IF prematurely ending movies externally
-    if (frame.current >= frame.shown.length) { frame.current = frame.shown.length;} 
+    if (frame.current >= frame.shown.length) { frame.current = frame.shown.length;}
     if (frame.shown[frame.shown.length - 1] != 1) {
       window.requestAnimationFrame(updateCanvas);
     } //IF frames left to show
@@ -350,8 +369,8 @@ function updateTargetBoundingBoxes(boundingBoxes){
     bbTarg.ID.push(boundingBoxes.ID[i])
 
     if (TASK.Target == 'gridwindow'){
-      bbTarg.x.push([gridCenter.x-ENV.FixationWindowRadius,gridCenter.x+ENV.FixationWindowRadius])
-      bbTarg.y.push([gridCenter.y-ENV.FixationWindowRadius,gridCenter.y+ENV.FixationWindowRadius])
+      bbTarg.x.push([gridCenter.x-ENV.FixationWindowRadius+CANVAS.offsetleft,gridCenter.x+ENV.FixationWindowRadius+CANVAS.offsetleft])
+      bbTarg.y.push([gridCenter.y-ENV.FixationWindowRadius+CANVAS.offsettop,gridCenter.y+ENV.FixationWindowRadius+CANVAS.offsettop])
       bbTarg.asset.push(boundingBoxes.asset[i] + '_gridwindow')
     }//IF gridwindow
     else if (TASK.Target == 'objectwindow'){
@@ -422,18 +441,23 @@ function broadcastBoundingBoxes(boundingBoxes,areTarg){
       }//FOR y coords
     }//FOR i bounding boxes
 
-    rtdb.ref('data/' + ENV.Subject).set({
-      x: FLAGS.effectorState.x,
-      y: FLAGS.effectorState.y,
-      touchevent: FLAGS.effectorState.touchevent,
-      state: FLAGS.effectorState.state,
-      chosenbox: FLAGS.effectorState.chosenbox,
-      choice: FLAGS.effectorState.choice,
-      holdduration: FLAGS.effectorState.holdduration,
-      boundingBoxes: boundingBoxesRtdb,
-      meta: areTarg,
-      timestamp: new Date().toJSON(),
-    });//RTDB.set
+    if ( !isNaN(FLAGS.effectorState.x) && !isNaN(FLAGS.effectorState.y) ){
+      rtdb.ref('data/' + ENV.Subject).set({
+        x: FLAGS.effectorState.x,
+        y: FLAGS.effectorState.y,
+        touchevent: FLAGS.effectorState.touchevent,
+        state: FLAGS.effectorState.state,
+        chosenbox: FLAGS.effectorState.chosenbox,
+        choice: FLAGS.effectorState.choice,
+        holdduration: FLAGS.effectorState.holdduration,
+        boundingBoxes: boundingBoxesRtdb,
+        meta: areTarg,
+        timestamp: new Date().toJSON(),
+      });//RTDB.set  
+    }
+    else{
+      console.log('!!!! Received NaN on effectorState')
+    }
   }//IF realtime database
   else{
     console.log('no RTDB connection for this Agent')
@@ -582,9 +606,7 @@ if (typeof im != 'undefined' && typeof im[0] == 'object') {
   for (var j = 0; j <= ob[f].length - 1; j++) {
     var [filter_objs, filter_img, objFilterSingleFrame, imgFilterSingleFrame] =
       updateFilterSingleFrame(taskscreen, ob[f][j], id[f][j], fr[f], gr[f][j]);
-    if (filter_img){
-      VISIBLECANVAS.getContext('2d').filter = imgFilterSingleFrame;
-    }
+    if (filter_img){ VISIBLECANVAS.getContext('2d').filter = imgFilterSingleFrame; }
 
     var boundingBox = renderImage2D(im[j],taskscreen,
                                     ob[f][j],id[f][j],fr[f],
@@ -607,8 +629,8 @@ return boundingBoxes
 function renderImage2D( im, sc, ob, id, fr, gr, canvasobj) {
   // var sz = chooseArrayElement(IMAGES[sc][ob].IMAGES.sizeTHREEJS * ENV.THREEJStoInches, id, 0);
   var sz = chooseArrayElement(IMAGES[sc][ob].IMAGES.sizeInches, id, 0);
-  var wdpixels = (sz * ENV.ViewportPPI) / ENV.CanvasRatio;
-  var htpixels = (wdpixels * im.height) / im.width;
+  var wdpixels = Math.round((sz * ENV.ViewportPPI) / ENV.CanvasRatio);
+  var htpixels = Math.round((wdpixels * im.height) / im.width);
   var context = canvasobj.getContext('2d');
   var xleft = NaN;
   var ytop = NaN;
@@ -654,8 +676,7 @@ function expandImage2DFrames(taskscreen)
 
       let durationMS = chooseArrayElement(IMAGES[taskscreen][classlabel].durationMS,i,0);
 
-      IMAGES[taskscreen][classlabel].IMAGES.imageidx[i] = 
-        interpParam_frames(imgIdx,"binary",durationMS,framerate);
+      IMAGES[taskscreen][classlabel].IMAGES.imageidx[i] = interpParam_frames(imgIdx,"binary",durationMS,framerate);
 
       for (let j = 0;
         j < IMAGES[taskscreen][classlabel].IMAGES.imageidx[i].length; j++)
@@ -725,7 +746,7 @@ function renderShape2D(sc, gr, canvasobj,taskscreen) {
     case 'Choice':
       return bufferChoiceUsingCircleSquare(ENV.ChoiceColor,ENV.ChoiceRadius,gr,canvasobj);
     case 'Reward':
-      funcreturn = renderSquareOnCanvas('green', ENV.RewardSquareXY, ENV.RewardSquareWidth, canvasobj);
+      funcreturn = renderSquareOnCanvas(TASK.RewardColor, ENV.RewardSquareXY, ENV.RewardSquareWidth, canvasobj);
       funcreturn.class[0] = -1 //not a target
       funcreturn.grid[0] = -1
       return funcreturn
@@ -1289,6 +1310,23 @@ function updateImageLoadingAndDisplayText(str) {
     'softwared desired - software actual' + '<br><br>' +
     'softwared actual - photodiode actual' + '<br>' +
     eyedataratestr;
+}//FUNCTION updateImageLoadingAndDisplayText
+
+async function updateImageLoadingAndDisplayTextwithRFIDBio(biodata) {
+  var textobj = document.getElementById('headsuptext'); //hijack the headsup loading text to show subject
+  textobj.innerHTML =
+  '<font size=+2>' + '<br>' + '<br>' + '<br>' + '<br>' + 
+    '<font color=red><bold>' + biodata.name + '</bold></font><br>' +
+    '<font color=red>'+ new Date(biodata.birthdate.seconds*1000).toLocaleDateString() + '<br>' +
+    biodata.sex + '<br>' + 
+    biodata.rfid +
+  '</font>'
+  await sleep(1000)
+
+  //After pause showing auto-detected subject,
+  //this will now quick load the subject's params & task
+  QuickLoad.load = 1;
+  waitforClick.next(1);
 }//FUNCTION updateImageLoadingAndDisplayText
 
 function displayPhysicalSizeText(displayobject_coord, canvasobj) {

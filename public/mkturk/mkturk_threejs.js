@@ -617,6 +617,7 @@ async function addToScene(taskscreen) {
     if (IMAGES[taskscreen][classlabel].OBJECTFILTERS !== undefined) {
       if (taskscreen == "Sample" || taskscreen == "Test") {
         for (let i = 0; i < IMAGES[taskscreen][classlabel].nimages; i++) {
+          let durationMS = chooseArrayElement(IMAGES[taskscreen][classlabel].durationMS,i,0);
           for (let key in IMAGES[taskscreen][classlabel].OBJECTFILTERS) {
             if (IMAGES[taskscreen][classlabel].OBJECTFILTERS[key] !== undefined &&
                 Array.isArray(IMAGES[taskscreen][classlabel].OBJECTFILTERS[key][i])
@@ -670,24 +671,24 @@ async function addToScene(taskscreen) {
         IMAGES[taskscreen][classlabel].IMAGES.sizeTHREEJS = rescaleArrayInchestoTHREEJS([IMAGES[taskscreen][classlabel].IMAGES.sizeInches],ENV.THREEJStoInches);
       }//IF sizeTHREEJS
 
+  //--------------- EXPAND IMAGES.imageidx -----------------//
+      if (IMAGES[taskscreen][classlabel].IMAGES.imageidx.length == 1){
+        for (let i = 1; i < IMAGES[taskscreen][classlabel].nimages; i++){
+          IMAGES[taskscreen][classlabel].IMAGES.imageidx[i] = IMAGES[taskscreen][classlabel].IMAGES.imageidx[0]
+        }//FOR i stimuli, fill value
+      }//IF 1 bkgd image
       for (let i = 0; i < IMAGES[taskscreen][classlabel].nimages; i++) {
         if (i==0){ IMAGES[taskscreen][classlabel].IMAGES.boundingBoxCube2DPixels=[]; }
 
         // IF background image idx isArray
-        let imgIdx;
-
-        let useidx = i;
-        if (typeof(IMAGES[taskscreen][classlabel].IMAGES.imageidx[useidx]) == 'undefined'){
-          useidx = 0;
-        }//IF no entry available
-        if (!Array.isArray(IMAGES[taskscreen][classlabel].IMAGES.imageidx[useidx])) {
+        if (!Array.isArray(IMAGES[taskscreen][classlabel].IMAGES.imageidx[i])) {
           imgIdx = [
-            IMAGES[taskscreen][classlabel].IMAGES.imageidx[useidx],
-            IMAGES[taskscreen][classlabel].IMAGES.imageidx[useidx],
+            IMAGES[taskscreen][classlabel].IMAGES.imageidx[i],
+            IMAGES[taskscreen][classlabel].IMAGES.imageidx[i],
           ];
         }//IF !array, make 2-element array
         else {
-          imgIdx = IMAGES[taskscreen][classlabel].IMAGES.imageidx[useidx];
+          imgIdx = IMAGES[taskscreen][classlabel].IMAGES.imageidx[i];
         }//ELSE isArray
 
         let durationMS = chooseArrayElement(IMAGES[taskscreen][classlabel].durationMS,i,0);
@@ -699,6 +700,7 @@ async function addToScene(taskscreen) {
             IMAGES[taskscreen][classlabel].IMAGES.imageidx[i][j] = Math.round(IMAGES[taskscreen][classlabel].IMAGES.imageidx[i][j]);
           }//IF
         }//FOR j img indices, round
+  //--------------- EXPAND IMAGES.imageidx (end) -----------------//
 
         if (!IMAGES[taskscreen][classlabel].IMAGES.imageidx[i].every((val, i, arr) => val === arr[0])) {
           FLAGS.movieper[taskscreen][classlabel][i] = IMAGES[taskscreen][classlabel].IMAGES.imageidx[i].length;
@@ -760,6 +762,9 @@ async function addToScene(taskscreen) {
 
 function updateSingleFrame3D(taskscreen,classlabels,index,movieframe,gridindex,cubeTexture,show_objs,show_im)
 {
+  let scenecenterX = ENV.XGridCenter[gridindex];
+  let scenecenterY = ENV.YGridCenter[gridindex];
+
   //==== TURN OFF ALL ITEMS
   for (let sceneElem in scene[taskscreen]["children"]) {
     scene[taskscreen]["children"][sceneElem].visible = false;
@@ -988,8 +993,6 @@ function updateSingleFrame3D(taskscreen,classlabels,index,movieframe,gridindex,c
 
       if (nextvisible == 1) { objects.visible = true; } //IF visible
       else { objects.visible = false; } //ELSE !visible
-      var scenecenterX = ENV.XGridCenter[gridindex];
-      var scenecenterY = ENV.YGridCenter[gridindex];
 
       var box = scene[taskscreen].getObjectByName(obj + "_" + taskscreen + "_" + classlabel + "_" + "boxhelper");
       var [objPosition, objSize, boundingBox] = updateObjectSingleFrame(

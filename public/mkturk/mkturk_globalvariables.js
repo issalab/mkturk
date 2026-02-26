@@ -40,6 +40,8 @@ ENV.USBDeviceType = '';
 ENV.USBDeviceName = '';
 ENV.Subject = '';
 ENV.AgentRFID = 'XX';
+ENV.AgentBirthdate = '';
+ENV.AgentSex = '';
 ENV.CurrentDate = new Date();
 ENV.CanvasRatio = 1;
 ENV.BackingStoreRatio = 1;
@@ -158,7 +160,8 @@ FLAGS.effectorState = {x: 0, y: 0, xmedian: 0, ymedian: 0,
                         chosenbox: -1, choice: -1,
                         holdstart: -1, holdduration: 0,
                         touchevent: '', state: '',
-                        timestamp: Date.now() - ENV.CurrentDate.valueOf()
+                        timestamp: Date.now() - ENV.CurrentDate.valueOf(),
+                        event_xytt: [],
                       }//FLAGS.effectorState
 
 
@@ -174,6 +177,8 @@ FLAGS.automatortext = '';
 FLAGS.rtdbAgentNumConnections = 1;
 
 FLAGS.filecodeSent = 0;
+FLAGS.filecode = [-1,-1,-1,-1,-1,-1];
+FLAGS.pulse_tstart = -1;
 
 var CANVAS = {};
 var CANVAS = {
@@ -305,7 +310,11 @@ EVENTS.reset_timeseries = function () {
   this.timeseries.EyeData = {};
   this.timeseries.Arduino = {};
   this.timeseries.TouchData = {};
-  this.timeseries.EffectorData= {t: [],x: [],y: [], w: [], a: [], q: [] };
+  this.timeseries.EffectorData= {t: [],x: [],y: [], w: [], a: [] };
+  this.timeseries.DAQ = {}
+  this.timeseries.DAQ['d0'] = {treceived:[],trial:[],tstart:[],tend:[],filecode:[],mktrial:[],mkblock:[],mkfilecode:[]}
+  this.timeseries.DAQ['d1'] = {treceived:[],trial:[],tstart:[],tend:[],filecode:[],mktrial:[],mkblock:[],mkfilecode:[]}
+  this.timeseries.DAQ['ph'] = {treceived:[],trise:[],tdrop:[],threshrise:[],threshdrop:[],dursamplecommand:[],mktrial:[],mkblock:[],mkfilecode:[]}
 
   //Initialize EffectordataLocal
   for (var i=0; i<ENV.MaxTrialsPerFile; i++){
@@ -314,25 +323,16 @@ EVENTS.reset_timeseries = function () {
     this.timeseries.EffectorData.y[i] = new Int16Array(0)
     this.timeseries.EffectorData.w[i] = new Int16Array(0)
     this.timeseries.EffectorData.a[i] = new Int16Array(0)
-    this.timeseries.EffectorData.q[i] = new Int16Array(0)
   }//FOR i max trials per file
 
   // Initialize battery value
   if (ENV.BatteryAPIAvailable) {
     //Monitor Battery - from: http://www.w3.org/TR/battery-status/
     navigator.getBattery().then(function (batteryobj) {
-      logEVENTS(
-        'Battery',
-        [batteryobj.level, batteryobj.dischargingTime],
-        'timeseries'
-      );
+      logEVENTS( 'Battery', [batteryobj.level, batteryobj.dischargingTime],'timeseries');
 
       batteryobj.addEventListener('levelchange', function () {
-        logEVENTS(
-          'Battery',
-          [batteryobj.level, batteryobj.dischargingTime],
-          'timeseries'
-        );
+        logEVENTS('Battery',[batteryobj.level, batteryobj.dischargingTime],'timeseries');
       }); //batteryobj.addEventListener
     }); //navigator.getBattery()
   } //IF battery API present
@@ -443,6 +443,7 @@ function purgeTrackingVariables(src) {
   FLAGS.consecutivehits = 0;
   FLAGS.firestorelastsavedtrial=0;
   FLAGS.filecodeSent = 0;
+  FLAGS.filecode = [-1,-1,-1,-1,-1,-1];
 
   return;
 }//FUNCTION purgeTrackingVariables

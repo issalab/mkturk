@@ -30,6 +30,15 @@ function hold_promise_simple(touchduration, outsideGracePeriod, broadcast_over_r
     while (true) {
       touchevent = yield touchevent;
       let boundingBoxes = FLAGS.bbTarget //fetch latest target bounding box
+      if (FLAGS.bbTarget.taskscreen.length == 0){
+        console.log('CONTINUE in hold_promise: no targets --> ignore agent event')
+        continue
+      }//IF no targets displayed yet, ignore any events (e.g., during transition between touchfix and sample)
+
+      if (typeof touchevent.type == 'undefined'){
+        console.log('Undefined touch event')
+        continue
+      }//IF no type specified
 
       //0a-EVENT COORDS, 0b-EVENT BOX
       //1a-INITIATE, 1b-CLICKED/DRAGGED, 1c-RELEASED
@@ -76,12 +85,12 @@ function hold_promise_simple(touchduration, outsideGracePeriod, broadcast_over_r
     //==== 1a - INITIATED ================//
       let holdstart = FLAGS.effectorState.holdstart
       if ( holdstart <= 0 && touchevent.type != 'touchend' && touchevent.type != 'mouseup'){
-        if (taskscreen == 'Touchfix' && touchevent.type != 'eye'){
+        if (taskscreen == 'Touchfix' && touchevent.type != 'eye'
+        && touchevent.type != 'mousemove' && touchevent.type != 'touchmove'){
           if (boxClass >= 0 && (touchevent.type == 'touchstart' || touchevent.type == 'mousedown') ){
             holdstart = Date.now() - ENV.CurrentDate.valueOf();
             CURRTRIAL.xhold = []
             CURRTRIAL.yhold = []
-            // console.log('HoldPromise -- INITIATED IN BOX, holddur=0ms')
           }//IF clicked in box
         }//ONLY IF fixation screen && mouse || touch, then have to click to initiate trial
         else{
@@ -89,7 +98,6 @@ function hold_promise_simple(touchduration, outsideGracePeriod, broadcast_over_r
             holdstart = Date.now() - ENV.CurrentDate.valueOf();
             CURRTRIAL.xhold = []
             CURRTRIAL.yhold = []
-            // console.log('HoldPromise -- INITIATED IN BOX, holddur=0ms')
           }//IF went into box or clicked in box  
         }//ELSE in all other cases, can drag to activate target
       }//IF hadn't moved into box or clicked in box yet
@@ -165,13 +173,17 @@ function hold_promise_simple(touchduration, outsideGracePeriod, broadcast_over_r
         md_xy = [math.median(CURRTRIAL.xhold), math.median(CURRTRIAL.yhold)]
       }
 
-      FLAGS.effectorState = {
-        x: x, y: y, xmedian: md_xy[0], ymedian: md_xy[1],
-        chosenbox: boxID, choice: boxClass,
-        holdduration: holdduration, holdstart: holdstart,
-        touchevent: touchevent.type, state: return_event.type,
-        timestamp: Date.now() - ENV.CurrentDate.valueOf(),
-      }//FLAGS.effectorState
+      FLAGS.effectorState.x = x
+      FLAGS.effectorState.y = y
+      FLAGS.effectorState.xmedian = md_xy[0]
+      FLAGS.effectorState.ymedian = md_xy[1]
+      FLAGS.effectorState.chosenbox = boxID
+      FLAGS.effectorState.choice = boxClass
+      FLAGS.effectorState.holdduration = holdduration
+      FLAGS.effectorState.holdstart = holdstart
+      FLAGS.effectorState.touchevent = touchevent.type
+      FLAGS.effectorState.state = return_event.type
+      FLAGS.effectorState.timestamp = Date.now() - ENV.CurrentDate.valueOf()
     //==== (END) 2a - STORE VALS ==================//
 
     //==== 2b - LOG STATE, PLOT COORDS ==================//
@@ -181,37 +193,37 @@ function hold_promise_simple(touchduration, outsideGracePeriod, broadcast_over_r
       }//IF !eye event
     }//IF x,y
 
-    let holdGeneratorStatus = 
-          touchevent.type + ' ' + return_event.type + '__' +
-          'choice: ' + boxID + ',' + boxClass + '__' +
-          '(' + Math.round(x) + ',' + Math.round(y) + ', ' + holdduration + 'ms)' 
-      // console.log(holdGeneratorStatus)        
+    // let holdGeneratorStatus = 
+    //       touchevent.type + ' ' + return_event.type + '__' +
+    //       'choice: ' + boxID + ',' + boxClass + '__' +
+    //       '(' + Math.round(x) + ',' + Math.round(y) + ', ' + holdduration + 'ms)' 
+    // console.log(holdGeneratorStatus)        
 
-      if (broadcast_over_rtdb){
-        broadcastBoundingBoxes(FLAGS.bbDisplay, 0)
-        broadcastBoundingBoxes(FLAGS.bbTarget, 1)  
-      }//IF not called along with displayTrial, then go ahead and broadcast from here
+    if (broadcast_over_rtdb){
+      broadcastBoundingBoxes(FLAGS.bbDisplay, 0)
+      broadcastBoundingBoxes(FLAGS.bbTarget, 1)  
+    }//IF not called along with displayTrial, then go ahead and broadcast from here
 
-      //PLOT ON PRACTICE SCREEN (depends on GLOBAL var xyplot)
-      if (FLAGS.savedata == 0) {
-        //old dots in blue
-        if (typeof xyplot != 'undefined') {
-          renderDotOnCanvas('blue', xyplot, 2, EYETRACKERCANVAS);
-        }
-        xyplot = [x - CANVAS.offsetleft, y - CANVAS.offsettop];
+    //PLOT ON PRACTICE SCREEN (depends on GLOBAL var xyplot)
+    if (FLAGS.savedata == 0) {
+      //old dots in blue
+      if (typeof xyplot != 'undefined') {
+        renderDotOnCanvas('blue', xyplot, 2, EYETRACKERCANVAS);
+      }
+      xyplot = [x - CANVAS.offsetleft, y - CANVAS.offsettop];
 
-        //if x coordinate out-of-bounds, draw on border
-        if (xyplot[0] < 0) { xyplot[0] = 0 + 1; }
-        else if (xyplot[0] > EYETRACKERCANVAS.clientWidth) { xyplot[0] = EYETRACKERCANVAS.clientWidth - 1; }
+      //if x coordinate out-of-bounds, draw on border
+      if (xyplot[0] < 0) { xyplot[0] = 0 + 1; }
+      else if (xyplot[0] > EYETRACKERCANVAS.clientWidth) { xyplot[0] = EYETRACKERCANVAS.clientWidth - 1; }
 
-        //if y coordinate out-of-bounds, draw on border
-        if (xyplot[1] < 0) { xyplot[1] = 0 + 1; }
-        else if (xyplot[1] > EYETRACKERCANVAS.clientHeight) { xyplot[1] = EYETRACKERCANVAS.clientHeight - 1; }
+      //if y coordinate out-of-bounds, draw on border
+      if (xyplot[1] < 0) { xyplot[1] = 0 + 1; }
+      else if (xyplot[1] > EYETRACKERCANVAS.clientHeight) { xyplot[1] = EYETRACKERCANVAS.clientHeight - 1; }
 
-        //new dot in red if in box, otherwise yellow
-        if (boxClass != -1) { renderDotOnCanvas('red', xyplot, 2, EYETRACKERCANVAS); }
-        else { renderDotOnCanvas('yellow', xyplot, 2, EYETRACKERCANVAS); }
-      }//IF practice mode, overlay dots      
+      //new dot in red if in box, otherwise yellow
+      if (boxClass != -1) { renderDotOnCanvas('red', xyplot, 2, EYETRACKERCANVAS); }
+      else { renderDotOnCanvas('yellow', xyplot, 2, EYETRACKERCANVAS); }
+    }//IF practice mode, overlay dots      
     //==== (END) 2b - LOG STATE, PLOT COORDS ==================//
 
       if (return_event.type.includes('held') || return_event.type.includes('broke')){
@@ -222,7 +234,8 @@ function hold_promise_simple(touchduration, outsideGracePeriod, broadcast_over_r
       FLAGS.effectorState.xmedian, FLAGS.effectorState.ymedian,
       FLAGS.effectorState.timestamp
     ];
-    console.log('HoldPromise -- RESOLVE HOLD_SIMPLE --> ' + return_event.type + '__' + return_event.cxyt)
+    console.log('RESOLVE HOLD_PROMISE_SIMPLE --> ' + return_event.type + '__' + return_event.cxyt)
+    FLAGS.bbTarget = { taskscreen: [], indscreen: [], grid: [], x: [], y: [], ID: [], class: [], asset: [] } //Stale since have used and need to refresh with new ones from new display
     resolveFunc(return_event);
   }//Generator
   FLAGS.effectorState.holdstart = -1
@@ -232,7 +245,7 @@ function hold_promise_simple(touchduration, outsideGracePeriod, broadcast_over_r
   waitforEvent = waitforeventGenerator(); // start async function
   let tStartGenerator = performance.now()
   FLAGS.touchGeneratorCreated = 1;
-  console.log('HoldPromise --  STARTING GENERATOR HOLD_SIMPLE')
+  console.log('STARTING HOLD_PROMISE_SIMPLE')
     
   waitforEvent.next(); //move out of default state
   return {p, cancel};
@@ -281,12 +294,6 @@ async function donePracticingTask_listener(event) {
   FLAGS.purge = 1;
   purgeTrackingVariables('donePractice');
   FLAGS.purge = 0;
-
-  if (port.connected && FLAGS.savedata) {
-    if (FLAGS.filecodeSent <= 0){
-      await index_send_filecode(CURRTRIAL.starttime)
-    }//IF first trial, send filecode pulse on sample command line
-  }//IF
 
   document.querySelector('p[id=imageloadingtext]').style.display = 'none'; //if do style.visibility=hidden, element will still occupy space
   document.querySelector('button[id=donePracticingTask]').style.display = 'none';
@@ -469,7 +476,7 @@ async function moviefinish_promise() {
   waitforMovieFinish = waitforMovieGenerator(); // start async function
   waitforMovieFinish.next(); //move out of default state
   return p;
-} //FUNCTION moviefinish_promise
+}//FUNCTION moviefinish_promise
 
 function preemptRFID_listener(event) {
   event.preventDefault();

@@ -1,14 +1,36 @@
-import * as firebase from 'firebase/app';
-import 'firebase/firestore';
-import 'firebase/storage';
+// import * as firebase from 'firebase/app';
+// import 'firebase/firestore';
+// import 'firebase/storage';
+
+import { getApp } from 'firebase/app';
+import { getFirestore,
+  Timestamp,
+  doc,
+  collection,
+  Query,
+  query,
+  where,
+} from 'firebase/firestore';
+import {
+  FirebaseStorage,
+  StorageReference,
+  getStorage,
+  ref,
+  listAll,
+  getDownloadURL,
+  getMetadata,
+} from 'firebase/storage';
+
 import JSONEditor from 'jsoneditor';
 import cloneDeep from 'lodash.cloneDeep';
 import { Utils } from './utils';
 
 type div = HTMLDivElement;
-type Timestamp = firebase.firestore.Timestamp;
-const db = firebase.firestore();
-const storage = firebase.storage();
+// type Timestamp = firebase.firestore.Timestamp;
+// const db = firebase.firestore();
+const db = getFirestore(getApp());
+// const storage = firebase.storage();
+const storage = getStorage(getApp());
 const utils = new Utils();
 
 export class Mkcolony {

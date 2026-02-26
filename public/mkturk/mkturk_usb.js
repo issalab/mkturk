@@ -76,6 +76,7 @@ usbDeviceWorker.onmessage = function(event) {
     console.log(event.data.val);
     port.statustext_connect = event.data.val
     updateHeadsUpDisplayDevices();
+    return
   }//IF disconnected usb
   
   if (event.data.message == 'USBConnect'){
@@ -86,33 +87,36 @@ usbDeviceWorker.onmessage = function(event) {
     console.log(event.data.val);
     port.statustext_connect = event.data.val
     updateHeadsUpDisplayDevices();
+    return
   }//IF connected usb
 
   if (event.data.message == 'SerialPortConnect'){
     port.connected = true
     ENV.USBDeviceType = event.data.devicetype;//XX
-    ENV.USBDeviceName = event.data.devicename;  
+    ENV.USBDeviceName = event.data.devicename;
+    return
   }//IF serialportconnect
 
   if (event.data.message == 'EyeRead'){
     ENV.Eye.TrackEye = 1;
-    let x = event.data.x
-    let y = event.data.y
-    let w = event.data.w
-    let a = event.data.a
-    let numeyes = event.data.numeyes
-    let timestamp = event.data.time
+    for (let i=0; i<=event.data.x.length-1; i++){
+      let x = event.data.x[i]
+      let y = event.data.y[i]
+      let w = event.data.w[i]
+      let a = event.data.a[i]
+      let numeyes = event.data.numeyes
+      let timestamp = event.data.time[i]
 
-    if (ENV.Eye.CalibXTransform.length > 0) {
-      var xy = applyLinearTransform(x,y,ENV.Eye.CalibXTransform,ENV.Eye.CalibYTransform); //Calibrated
-    }
-    else {
-      xy = ['null', 'null'];
-      console.log('recording null eye values')
-    }
-
-    // STORE calibrated eye signal
-    logEVENTS('EyeData',[ numeyes,xy[0],xy[1],w,a,null,null,null,null ],'timeseries',timestamp);
+      if (ENV.Eye.CalibXTransform.length > 0) {
+        var xy = applyLinearTransform(x,y,ENV.Eye.CalibXTransform,ENV.Eye.CalibYTransform); //Calibrated
+      }
+      else {
+        xy = ['null', 'null'];
+        console.log('recording null eye values')
+      }
+      // STORE calibrated eye signal
+      logEVENTS('EyeData',[ numeyes,xy[0],xy[1],w,a,null,null,null,null ],'timeseries',timestamp);
+    }//FOR i received samples
 
     if (ENV.Eye.TrackEye > 0 && FLAGS.touchGeneratorCreated == 1) {
       //Send calibrated signal, convert from eye coordinates to tablet coordinates
@@ -137,7 +141,7 @@ usbDeviceWorker.onmessage = function(event) {
 
         xy[0] = X_mdn;
         xy[1] = Y_mdn;
-      } //compute median
+      }//IF >=4 samples, compute median
 
       var event_xytt = {
         x_val: xy[0],
@@ -145,8 +149,9 @@ usbDeviceWorker.onmessage = function(event) {
         time: Date.now(),
         type: 'eye',
       };
-      waitforEvent.next(event_xytt); //send to hold_promise generator
+      FLAGS.effectorState.event_xytt = event_xytt; //hold value, wait for display (updateCanvas calls event listener)
     }//IF TrackEye
+    return
   }//IF EyeRead
 
   if (event.data.message == 'EyeSuccessRate'){
@@ -155,16 +160,19 @@ usbDeviceWorker.onmessage = function(event) {
     if (FLAGS.savedata == 0) {
       updateImageLoadingAndDisplayText('');
     }
+    return
   }//IF EyeSuccessRate
 
   if (event.data.message == 'OtherRead'){
     console.log(event.data.val);
     port.statustext_received = event.data.val
     updateHeadsUpDisplayDevices()
-  }
+    return
+  }//IF OtherRead
 
   if (event.data.message == 'RFIDRead'){
-    var tagend = event.data.val.indexOf('}', 0);
+    let tagstart = event.data.val.indexOf('{tag', 0);
+    let tagend = event.data.val.indexOf('}', 0);
     logEVENTS('RFIDTag',event.data.val.slice(tagstart + 4, tagend),'timeseries');
 
     var nrfid = Object.keys(EVENTS['timeseries']['RFIDTag']).length;
@@ -174,10 +182,33 @@ usbDeviceWorker.onmessage = function(event) {
         new Date(EVENTS['timeseries']['RFIDTag'][nrfid - 2][1]);
     }
     port.statustext_received = 
-      'Parsed TAG ' + EVENTS['timeseries']['RFIDTag'][nrfid - 1][2] +
+      'Parsed TAG <br>' + EVENTS['timeseries']['RFIDTag'][nrfid - 1][2] +
       ' @ ' + new Date().toLocaleTimeString('en-US') +
       ' dt=' + dt + 'ms';
-
+    
+    var textobj = document.getElementById('headsuptext'); //hijack the headsup loading text to show subject
+    if (ENV.Subject == ''){
+      textobj.innerHTML =
+        '<font size=+2>' + '<br>' + '<br>' + '<br>' + '<br>' +
+          port.statustext_received +
+        '</font>'
+    }//IF no subject chosen or detected yet
+    else if (ENV.Subject != '' && !FLAGS.savedata){
+      textobj.innerHTML = 
+        '<font size=+2>' + '<br>' + '<br>' + '<br>' + '<br>' + 
+          '<font color=red><bold>' + ENV.Subject + '</bold></font><br>' +
+          '<font color=red>'+ ENV.AgentBirthdate + '<br>' +
+          ENV.AgentSex + '<br>' + 
+          ENV.AgentRFID + '<br>' + 
+        '</font>' +
+        '<font color=white>' +
+          port.statustext_received +
+        '</font>'
+    }
+    else if (ENV.Subject != '' && FLAGS.savedata){
+      updateHeadsUpDisplay()
+    }//stop hijacking
+      
     if (FLAGS.RFIDGeneratorCreated == 1) {
       var event = {
         tag: EVENTS['timeseries']['RFIDTag'][nrfid - 1][2],
@@ -187,8 +218,9 @@ usbDeviceWorker.onmessage = function(event) {
     }
     if (ENV.Subject == '') {
       queryRFIDTagonFirestore(EVENTS['timeseries']['RFIDTag'][nrfid - 1][2]);
-    } //IF no subject chosen yet, auto-find in firestore based on their RFIDTag, which will then QuickLoad the page
-    updateHeadsUpDisplayDevices();    
+    }//IF no subject chosen yet, auto-find in firestore based on their RFIDTag, which will then QuickLoad the page
+    updateHeadsUpDisplayDevices();
+    return 
   }//IF RFIDRead
 
   if (event.data.message == 'SampleCommandReturn'){
@@ -198,12 +230,14 @@ usbDeviceWorker.onmessage = function(event) {
     else if (event.data.val.includes('0')){
       logEVENTS('SampleCommandOffReturnTime',event.data.time - ENV.CurrentDate.valueOf(),'trialseries');
     }
+    return
   }//IF SampleCommandReturn
 
   if (event.data.message == 'SerialPortWrite'){
     console.log(event.data.val)
     port.statustext_sent = event.data.val
     updateHeadsUpDisplayDevices()
+    return
   }//IF SerialPortWrite
 };//FUNCTION usbDeviceWorker.onmessage
 

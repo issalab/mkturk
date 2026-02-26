@@ -28,16 +28,23 @@ var eyebuffer = {
   dt: 0,
   tstart: 0,
   tlast: 0,
+  x: [],
+  y: [],
+  w: [],
+  a: [],
+  onReceiveTime: [],
+  transmitInterval_HARDCODED: 11,
+  tlastTransmit: performance.now(),
 };
 
 var activedevices = [];
 var usbstatus = {connected: 0, makeconnection: 0, deviceind: -1}
-
-var bc = new BroadcastChannel("mkturk.com");
 //============== (END) VARIABLES ==============//
 
+//============== BROADCAST CHANNEL ==============//
+var bc = new BroadcastChannel("mkturk.com");
 bc.onmessage = (event) => {
-  console.log('BROADCAST: ' + event.data)
+  // console.log('BROADCAST: ' + event.data)
   if (event.data == 'send me your device states'){
     bc.postMessage(usbstatus.deviceind)
   }
@@ -53,10 +60,10 @@ function pingBroadcast(){
   }//if timer expired & new data added
 	broadcastTimer = setTimeout(function(){ clearTimeout(broadcastTimer); pingBroadcast() },2000)
 }//FUNCTION pingBroadcast
+//============== (END) BROADCAST CHANNEL ==============//
 
 onmessage = async function(event) {
 let devices
-console.log(event.data.action + ', ' + event.data.val)
 switch(event.data.action){
   case 'connect':
     devices = await navigator.usb.getDevices({ filters: arduinofilters });
@@ -90,9 +97,9 @@ switch(event.data.action){
           event.ports[0].postMessage({error: e});
         }
         console.log(error);
-      }
+      }//catch(error)
     }//ELSE
-    usbport.statustext_connect = 'Worker -- USB DEVICE CONNECTED BY USER ACTION!';
+    usbport.statustext_connect = 'USB Worker -- USB DEVICE CONNECTED BY USER ACTION!';
 
     if (event.data.val == 'AutoConnect'){
       if (usbstatus.connected == 0){
@@ -224,7 +231,6 @@ serial.Port.prototype.onReceive = (data) => {
   if (tagstart >= 0) {
     //rfid: arduino sends whole tag at once
     var tagend = usbport.statustext_received.indexOf('}', 0);
-    logEVENTS('RFIDTag',usbport.statustext_received.slice(tagstart + 4, tagend),'timeseries');
     postMessage({message: 'RFIDRead', val: usbport.statustext_received})
   }//IF RFID Tag
 
@@ -250,15 +256,36 @@ serial.Port.prototype.onReceive = (data) => {
     if (n_character_close > 0) {
       var x = eyebuffer.buffer.slice(0, 4); //pupil x_center
       var y = eyebuffer.buffer.slice(4, 8); //pupil y_center
-      var w = eyebuffer.buffer.slice(9, 12); //pupil diameter
-      var a = eyebuffer.buffer.slice(13, 16); //pupil aspect ratio
+      var w = eyebuffer.buffer.slice(8, 12); //pupil diameter
+      var a = eyebuffer.buffer.slice(12, 16); //pupil aspect ratio
 
-      x = parseInt('0x' + x) / 32767; //Raw
-      y = parseInt('0x' + y) / 32767; //Raw
-      w = parseInt('0x' + w) / 32767; //Raw
-      a = parseInt('0x' + a) / 32767; //Raw
-      postMessage({message: 'EyeRead', 
-                    x: x, y: y, w: w, a: a, numeyes: eyebuffer.numeyes_HARDCODED, time: onReceiveTime})
+      x = parseInt('0x' + x) / 32767 - 0.5; //Raw, centered
+      y = parseInt('0x' + y) / 32767 - 0.5; //Raw, centered
+      w = parseInt('0x' + w); //int16
+      a = parseInt('0x' + a); //int16
+
+      if ( x != 'NaN' && y != 'NaN'){
+        eyebuffer.x.push(x)
+        eyebuffer.y.push(y)
+        eyebuffer.w.push(w)
+        eyebuffer.a.push(a)
+        eyebuffer.onReceiveTime.push(onReceiveTime)
+        if (performance.now() - eyebuffer.tlastTransmit >= eyebuffer.transmitInterval_HARDCODED && eyebuffer.x.length>0){
+          postMessage({message: 'EyeRead', 
+                      x: eyebuffer.x, y: eyebuffer.y, w: eyebuffer.w, a: eyebuffer.a, 
+                      numeyes: eyebuffer.numeyes_HARDCODED, time: eyebuffer.onReceiveTime})
+          // console.log('transmitting ' + eyebuffer.x.length + ' values, dt=' + (performance.now() - eyebuffer.tlastTransmit))
+          eyebuffer.x = [];
+          eyebuffer.y = [];
+          eyebuffer.w = [];
+          eyebuffer.a = [];
+          eyebuffer.onReceiveTime = [];
+          eyebuffer.tlastTransmit = performance.now() 
+        }//Transmit
+      }//IF !NaN
+      else{
+        console.log('at least one EYE NaN')
+      }//ELSE NaN
 
       eyebuffer.success = eyebuffer.success + 1;
       if (n_character_close == 1) {
@@ -279,12 +306,11 @@ serial.Port.prototype.onReceive = (data) => {
     if (eyebuffer.fail + eyebuffer.success >= 900) {
       eyedataratestr =
         '<font color=green>' +
-        'EYE: Success=' +
+          'EYE: Success=' +
             Math.round( (1000 * eyebuffer.success) / (eyebuffer.fail + eyebuffer.success)) / 10 + '%' +
-        ' (dt_u = ' +
-            Math.round( (10 * (performance.now() - eyebuffer.tstart)) /
-                        (eyebuffer.success + eyebuffer.fail) )/10 +
-        ' ms)' + '</font>';
+          ' (dt_u = ' +
+            Math.round( (10 * (performance.now() - eyebuffer.tstart)) / (eyebuffer.success + eyebuffer.fail) )/10 +' ms)' +
+        '</font>';
 
       usbport.statustext_received = eyedataratestr;
       postMessage({message: 'EyeSuccessRate', val: eyedataratestr})
@@ -364,7 +390,7 @@ navigator.usb.ondisconnect = function (device) {
   // USB device disconnected
   usbstatus.connected = 0;
   usbstatus.deviceind = -1
-  usbport.statustext_connect = 'Worker -- Navigator USB DEVICE DISCONNECTED';
+  usbport.statustext_connect = 'USB Worker -- Navigator USB DEVICE DISCONNECTED';
 
   console.log(' D I S C O N N E C T: usbstatus.connected = false !!!!')
   postMessage({message: 'USBDisconnect', val: usbport.statustext_connect});

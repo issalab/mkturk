@@ -1,7 +1,7 @@
 export const taskParamSchema = {
   title: 'MkTurk Task Params',
   description: 'Object containing MkTurk task parameters',
-  type: ['object', 'array','string'],
+  type: ['object', 'array','string','number','integer'],
   properties: {
     Agent: {
       type: 'string',
@@ -37,33 +37,33 @@ export const taskParamSchema = {
     },
     RewardStage: {
       type: 'integer',
-      default: 0,
+      default: '0',
       examples: ['0 (fixation)','1 (sample or choice)'],
     },
     NRSVP: {
       type: 'integer',
-      default: 0,
+      default: '0',
       examples: ['# of movie clips to show in rsvp sequence'],
     },
     SameDifferent: {
       type: 'integer',
-      default: 0,
+      default: '0',
     },
     VisualSearch: {
       type: 'integer',
-      default: 0,
+      default: '0',
       examples: ['0 (random choice from test bag)','1 (select test image with same index as sample image)'],
     },
     ImageBagsSample: {
       type: 'array',
-      default: '/mkturkfiles/scenebags/objectome3d/camel/20200709_camel_token.js, /mkturkfiles/scenebags/objectome3d/wrench/20200709_wrench_token.js',
+      default: '/mkturkfiles/scenebags/objectome3d/camel/20200709_camel_token.js, /mkturkfiles/scenebags/objectome3d/wrench/20200709_camel_token.js',
       items: {
         type: 'string',
       },
     },
     ImageBagsTest: {
       type: 'array',
-      default: '/mkturkfiles/scenebags/objectome3d/camel/20200709_camel_token.js, /mkturkfiles/scenebags/objectome3d/wrench/20200709_wrench_token.js',
+      default: 'filled with same number as ImageBagsSample using /mkturkfiles/scenebags/objectome3d/camel/20200709_camel_token.js',
       items: {
         type: 'string',
       },
@@ -145,6 +145,11 @@ export const taskParamSchema = {
       type: 'string',
       default: 'empty string',
     },
+    FeedbackPRE: {
+      type: 'integer',
+      default: '50',
+      examples: ['in milliseconds'],
+    },
     FixationDotSizeInches: {
       type: 'number',
       default: '0',
@@ -184,8 +189,8 @@ export const taskParamSchema = {
     },
     HeadsupDisplayFraction: {
       type: 'number',
-      default: 0,
-      examples: ['places black region with text at top of screen'],
+      default: '0',
+      examples: ['fraction>0, (places black region with text at top of screen)'],
     },
     HideChoiceDistractors: {
       type: 'integer',
@@ -219,11 +224,12 @@ export const taskParamSchema = {
     },
     NConsecutiveHitsforBonus: {
       type: 'integer',
-      default: 0,
+      default: '0',
+      examples: ['0 (no bonus reward)','n (increment reward after n consecutive hits)'],
     },
     NFixations: {
       type: 'integer',
-      default: 1,
+      default: '1',
       examples: ['n (subject has to press fixation n times to initiate sample presentation'],
     },
     NMillisecondsPerBagBlock:{
@@ -233,17 +239,17 @@ export const taskParamSchema = {
     },
     NRewardMax: {
       type: 'integer',
-      default: 1,
+      default: '1',
       examples: ['1 (no bonus reward possible)','n (max rewards possible per trial)']
     },
     NRSVPMax: {
       type: 'integer',
-      default: 0,
+      default: '0',
       examples: ['0 (no exponential reward for fixating NRSVP seq)','>NRSVP (exponentially more reward pulses after NRSVP, 1 pulse for NRSVP)'],
     },
     NStickyResponse: {
       type: 'integer',
-      default: 0,
+      default: '0',
       examples: ['0 (subject can repeatedly choose a given response over trials','n (after n, the neglected choice is set as correct until selected)'],
     },
     NStimuliPerBagBlock: {
@@ -261,12 +267,17 @@ export const taskParamSchema = {
     },
     Photodiode: {
       type: 'integer',
-      default: 1,
+      default: '1',
+    },
+    RewardColor: {
+      type: 'string',
+      default: '#008000 = [0,128,0]',
+      examples: ['#000000 (black)','#7F7F7F (gray)','#FFFFFF (white)'],
     },
     SampleHoldDuration: {
       type: 'integer',
-      default: "Infinity (enter as a string with quotes)",
-      examples: ['in milliseconds (duration of fixation hold)', 'Infinity (view target through whole sample sequence -- follow mode)', '0 (immediately reward upon finding target -- find mode)'],
+      default: "86400000 (24 hrs)",
+      examples: ['in milliseconds (duration of fixation hold)', '0 (immediately reward upon finding target -- find mode)'],
     },
     SampleGridIndex: {
       type: 'integer',

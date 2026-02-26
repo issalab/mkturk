@@ -21,13 +21,51 @@ if (FLAGS.usecanvas2D){
       function(resolve, reject){
         try {
           var image = new Image(); 
+          image.decoding = 'sync'
+          image.loading = 'eager'
           image.crossOrigin = "Anonymous"; //to allow saving of a 'tainted canvas', see https://developer.mozilla.org/en-US/docs/Web/HTML/CORS_enabled_image
+          image.src = url
           image.onload = function(){
             updateImageLoadingAndDisplayText('Loaded: ' + imagefile_path)
             console.log('Loaded IMG: ' + imagefile_path)
             resolve(image)        
           }
-          image.src = url
+          
+          // IMAGE.DECODE() INSTEAD OF IMAGE.ONLOAD
+          // console.log(imagefile_path)
+          // try{
+          //   image.decode().then(()=>
+          //   {
+          //     document.body.appendChild(image);
+          //     VISIBLECANVAS.appendChild(image);
+          //     console.log('DECODED IMG: ' + imagefile_path)
+          //     updateImageLoadingAndDisplayText('Loaded: ' + imagefile_path)
+          //     resolve(image)
+          //   })  
+          // }
+          // catch(error){
+          //   console.log(imagefile_path)
+          // }
+
+          // // TO BASE64 URL INSTEAD OF IMAGE.DECODE
+          // var image = new Image();
+          // image.crossOrigin = 'Anonymous';
+          // image.loading = 'eager';
+          // image.src = url;
+          // image.onload = () => {
+          //   updateImageLoadingAndDisplayText('Loaded: ' + imagefile_path)
+          //   console.log('Loaded IMG: ' + imagefile_path)
+          //   // resolve(image)  
+
+          //   var canvas = document.createElement('canvas');
+          //   canvas.width = image.width;
+          //   canvas.height = image.height;
+          //   var ctx = canvas.getContext('2d');
+          //   ctx.drawImage(image, 0, 0);
+          //   var base64data = canvas.toDataURL('image/png');
+          //   delete(canvas)
+          //   resolve([image,base64data]) //Need to return whole image not just set image.src
+          // };
         } //TRY
         catch (error){
           console.log(error)
@@ -283,7 +321,8 @@ async function loadImageArrayfromFirebase(imagepathlist) {
         var partial_image_array = await Promise.all(partial_image_requests);
         image_array.push(...partial_image_array);
       }
-    } else {
+    }
+    else {
       // If number of images is less than MAX_SIMULTANEOUS_REQUESTS, request them all simultaneously:
       for (var i = 0; i < 3; i++) {
         var image_requests = imagepathlist.map(loadImagefromFirebase);
@@ -293,6 +332,16 @@ async function loadImageArrayfromFirebase(imagepathlist) {
         var image_array = await Promise.all(image_requests)
           .catch(function (error) { console.log(error);})
           .then();
+
+        // var image_array = []
+        // for (q=0; q<=imagepathlist.length-1; q++){
+        //   console.log('trying to load ' + imagepathlist[q])
+        //   var p = loadImagefromFirebase(imagepathlist[q]);
+        //   // image_array[q] = await p.catch(function (error) { console.log(error);}).then();
+        //   let funcreturn = await p.catch(function (error) { console.log(error);}).then();
+        //    image_array[q] = funcreturn[0]
+        //    image_array[q].src = funcreturn[1]
+        // }//FOR q items
 
         var load_success = 1;
         for (var j = 0; j < image_array.length; j++) {
@@ -380,15 +429,16 @@ async function loadParametersfromFirebase(paramfile_path) {
       TASK.ImageBagsSample = [
         "/mkturkfiles/scenebags/objectome3d/camel/20200709_camel_token.js",
         "/mkturkfiles/scenebags/objectome3d/wrench/20200709_wrench_token.js"
-    ]}
-    if (typeof TASK.SampleHoldDuration == 'undefined'){TASK.SampleHoldDuration = Infinity}
+    ]}//IF ImageBagsSample undefined
+    if (typeof TASK.SampleHoldDuration == 'undefined'){TASK.SampleHoldDuration = 86400000}//24 hours in milliseconds
 
     // TEST SCREEN
     if (typeof TASK.ImageBagsTest == 'undefined'){
-      TASK.ImageBagsTest = [
-        "/mkturkfiles/scenebags/objectome3d/camel/20200709_camel_token.js",
-        "/mkturkfiles/scenebags/objectome3d/wrench/20200709_wrench_token.js"
-    ]}
+      TASK.ImageBagsTest = []
+      for (let i=0; i<=TASK.ImageBagsSample.length-1; i++){
+        TASK.ImageBagsTest.push("/mkturkfiles/scenebags/objectome3d/camel/20200709_camel_token.js")
+      }//FOR i samplebags
+    }//IF ImageBagsTest undefined
     if (typeof TASK.TestGridIndex == 'undefined'){ 
       if (TASK.ImageBagsTest.length == 1){
         TASK.TestGridIndex = [0]        
@@ -423,9 +473,11 @@ async function loadParametersfromFirebase(paramfile_path) {
     if (typeof TASK.BlinkGracePeriod == 'undefined'){TASK.BlinkGracePeriod = 200;}
 
     // REWARD
+    if (typeof TASK.FeedbackPRE == 'undefined'){TASK.FeedbackPRE = 50}
     if (typeof TASK.NConsecutiveHitsforBonus == 'undefined'){TASK.NConsecutiveHitsforBonus = 0;}
     if (typeof TASK.NRewardMax == 'undefined'){TASK.NRewardMax = 1;}
     if (typeof TASK.NRSVPMax == 'undefined'){TASK.NRSVPMax = 0;}
+    if (typeof TASK.RewardColor == 'undefined'){TASK.RewardColor = '#008000';}
 
     // AUTOMATOR
     if (typeof TASK.Automator == 'undefined'){TASK.Automator = 0;}
@@ -603,6 +655,7 @@ async function saveBehaviorDatatoFirebase(TASK, ENV, CANVAS, EVENTS) {
         RFIDTag: EVENTS['timeseries']['RFIDTag'],
         Weight: EVENTS['timeseries']['Weight'],
         EffectorXY: EVENTS['timeseries']['EffectorData'],
+        DAQ: EVENTS['timeseries']['DAQ']
         // 'Arduino': EVENTS['timeseries']['Arduino'],
       },
     };//dataObj

@@ -248,6 +248,7 @@ function initializeRTDBCallbacks(){
     mkeye.live.trial = snap.val().trialnum
     mkeye.live.filename = snap.val().filename
     mkeye.live.performance = snap.val().performance
+    mkeye.live.sample_softwarecliptimes = snap.val().cliptimes
 
     if ( mkeye.live.filename.indexOf(mkeye.file.name) >= 0  ){
       mkeye.file.active = '√Active'
@@ -274,6 +275,14 @@ function initializeRTDBCallbacks(){
       }
     }//IF plot initialized
   })//ON CALLBACK for effector data
+
+  rtdb.ref(`daq/${mkeye.data.TASK.Agent}/ph`).on('value', (snap) => {
+    if (snap.val() == null){return}
+    mkeye.live.sample_trise = snap.val().trise
+    mkeye.live.samplecommand_dur = snap.val().dursamplecommand
+    console.log('-->from mksensor input ' + 'photodiode (analog)')
+    updateBasicStatsText()
+  })//RTDB receive callback for digital line
 }//FUNCTION initializeRTDBCallbacks()
 
 function getObjectBoundingBoxes(scenes){

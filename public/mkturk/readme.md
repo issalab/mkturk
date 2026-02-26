@@ -122,7 +122,7 @@ Target (default = object): Type of target bounding box to use during Fixation, S
   
     (3) 'object' -- dynamic location, dynamic size -- window follows object position and aspect ratio/size. It's the object bounding box whether the object is the blue fixation dot or the foreground objects in a scene render, OR 
   
-    (4) 'scene' -- dynamic location, dynamic size -- the overall scene bounding box which would encompass both object and background.
+    **DO NOT USE, NOT FULLY IMPLEMENTED USE gridwindow instead** (4) 'scene' -- dynamic location, dynamic size -- the overall scene bounding box which would encompass both object and background.
   
     Note that 'objectwindow', 'object', and 'scene' are dynamic bounding boxes where each frame render will compute a bounding box whereas 'gridwindow' is a static bounding box applied to a grid position independent of rendered assets (shape, image, object, cubemap). For now, the TASK.Target parameter is task-wide, could always be done specific to each screen (e.g., Fixation vs. Sample) to provide more flexibility in the future.
 
@@ -136,11 +136,15 @@ BlinkGracePeriod (default = 200 milliseconds): Amount of time subject can (brief
 ___________________________________________________________________________
 *REWARD OPTIONS*
 ___________________________________________________________________________
+FeedbackPRE(default = 50 --> show gray blank and wait for FeedbackPRE ms after display screen before delivering feedback): Reward/punish/no feedback is delayed according to TASK.FeedbackPRE. Note that the white fixation dot and all display elements will extinguish during the wait period before either TASK.RewardColor colored reward square or black punish timeout screen give visual feedback. Having a delay may be used to measure subject reward anticipation. Or having a delay post-stimulus and pre-reward delivery can accommodate pump triggering faster than display sequence finishes (Arduino pump trigger lag is few milliseconds from mkturk while display hardware can be lagged 10-40ms from mkturk). In this way, any noise from pump/licking can be distanced from stimulus/task display sequence.
+
 NConsecutiveHitsforBonus (default = 0 --> do not count consecutive hits toward extra reward): How many consecutive hits subject needs for the reward amount to increase.  If NConsecutiveHitsforBonus=4, then subject will get 2x reward for correct responses on 4 consecutive trials, 3x reward for correct responses on 8 consecutive trials, up to nrewardmax times of 1x reward. This is a way to make chance on a 2AFC task be virtually < 50% since reward is jointly distributed across trials rather than independently on the current trial.
 
-NRewardMax (default = 1 --> no bonus reward possible): Max number of rewards that can be given for a successful trial. This caps how much extra (bonus) reward subject can get for successful completion of consecutive trials. If nrewardmax=3, then subject can get up to 3x reward for completing 3*NConsecutiveHitsforBonus consecutive trials successfully, and then would get 3x reward after that until gets a trial wrong.
+NRewardMax (default = 1 --> no bonus reward possible): Max number of rewards that can be given for a successful trial. This caps how much extra (bonus) reward subject can get for successful completion of consecutive trials. If nrewardmax=3, then subject can get up to 3x reward for completing 3*NConsecutiveHitsforBonus consecutive trials successfully, and then would get 3x reward after that until gets a trial wrong. Fixed 50ms interval is used between successive rewards.
 
 NRSVPMax (default = 0 --> no exponential reward for fixating NRSVP sequence longer): Works in tandem with TASK.NRSVP where TASK.NRSVP is the min # of images required to fixate for reward and a rsvp sequence of TASK.NRSVPMax images is queued up per trial. Exponentially more reward pulses given for longer fixations up to NRewardMax for fixating NRSVPMax images. No reward for less than NRSVP clips fixated, one reward pulse for NRSVP clips viewed, and NRewardMax pulses given for NRSVPMax.  Trial-by-Trial bonus reward for consecutive hits will be ignored if this option is on to reward more images fixated within a trial. NRSVPMax is ignored if set less than NRSVP. See TSequenceActualClip in TRIALEVENTS if want to determine which clips were fixated (-1 is registered for clip times if broke fixation). See TRIALEVENTS[NReward] to determine how many reward pulses were delivered. NOTE: If want to use bonus rewards & NRewardMax in the traditional trial-by-trial sense, then set NRSVPMax < NRSVP so that only one reward is given per NRSVP images shown and bonus is enacted based on multiple consecutive trial hits.
+
+RewardColor (default = #008000 = [0,128,0] --> green square): specify the reward square color in hex (eg, #FFFFFF for white or #000000 for black). Not required in param file. If not provided, defaults to a green square (#008000)
 
 ___________________________________________________________________________
 *ADD AUTOMATOR*
@@ -447,7 +451,7 @@ Most variables except those marked * or ** can be changed on a per movie clip an
 **cannot be animated
 () meta appended to SCENES and saved into final data file (i.e., not user-specified in scene file)
 
-# CAMERAS
+### CAMERAS
 type*:
 fieldofview*:
 near*:
@@ -457,14 +461,14 @@ targetTHREEJS:
 visible:
 (targetInches):
 
-# LIGHTS
+### LIGHTS
 type*:
 color*:
 intensity:
 position:
 visible:
 
-# OBJECTS
+### OBJECTS
 meshpath*:
 objectdoc*:
 texture*:
@@ -490,13 +494,13 @@ target**: (default = 1 --> an object is a valid target) Allows user to toggle wh
 (sizeInches):
 (positionInches):
 
-# IMAGES
+### IMAGES
 imagebag*:
 imageidx:
 sizeTHREEJS:
 (boundingBoxCube2DPixels):
 
-# OBJECTFILTERS || IMAGEFILTERS
+### OBJECTFILTERS || IMAGEFILTERS
 blur: Applies a Gaussian blur to the input image in pixels.
 
 brightness: Applies a linear multiplier to the input image, making it appear more or less bright. Values are linear multipliers on the effect, with 0% creating a completely black image, 100% having no effect, and values over 100% brightening the image.
@@ -515,7 +519,7 @@ saturate: Saturates the image, with 0% being completely unsaturated, 100% leavin
 
 sepia: Converts the image to sepia, with a value of 100% making the image completely sepia and 0% making no change.
 
-# durationMS**
+### durationMS**
 Duration of a movie clip in milliseconds. Specifying as an array of values allows setting of different durations for each movie clip.
 (nimages)
 (nbackgroundimages)
@@ -543,7 +547,11 @@ Duration of a movie clip in milliseconds. Specifying as an array of values allow
 
 8,9 - eye serial
 
-10,11 - rfid serial
+10 - sample command2
+
+11 - trial code2
+
+(10,11) - rfid serial
 
 12 - unused
 
@@ -556,8 +564,8 @@ A1 - block trigger
 A2 - trial trigger
 A3 - trial trigger
 
-A4 - sample command
-A5 - trial code
+A4 - sample command1
+A5 - trial code2
 
 ### Lines
 D8,D9 (D2 led) - eye - softwareserial2
@@ -572,7 +580,7 @@ A4,A5 (D6 led for trial code) - file code+sample command & trial code - IN3 (not
 
 <br>
 
-## ARDUINO V0.3 -- mkphotodiode/mksensor
+## ARDUINO V0.3 -- mksensor
 ### Digital Pins
 0 - RX
 
@@ -584,9 +592,9 @@ A4,A5 (D6 led for trial code) - file code+sample command & trial code - IN3 (not
 
 4 - unused
 
-5 - sample command led
+5 - digital in 0 led
 
-6 - unused led
+6 - digital in 1 led
 
 7 - unused led
 
@@ -604,13 +612,13 @@ A0 - unused
 
 A1 - unused
 
-A2 - unused
+A2 - digital in 0
 
-A3 - unused
+A3 - digital in 1
 
-A4 - Photodiode Receive
+A4 - Photodiode Receive (analog in)
 
-A5 - Sample Command Receive
+A5 - Future Analog In
 
 
 ### Lines
@@ -618,8 +626,8 @@ D8,D9 (D2 led) - unused - softwareserial2
 
 D10,D11 (D6 led) - unused - softwareserial1
 
-A2,A3 (D5 led) - unused - IN1
+A2,A3 (D5 led) - digital in 0, digital in 1 - IN1
 
 A0,A1 (D3 led) - unused - IN2
 
-A4,A5 - photodiode, sample command - IN3
+A4,A5 - photodiode, future analog in - IN3

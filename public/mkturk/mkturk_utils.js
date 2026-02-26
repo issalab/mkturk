@@ -87,14 +87,14 @@ async function index_init_awaits(){
   }//IF WEBBluetoothAvailable
 
   document.querySelector('button[id=donePracticingTask]').addEventListener('pointerup', donePracticingTask_listener, false);
-  document.querySelector('button[id=stressTest]').addEventListener('touchstart', stressTest_listener, false);
-  document.querySelector('button[id=gridPoints]').addEventListener('touchstart', gridPoints_listener, false);
+  document.querySelector('button[id=stressTest]').addEventListener('pointerup', stressTest_listener, false);
+  document.querySelector('button[id=gridPoints]').addEventListener('pointerup', gridPoints_listener, false);
 
-  //---- for Safari
-  document.querySelector('button[id=donePracticingTask]').addEventListener('click', donePracticingTask_listener, false);
-  document.querySelector('button[id=stressTest]').addEventListener('click', stressTest_listener, false);
-  document.querySelector('button[id=gridPoints]').addEventListener('click', gridPoints_listener, false);
-  //---- (END) for Safari
+  // //---- for Safari
+  // document.querySelector('button[id=donePracticingTask]').addEventListener('click', donePracticingTask_listener, false);
+  // document.querySelector('button[id=stressTest]').addEventListener('click', stressTest_listener, false);
+  // document.querySelector('button[id=gridPoints]').addEventListener('click', gridPoints_listener, false);
+  // //---- (END) for Safari
 
   //====================== Retrieve device's screen properties ===========================//
   ENV.WebAppUrl = window.location.href;
@@ -170,6 +170,7 @@ async function index_init_params_screen_automator(){
   document.querySelector('div[id=subjectID_div]').style.display = 'none';
 
   localStorage.setItem('Agent', ENV.Subject);
+  initializeRTDBCallbacks(ENV.Subject);
 
   if (ENV.MTurkWorkerId) {
     ENV.ParamFileName = PARAM_DIRPATH + ENV.MTurkWorkerId + '_' +
@@ -621,20 +622,15 @@ if (!FLAGS.usecanvas2D)
 
   //============ 4: PRELOAD SHADERS (COMPILE) ============//
   for (let scenetype in scene) {
-    renderer.compile(
-      scene[scenetype],
-      scene[scenetype].getObjectByName('cam0')
-    );
+    renderer.compile(scene[scenetype],scene[scenetype].getObjectByName('cam0'));
   }
   console.log('3js: compiled scene');
   //============ (END) 4: PRELOAD SHADERS (COMPILE) ============//
 }//IF !FLAGS.usecanvas2D
 
 if (FLAGS.usecanvas2D){
-  for (let scenetype in IMAGES) {
-    expandImage2DFrames(scenetype)
-  }
-} //IF FLAGS.usecanvas2D
+  for (let scenetype in IMAGES) { expandImage2DFrames(scenetype) }
+}//IF FLAGS.usecanvas2D
 
   FLAGS.need2loadScenes = 0;
 
@@ -764,21 +760,29 @@ async function index_send_filecode(){
   let ind_start = ENV.DataFileName.lastIndexOf('T');
   let ind_end = ENV.DataFileName.indexOf('_');
   let filetime = ENV.DataFileName.substring(ind_start + 1, ind_end);
-  let time_digits = [ 
+  let time_digits = [
     Number(filetime[0]), Number(filetime[1]), //hours
     Number(filetime[3]), Number(filetime[4]), //minutes
     Number(filetime[filetime.length-2]), Number(filetime[filetime.length-1]) //seconds
-];
+  ];
+  FLAGS.filecode = time_digits;
+  rtdb.ref('instances/' + ENV.Subject).set({
+    'trialnum': CURRTRIAL.num, 'blocknum': CURRTRIAL.blocknum,
+    'filecode': FLAGS.filecode, 'filename': ENV.DataFileName,
+    'performance': -1 } );
 
   for (let i=0; i<=time_digits.length-1; i++){
     usbDeviceWorker.postMessage({ action: "writeSampleCommandTriggertoUSB", val: 'f1' });
-    await sleep(10*(time_digits[i]+1));
+    FLAGS.pulse_tstart = performance.now();
+    await waitUntil(10*(time_digits[i]+1))
+
     usbDeviceWorker.postMessage({ action: "writeSampleCommandTriggertoUSB", val: 'f0' });
-    await sleep(25);//milliseconds  
+    FLAGS.pulse_tstart = performance.now();
+    await waitUntil(25)
   }//FOR i digits
 
   FLAGS.filecodeSent = 1;
-  return 1
+  return time_digits
 }//FUNCTION index_send_filecode()
 
 async function index_send_trialcode(){
@@ -786,10 +790,12 @@ async function index_send_trialcode(){
 
   for (var i=0; i<=str.length-1; i++){
     usbDeviceWorker.postMessage({ action: "writeTrialCodetoUSB", val: 1 });
-    await sleep(10*(Number(str[i])+1));
+    FLAGS.pulse_tstart = performance.now();
+    await waitUntil(10*(Number(str[i])+1));
     usbDeviceWorker.postMessage({ action: "writeTrialCodetoUSB", val: 0 });
     if (i<str.length-1){
-      await sleep(25);//milliseconds
+      FLAGS.pulse_tstart = performance.now();
+      await waitUntil(25);//milliseconds
     }//postpend gap between digits
   }//FOR i digits
   return 1
@@ -968,7 +974,6 @@ function index_housekeeping_effector_data(){
     let y = [];
     let w = [];
     let a = [];
-    let q = [];
 
     let nsamples = Object.keys(EVENTS[eventtype][eventname]).length;
     for (let i=0; i<=nsamples-1; i++ ){
@@ -980,23 +985,20 @@ function index_housekeeping_effector_data(){
         if (eventname == 'EyeData'){
           x.push(EVENTS[eventtype][eventname][i][3])
           y.push(EVENTS[eventtype][eventname][i][4])
-          // w.push(EVENTS[eventtype][eventname][i][5])
-          // a.push(EVENTS[eventtype][eventname][i][6])
+          w.push(EVENTS[eventtype][eventname][i][5])
+          a.push(EVENTS[eventtype][eventname][i][6])
         }//IF Eye
         else if (eventname == 'TouchData'){
           x.push( EVENTS[eventtype][eventname][i][2] + CANVAS.offsetleft )
           y.push( -EVENTS[eventtype][eventname][i][3] + ENV.ViewportPixels[1] )
-          // q.push(EVENTS[eventtype][eventname][i][4])
         }//IF Touch
       }//IF within ENV.EffectorSaveJSONDataRelativetoFixationDotDisplayMS of currtrial
     }//FOR i times sampled
-// console.log('N=' + t.length + '  t_effector ' + [...t] )
     EVENTS['timeseries']['EffectorData'].t[CURRTRIAL.num] = new Int16Array(t)
     EVENTS['timeseries']['EffectorData'].x[CURRTRIAL.num] = new Int16Array(x)
     EVENTS['timeseries']['EffectorData'].y[CURRTRIAL.num] = new Int16Array(y)
-    // EVENTS['timeseries']['EffectorData'].w[CURRTRIAL.num] = new Int16Array(w)
-    // EVENTS['timeseries']['EffectorData'].a[CURRTRIAL.num] = new Int16Array(a)
-    // EVENTS['timeseries']['EffectorData'].q[CURRTRIAL.num] = new Int16Array(q)
+    EVENTS['timeseries']['EffectorData'].w[CURRTRIAL.num] = new Int16Array(w)
+    EVENTS['timeseries']['EffectorData'].a[CURRTRIAL.num] = new Int16Array(a)
 }//FUNCTION index_housekeeping_effector_xyt
 
 function index_housekeeping_cloudstorage(){
@@ -1054,7 +1056,7 @@ function index_housekeeping_exits(){
   if ( TASK.Agent == 'SaveImages' && TASK.Automator == 0)
   {
     if (TASK.NRSVP > 1){
-      if (CURRTRIAL.num >= Math.ceil(TQS.samplebag_indices.length/TASK.NRSVP)) { 
+      if (CURRTRIAL.num >= Math.ceil(TQS.samplebag_indices.length/TASK.NRSVP)-1) { 
         console.log('MKTURK EXITING -- all images shown once for SaveImages')
         return 1
       }
@@ -1091,6 +1093,41 @@ function index_update_blocknum(){
   CURRTRIAL.blocknum++
   TQS.currentbag_starttime = -1;//update to Date.now() only when trigger in screenfunctions
 }//FUNCTION index_update_blocknum
+
+//REALTIME DATABASE (effector tracking)
+function initializeRTDBCallbacks(agent){
+  let linenum = ['d0','d1']
+
+  for (let i=0; i<=linenum.length-1; i++){
+    rtdb.ref(`daq/${agent}/`+linenum[i]).on('value', (snap) => {
+      if (snap.val() == null){return}
+      EVENTS['timeseries']['DAQ'][linenum[i]]['treceived'].push(performance.now())
+      EVENTS['timeseries']['DAQ'][linenum[i]]['trial'].push(snap.val().trial)
+      EVENTS['timeseries']['DAQ'][linenum[i]]['tstart'].push(snap.val().tstart)
+      EVENTS['timeseries']['DAQ'][linenum[i]]['tend'].push(snap.val().tend)
+      EVENTS['timeseries']['DAQ'][linenum[i]]['filecode'].push(snap.val().filecode)
+      EVENTS['timeseries']['DAQ'][linenum[i]]['mktrial'].push(snap.val().mktrial)
+      EVENTS['timeseries']['DAQ'][linenum[i]]['mkblock'].push(snap.val().mkblock)
+      EVENTS['timeseries']['DAQ'][linenum[i]]['mkfilecode'].push(snap.val().mkfilecode)
+      console.log('-->from mksensor input' + linenum[i] + ' (digital)')
+    })//RTDB receive callback for digital line  
+  }//FOR i input lines
+
+  rtdb.ref(`daq/${agent}/ph`).on('value', (snap) => {
+    if (snap.val() == null){return}
+    EVENTS['timeseries']['DAQ']['ph']['treceived'].push(performance.now())
+    EVENTS['timeseries']['DAQ']['ph']['trise'].push(snap.val().trise)
+    EVENTS['timeseries']['DAQ']['ph']['tdrop'].push(snap.val().tdrop)
+    EVENTS['timeseries']['DAQ']['ph']['threshrise'].push(snap.val().threshrise)
+    EVENTS['timeseries']['DAQ']['ph']['threshdrop'].push(snap.val().threshdrop)
+    EVENTS['timeseries']['DAQ']['ph']['dursamplecommand'].push(snap.val().dursamplecommand)
+    EVENTS['timeseries']['DAQ']['ph']['mktrial'].push(snap.val().mktrial)
+    EVENTS['timeseries']['DAQ']['ph']['mkblock'].push(snap.val().mkblock)
+    EVENTS['timeseries']['DAQ']['ph']['mkfilecode'].push(snap.val().mkfilecode)
+    console.log('-->from mksensor input ' + 'photodiode (analog)')
+  })//RTDB receive callback for digital line
+}//FUNCTION initializeRTDBCallbacks()
+
 
 (function (window) {
   window.utils = {
@@ -1229,9 +1266,57 @@ function toBytesInt16(num) {
   return arr;
 }
 
-function sleep(ms) {
+async function sleep(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
+
+async function waitUntil(dur){
+  return await new Promise(resolve => {
+    const interval = setInterval(() => {
+      if (performance.now() - FLAGS.pulse_tstart>=dur) {
+        resolve('foo');
+        clearInterval(interval);
+      };
+    }, 1);
+  });
+}//FUNCTION waitUntil
+
+// async function waitUntil(condition) {
+//   return await new Promise(resolve => {
+//     const interval = setInterval(() => {
+//       if (condition) {
+//         resolve('foo');
+//         clearInterval(interval);
+//       };
+//     }, 1000);
+//   });
+// }
+// const asyncInterval = async (callback, ms, triesLeft = 5) => {
+//   return new Promise((resolve, reject) => {
+//     const interval = setInterval(async () => {
+//       if (await callback()) {
+//         resolve();
+//         clearInterval(interval);
+//       } else if (triesLeft <= 1) {
+//         reject();
+//         clearInterval(interval);
+//       }
+//       triesLeft--;
+//     }, ms);
+//   });
+// }
+// const interval = setInterval(() => {
+//   const currentDate = Date.now()
+
+//   if (currentDate - startDate === 1000) {
+//     // it was a second
+
+//     clearInterval(interval)
+//     return
+//   } 
+
+//   // it was not a second
+// }, 50)
 
 // Async: play sound
 async function playSound(idx) {
@@ -1278,7 +1363,7 @@ async function runPumpButtonCallback(str) {
     FLAGS.runPump = 1;
     if (str == 'flush') {
       dur = 5000; //milliseconds
-      npulse = 12*4; //4 minutes
+      npulse = (4*60*1000)/5000; //4 minutes
     } else if (str == 'trigger') {
       dur = TASK.RewardDuration //milliseconds
       npulse = 50;
@@ -1324,7 +1409,7 @@ async function runPumpButtonCallback(str) {
       updateHeadsUpDisplayDevices();
     } //if usb pump
 
-    await sleep(dur + 800);
+    await sleep(500);
     console.log('pulse' + i);
   } //for i pulses
 

@@ -128,6 +128,7 @@ async generate_trials(n_trials){
 		console.log('TQ.generate_trials(): Queue is full or no trials were requested')
 		return 
 	}
+	console.log('Generating trials ' + n_trials)
 
 	var image_requests = []; 
 
@@ -322,6 +323,7 @@ async get_next_trial(){
 	var test_filenames = this.testq.filenames.shift(); 
 	var test_indices = this.testq.indices.shift(); 
 	var test_correctIndex = this.testq.correctIndex.shift();
+	this.num_in_queue--;
 
 	//IF the past NStickyResponse trials have been on one side ==> 
 	//THEN draw until this upcoming trial's correct answer is at another location
@@ -343,13 +345,17 @@ async get_next_trial(){
 			test_filenames = this.testq.filenames.shift(); 
 			test_indices = this.testq.indices.shift(); 
 			test_correctIndex = this.testq.correctIndex.shift();
+			this.num_in_queue--;
 		}//IF sticky && correct response equals sticky side, then continue drawing trials
 		else {
 			break
 		}//ELSE not stick
 	}//WHILE not drawing correct response on opposite side of response bias (sticky side)
 	
-	if ( (TASK.NStimuliPerBagBlock > 0 || TASK.NMillisecondsPerBagBlock > 0) && FLAGS.savedata){
+	if ( (TASK.NStimuliPerBagBlock > 0 || TASK.NMillisecondsPerBagBlock > 0)){
+		if (FLAGS.SaveData == 0){
+			this.currentbag = 0
+		}//IF in practice mode, start with this bag when click done
 		while(true){
 			if ( this.samplebag_labels[sample_index] != this.currentbag){
 				if (this.sampleq.filename.length == 0){
@@ -362,13 +368,14 @@ async get_next_trial(){
 				test_filenames = this.testq.filenames.shift(); 
 				test_indices = this.testq.indices.shift(); 
 				test_correctIndex = this.testq.correctIndex.shift();
+				this.num_in_queue--;
 			}//IF need to stick to a bag for NMillisecondsPerBagBlock, continue drawing trials till get one matching this.currentbag
 			else {
 				break
 			}//ELSE correct bag for this block is queued up
 		}//WHILE not drawing from bag matching this.currentbag
 	}//IF TASK.NMillisecondsPerBagBlock > 0
-	
+		
 	// Get image from imagebag
 	if (typeof(sample_filename) != "undefined"){
 		var sample_image = []
@@ -416,9 +423,6 @@ async get_next_trial(){
 			}//ELSE single image
 		}//FOR i test items
 	}//IF test image
-
-	this.num_in_queue--;
-
 	var sample_scenebag_label = this.samplebag_labels[sample_index]; 
 	var sample_scenebag_index = this.samplebag_indices[sample_index];
 
@@ -517,7 +521,7 @@ selectTestImages(correct_label, testbag_labels){
 			// Determine which location that grid index corresponds to in testIndices: 
 			var order_idx = TASK.TestGridIndex.indexOf(object_grid_index)
 			if (order_idx < 0){
-				console.log("ERROR: Could not find object's grid index in testgridinices, make sure ObjectGridIndex has same indices as TestGridIndex in parameter file.")
+				console.log("ERROR: Could not find object's grid index in TestGridIndices, make sure ObjectGridIndex has same indices as TestGridIndex in parameter file.")
 			}
 
 			// Place the selected test image in the appropriate location in testIndices. 
