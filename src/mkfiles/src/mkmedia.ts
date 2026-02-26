@@ -239,6 +239,7 @@ export class Mkeditor {
         'ChoiceSizeInches',
         'ChoiceTimeOut',
         'DeviceConfig',
+        'FeedbackPRE',
         'FixationDotSizeInches',
         'FixationDuration',
         'FixationOutsideGracePeriod',

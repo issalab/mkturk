@@ -683,39 +683,41 @@ index_init();
     logEVENTS('NReward', CURRTRIAL.nreward, 'trialseries');
 
     //============ DELIVER REWARD/PUNISH ============//
+    //Feedback Delay (after sample/choice)
+    CANVAS.tsequencepost = [];
+    CANVAS.sequencepost = [];
+    funcreturn = makeSequencePost(TASK.FeedbackPRE,"Blank",ENV.FrameRateMovie);
+    CANVAS.tsequencepost = funcreturn[0];
+    CANVAS.sequencepost = funcreturn[1];
+
+    let lenTsequencePost = CANVAS.tsequencepost.length;
+    frame.reset(CANVAS.tsequencepost)
+    renderShape2D(CANVAS.sequencepost[0], -1, VISIBLECANVAS);
+    await displayTrial(
+      CANVAS.tsequencepost,
+      Array(lenTsequencePost).fill(-1),
+      Array(lenTsequencePost).fill(-1),   
+      range(0, lenTsequencePost - 1, 1),
+      CANVAS.sequencepost,
+      Array(lenTsequencePost).fill(0),
+      Array(lenTsequencePost).fill(0),
+      [],
+      mkm
+    );//Show gray during Feedback Delay
+
+
     //NO FEEDBACK
     if (CURRTRIAL.nreward == -1) {
       // IF no feedback
-      CANVAS.sequencepost[1] = 'Blank';
-      CANVAS.tsequencepost[1] = 0;
-      frame.reset(CANVAS.sequencepost);
-      renderShape2D(CANVAS.sequencepost[0], -1, VISIBLECANVAS);
-
-      let lenTsequencePost = CANVAS.tsequencepost.length;
-      await displayTrial(
-        CANVAS.tsequencepost,
-        Array(lenTsequencePost).fill(-1),
-        Array(lenTsequencePost).fill(-1),   
-        range(0, lenTsequencePost - 1, 1),
-        CANVAS.sequencepost,
-        Array(lenTsequencePost).fill(0),
-        Array(lenTsequencePost).fill(0),
-        [],
-        mkm
-      );
     }//IF no reward/punish feedback
     else if (CURRTRIAL.correct) {
       CANVAS.tsequencepost = [];
       CANVAS.sequencepost = [];
-      funcreturn = makeSequencePost(50,"Blank",ENV.FrameRateMovie);
+      funcreturn = makeSequencePost(TASK.RewardDuration,"Reward",ENV.FrameRateMovie);
       CANVAS.tsequencepost = funcreturn[0];
       CANVAS.sequencepost = funcreturn[1];
 
-      funcreturn = makeSequencePost(TASK.RewardDuration,"Reward",ENV.FrameRateMovie);
-      CANVAS.tsequencepost.push(...funcreturn[0]);
-      CANVAS.sequencepost.push(...funcreturn[1]);
-
-      funcreturn = makeSequencePost(0,"Blank",ENV.FrameRateMovie);
+      funcreturn = makeSequencePost(50,"Blank",ENV.FrameRateMovie);
       CANVAS.tsequencepost.push(...funcreturn[0]);
       CANVAS.sequencepost.push(...funcreturn[1]);
 
@@ -723,7 +725,6 @@ index_init();
         frame.reset(CANVAS.tsequencepost)
         playSound(2);
 
-        renderShape2D(CANVAS.sequencepost[0], -1, VISIBLECANVAS);
         let lenTsequencePost = CANVAS.tsequencepost.length;
         let p1 = displayTrial(
           CANVAS.tsequencepost,
@@ -759,20 +760,15 @@ index_init();
     else if (!CURRTRIAL.correct) {
       CANVAS.tsequencepost = [];
       CANVAS.sequencepost = [];
-      funcreturn = makeSequencePost(50,"Blank",ENV.FrameRateMovie);
+      funcreturn = makeSequencePost(TASK.PunishTimeOut,"Punish",ENV.FrameRateMovie);
       CANVAS.tsequencepost = funcreturn[0];
       CANVAS.sequencepost = funcreturn[1];
-
-      funcreturn = makeSequencePost(TASK.PunishTimeOut,"Punish",ENV.FrameRateMovie);
-      CANVAS.tsequencepost.push(...funcreturn[0]);
-      CANVAS.sequencepost.push(...funcreturn[1]);
 
       funcreturn = makeSequencePost(0,"Blank",ENV.FrameRateMovie);
       CANVAS.tsequencepost.push(...funcreturn[0]);
       CANVAS.sequencepost.push(...funcreturn[1]);
 
       frame.reset(CANVAS.sequencepost)
-      renderShape2D(CANVAS.sequencepost[0], -1, VISIBLECANVAS);
       let lenSequencePost = CANVAS.sequencepost.length;
       let p1 = displayTrial(
         CANVAS.tsequencepost,
@@ -816,7 +812,7 @@ index_init();
     if (port.connected && FLAGS.savedata) {
       if (!updateBlockNum){
         usbDeviceWorker.postMessage({ action: "writeSampleCommandTriggertoUSB", val: "t0" });
-      }//IF not new block, only turn off trail trigger lines
+      }//IF not new block, only turn off trial trigger lines
       else if (updateBlockNum){
         usbDeviceWorker.postMessage({ action: "writeSampleCommandTriggertoUSB", val: "b0" });
       }//ELSE IF updateBlockNum, also turn off block trigger lines

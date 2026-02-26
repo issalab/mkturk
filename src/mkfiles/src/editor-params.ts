@@ -145,6 +145,11 @@ export const taskParamSchema = {
       type: 'string',
       default: 'empty string',
     },
+    FeedbackPRE: {
+      type: 'integer',
+      default: '50',
+      examples: ['in milliseconds'],
+    },
     FixationDotSizeInches: {
       type: 'number',
       default: '0',

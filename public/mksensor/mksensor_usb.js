@@ -496,7 +496,7 @@ function saveTrialData(abuff){
 async function saveAllData(abuff){
   alldata.t0.push(abuff.t0);
   alldata.t.push(abuff.t);
-  alldata.a0.push(new Uint8Array(abuff.ph))
+  alldata.a0.push(new Uint16Array(abuff.ph))
   alldata.nsamples = alldata.nsamples + abuff.ph.length
 
   let blob = new Blob([JSON.stringify(alldata)], { type: 'application/json' });

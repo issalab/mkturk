@@ -473,6 +473,7 @@ async function loadParametersfromFirebase(paramfile_path) {
     if (typeof TASK.BlinkGracePeriod == 'undefined'){TASK.BlinkGracePeriod = 200;}
 
     // REWARD
+    if (typeof TASK.FeedbackPRE == 'undefined'){TASK.FeedbackPRE = 50}
     if (typeof TASK.NConsecutiveHitsforBonus == 'undefined'){TASK.NConsecutiveHitsforBonus = 0;}
     if (typeof TASK.NRewardMax == 'undefined'){TASK.NRewardMax = 1;}
     if (typeof TASK.NRSVPMax == 'undefined'){TASK.NRSVPMax = 0;}
