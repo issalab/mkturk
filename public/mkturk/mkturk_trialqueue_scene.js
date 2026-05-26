@@ -405,14 +405,24 @@ async get_next_trial(){
 		
 	if (typeof(test_filenames) != "undefined"){
 		var test_images = []
+		
 		for (var i = 0; i <= test_filenames.length-1; i++){
 			if (Array.isArray(test_filenames[i])){
 				for (var j = 0; j <= test_filenames[i].length-1;j++){
+					
 					if (i==0 || typeof(test_images[j]) == 'undefined'){
 						test_images[j] = []
 					}//IF first item in frame
 					if (test_filenames[i][j] !=""){
-							test_images[j].push(await this.IB.get_by_name(test_filenames[i][j])); 
+						if (Array.isArray(test_filenames[i][j])){ //IF Array
+							var cubeTexture = []
+							for (var k = 0; k < test_filenames[i][j].length; k++){
+								cubeTexture.push(await this.IB.get_by_name(test_filenames[i][j][k])); 
+							}
+							test_images[j].push(cubeTexture)
+						} else{
+						test_images[j].push(await this.IB.get_by_name(test_filenames[i][j])); 
+						}	
 					}//IF image
 				}//FOR j frames
 			}//IF isArray test filenames
