@@ -248,7 +248,7 @@ export class Charts {
     this.objPerfPlot = new google.visualization.ColumnChart(
       this.elemObject.objPerfPlot
     );
-  }
+  }//FUNCTION setupCharts
 
   public setupChartOptions() {
     this.perfPlotOptions = {
@@ -456,7 +456,7 @@ export class Charts {
       title: 'Object Performance',
       legend: { position: 'none' },
     };
-  }
+  }//FUNCTION setupChartOptions
 
   public initializeChartData(file: FileType, plotOptions: any) {
     // Remove rows and columns
@@ -598,7 +598,7 @@ export class Charts {
     this.healthDataTable.addColumn('number', 'eye interval');
 
     this.updatePlots(file, plotOptions);
-  }
+  }//FUNCTION initializeChartData
 
   public updatePlots(file: FileType, plotOptions: any) {
     let fileData: LiveplotDataType;
@@ -611,33 +611,29 @@ export class Charts {
     console.log('plot updated');
     this.loadVitals(file);
     this.loadVitalsText(file);
-    // console.log('vitals', this.vitals);
     this.loadPerformanceData(file);
     this.loadHealthData(fileData);
     this.loadObjPerfData(fileData);
     this.loadChoiceData(fileData);
     this.loadRewardData(fileData);
-    this.drawPerformancePlot(file);
-    this.drawTrialPlot(file);
-    this.drawHealthPlot(file);
-    this.drawObjPerfPlot();
-    this.drawRxnTimePlot();
-    this.drawChoicePlot();
-    this.drawRewardPlot();
-    this.loadTouchSDText();
+    this.loadTouchSDText();//TouchSD text for ScreenPlot
+
+    this.drawPerformancePlot(file); //%Correct
+    this.drawTrialPlot(file); //#Trials
+    this.drawHealthPlot(file); //DisplayTiming, SampleCommand, EyeInterval
+    this.drawObjPerfPlot();//%Correct by Object
+    this.drawRxnTimePlot();//ReactionTime histogram
+    this.drawChoicePlot();//ChoiseBias bar plot
+    this.drawRewardPlot();//NRewards bar plot
     let streamActive = plotOptions.streamActive;
-    this.drawScreenPlot(fileData, streamActive);
+    this.drawScreenPlot(fileData, streamActive);//Touch Locations
+
+    //Realtime Plot
     if (streamActive && !this.realtimePlotActive) {
-      console.log('hello');
       this.drawRealtimePlot2(fileData);
       this.realtimePlotActive = true;
-    }
-    // if (streamActive) {
-    //   console.log('hello');
-    //   this.drawRealtimePlot2(fileData);
-    //   // this.realtimePlotActive = true;
-    // }
-  }
+    }//IF realtime stream active
+  }//FUNCTION updatePlots
 
   private loadVitals(file: FileType) {
     let data;
@@ -730,7 +726,7 @@ export class Charts {
         (data.RewardPer1000Trials * this.vitals.numReward) / 1000
       );
     }
-  }
+  }//FUNCTION loadVitals
 
   private loadVitalsText(file: FileType) {
     this.elemObject.perfVitals.innerHTML = `${this.vitals.subject}: ${this.vitals.pctCorrect}% (n = ${this.vitals.numCorrect} out of ${this.vitals.trials}, r=${this.vitals.numReward}=${this.vitals.rewardEstimate}mL, ${this.vitals.time} mins)`;
@@ -743,7 +739,7 @@ export class Charts {
     this.elemObject.trialVitals.innerHTML = `Last Trial: ${file.dateSaved!.toLocaleTimeString(
       'en-US'
     )}`;
-  }
+  }//FUNCTION loadVitalsText
 
   private loadTouchSDText() {
     try {
@@ -758,7 +754,7 @@ export class Charts {
     } catch (err) {
       console.error('Error loading touch SD text', err);
     }
-  }
+  }//FUNCTION loadTouchSDText
 
   private loadPerformanceData(file: FileType) {
     // Typechecking file.data
@@ -1263,7 +1259,7 @@ export class Charts {
       ]);
     }
     this.formatDate(this.cumulDataTable, 0);
-  }
+  }//FUNCTION loadPerformanceData
 
   private generateAndAddRowData(
     target: google.visualization.DataTable,
@@ -1281,7 +1277,7 @@ export class Charts {
     }
     // console.log('arr:', arr);
     target.addRows([arr]);
-  }
+  }//FUNCTION generateAndAddRowData
 
   // TODO: deal with case where SampleScenes[0].OBJECTS[firstKey].sizeInches is an
   // Array of arrays -- i.e. scene movie
@@ -1294,11 +1290,8 @@ export class Charts {
           sampleWidth = maxSizeInches * fileData.ViewportPPI;
         }
       } else {
-        console.error(
-          'SampleScenes[0].IMAGES.sizeInches is not an array. Please fix!'
-        );
-        sampleWidth =
-          fileData.SampleScenes[0].IMAGES.sizeInches * fileData.ViewportPPI;
+        console.error('SampleScenes[0].IMAGES.sizeInches is not an array. Please fix!');
+        sampleWidth = fileData.SampleScenes[0].IMAGES.sizeInches * fileData.ViewportPPI;
       }
     } else {
       let firstKey = _.findKey(fileData.SampleScenes[0].OBJECTS);
@@ -1310,13 +1303,11 @@ export class Charts {
           sampleWidth = maxSizeInches * fileData.ViewportPPI;
         }
       } else {
-        console.error(
-          'firstKey of SampleScenes[0].OBJECTS is not of type string'
-        );
+        console.error('firstKey of SampleScenes[0].OBJECTS is not of type string');
       }
     }
     return sampleWidth;
-  }
+  }//FUNCTION getSampleWidth
 
   private getTestWidth(fileData: LiveplotDataType) {
     let testWidth = 0;
@@ -1327,16 +1318,11 @@ export class Charts {
         if (_.isNumber(maxSizeInches)) {
           testWidth = maxSizeInches * fileData.ViewportPPI;
         } else {
-          console.error(
-            'TestScenes[0].IMAGES.sizeInches is not of type number'
-          );
+          console.error('TestScenes[0].IMAGES.sizeInches is not of type number');
         }
       } else {
-        console.error(
-          'TestScenes[0].IMAGES.sizeInches is not an array. Please fix!'
-        );
-        testWidth =
-          fileData.TestScenes[0].IMAGES.sizeInches * fileData.ViewportPPI;
+        console.error('TestScenes[0].IMAGES.sizeInches is not an array. Please fix!');
+        testWidth = fileData.TestScenes[0].IMAGES.sizeInches * fileData.ViewportPPI;
       }
     } else {
       let firstKey = _.findKey(fileData.TestScenes[0].OBJECTS);
@@ -1347,9 +1333,7 @@ export class Charts {
         if (_.isNumber(maxSizeInches)) {
           testWidth = maxSizeInches * fileData.ViewportPPI;
         } else {
-          console.error(
-            'firstKey of TestScenes[0].OBJECTS is not of type string'
-          );
+          console.error('firstKey of TestScenes[0].OBJECTS is not of type string');
         }
       }
     }
@@ -1359,7 +1343,7 @@ export class Charts {
     }
 
     return testWidth;
-  }
+  }//FUNCTION getTestWidth
 
   private getFixationWidth(fileData: LiveplotDataType, sampleWidth: number) {
     let fixationWidth = 0;
@@ -1370,7 +1354,7 @@ export class Charts {
       fixationWidth = sampleWidth;
     }
     return fixationWidth;
-  }
+  }//FUNCTION getFixationWidth
 
   private getChoiceWidth(fileData: LiveplotDataType) {
     let choiceWidth = 0;
@@ -1378,7 +1362,7 @@ export class Charts {
       choiceWidth = fileData.ChoiceSizeInches * fileData.ViewportPPI;
     }
     return choiceWidth;
-  }
+  }//FUNCTION getChoiceWidth
 
   private loadObjPerfData(data: LiveplotDataType) {
     this.objPerfDataTable.removeRows(
@@ -1418,7 +1402,7 @@ export class Charts {
         }
       }
     }
-  }
+  }//FUNCTION loadObjPerfData
 
   private loadChoiceData(data: LiveplotDataType) {
     this.choiceDataTable.removeRows(0, this.choiceDataTable.getNumberOfRows());
@@ -1495,7 +1479,7 @@ export class Charts {
         }
       }
     }
-  }
+  }//FUNCTION loadChoiceData
 
   private loadRewardData(data: LiveplotDataType) {
     this.rewardDataTable.removeRows(0, this.rewardDataTable.getNumberOfRows());
@@ -1513,7 +1497,7 @@ export class Charts {
     for (let i = 0; i < nrewardArr.length; i++) {
       this.rewardDataTable.addRow([i.toString(), nrewardArr[i]]);
     }
-  }
+  }//FUNCTION loadRewardData
 
   private loadHealthData(data: LiveplotDataType) {
     // console.log('[loadHealthData::fileData]', data);
@@ -1602,7 +1586,7 @@ export class Charts {
         ]);
       }
     }
-  }
+  }//FUNCTION loadHealthData
 
   private drawPerformancePlot(file: FileType) {
     let numRows = this.perfDataTable.getNumberOfRows();
@@ -1638,7 +1622,7 @@ export class Charts {
       },
     });
     this.perfDashboard.draw(this.perfDataTable);
-  }
+  }//FUNCTION drawPerformancePlot
 
   private drawHealthPlot(file: FileType) {
     let numRows = this.healthDataTable.getNumberOfRows();
@@ -1671,7 +1655,7 @@ export class Charts {
       },
     });
     this.healthDashboard.draw(this.healthDataTable);
-  }
+  }//FUNCTION drawHealthPlot
 
   private drawTrialPlot(file: FileType) {
     let trialFilterState: any = this.trialFilter.getState();
@@ -1691,23 +1675,23 @@ export class Charts {
     });
     this.trialPlot.setOptions(this.trialPlotOptions);
     this.trialDashboard.draw(this.cumulDataTable);
-  }
+  }//FUNCTION drawTrialPlot
 
   private drawObjPerfPlot() {
     this.objPerfPlot.draw(this.objPerfDataTable, this.objPerfPlotOptions);
-  }
+  }//FUNCTION drawObjPerfPlot
 
   private drawRxnTimePlot() {
     this.rxnPlot.draw(this.rxnTimeDataTable, this.rxnPlotOptions);
-  }
+  }//FUNCTION drawRxnTimePlot
 
   private drawChoicePlot() {
     this.choicePlot.draw(this.choiceDataTable, this.choicePlotOptions);
-  }
+  }//FUNCTION drawChoicePlot
 
   private drawRewardPlot() {
     this.rewardPlot.draw(this.rewardDataTable, this.rewardPlotOptions);
-  }
+  }//FUNCTION drawRewardPlot
 
   // private drawRealtimePlot(data: LiveplotDataType) {
   //   let idx = 0;
@@ -1919,7 +1903,7 @@ export class Charts {
       //   }
       // }
     }
-  }
+  }//FUNCTION drawStaticElements
 
   private drawRealtimePlot2(data: LiveplotDataType) {
     let cvs = document.querySelector('#realtime-canvas') as HTMLCanvasElement;
@@ -1971,7 +1955,7 @@ export class Charts {
         this.prevCoord.y = y;
       }
     });
-  }
+  }//FUNCTION drawRealtimePlot2
 
   private drawScreenPlot(data: LiveplotDataType, screenActive: boolean) {
     this.screenPlotOptions.series = [];
@@ -2016,7 +2000,7 @@ export class Charts {
     if (!this.realtimePlotActive) {
       this.screenPlot.draw(this.xyPosDataTable, this.screenPlotOptions);
     }
-  }
+  }//FUNCTION drawScreenPlot
 
   private formatDate(
     data: google.visualization.DataTable,
@@ -2026,14 +2010,14 @@ export class Charts {
       pattern: 'h aa',
     });
     formatter.format(data, colIdx);
-  }
+  }//FUNCTION formatDate
 
   private formatNumber(data: google.visualization.DataTable, colIdx: number) {
     let formatter = new google.visualization.NumberFormat({
       fractionDigits: 2,
     });
     formatter.format(data, colIdx);
-  }
+  }//FUNCTION formatNumber
 
   private formatColor(data: google.visualization.DataTable, colIdx: number) {
     let formatter = new google.visualization.ColorFormat();
@@ -2042,5 +2026,5 @@ export class Charts {
       formatter.addRange(i * dx, (i + 1) * dx, 'gray', colorMapJet[i]);
     }
     formatter.format(data, colIdx);
-  }
-}
+  }//FUNCTION formatColor
+}//CLASS Charts

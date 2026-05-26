@@ -21,13 +21,51 @@ if (FLAGS.usecanvas2D){
       function(resolve, reject){
         try {
           var image = new Image(); 
+          image.decoding = 'sync'
+          image.loading = 'eager'
           image.crossOrigin = "Anonymous"; //to allow saving of a 'tainted canvas', see https://developer.mozilla.org/en-US/docs/Web/HTML/CORS_enabled_image
+          image.src = url
           image.onload = function(){
             updateImageLoadingAndDisplayText('Loaded: ' + imagefile_path)
             console.log('Loaded IMG: ' + imagefile_path)
             resolve(image)        
           }
-          image.src = url
+          
+          // IMAGE.DECODE() INSTEAD OF IMAGE.ONLOAD
+          // console.log(imagefile_path)
+          // try{
+          //   image.decode().then(()=>
+          //   {
+          //     document.body.appendChild(image);
+          //     VISIBLECANVAS.appendChild(image);
+          //     console.log('DECODED IMG: ' + imagefile_path)
+          //     updateImageLoadingAndDisplayText('Loaded: ' + imagefile_path)
+          //     resolve(image)
+          //   })  
+          // }
+          // catch(error){
+          //   console.log(imagefile_path)
+          // }
+
+          // // TO BASE64 URL INSTEAD OF IMAGE.DECODE
+          // var image = new Image();
+          // image.crossOrigin = 'Anonymous';
+          // image.loading = 'eager';
+          // image.src = url;
+          // image.onload = () => {
+          //   updateImageLoadingAndDisplayText('Loaded: ' + imagefile_path)
+          //   console.log('Loaded IMG: ' + imagefile_path)
+          //   // resolve(image)  
+
+          //   var canvas = document.createElement('canvas');
+          //   canvas.width = image.width;
+          //   canvas.height = image.height;
+          //   var ctx = canvas.getContext('2d');
+          //   ctx.drawImage(image, 0, 0);
+          //   var base64data = canvas.toDataURL('image/png');
+          //   delete(canvas)
+          //   resolve([image,base64data]) //Need to return whole image not just set image.src
+          // };
         } //TRY
         catch (error){
           console.log(error)
@@ -69,9 +107,7 @@ async function loadMeshfromFirebase(meshfile_path) {
   //file ext = gltf or obj
   try {
     var meshfileRef = await storage.ref().child(meshfile_path);
-    var url = await meshfileRef
-      .getDownloadURL()
-      .catch((error) => console.log(error));
+    var url = await meshfileRef.getDownloadURL().catch((error) => console.log(error));
 
     var strs = meshfile_path.split('.');
     var ext = strs[1];
@@ -285,7 +321,8 @@ async function loadImageArrayfromFirebase(imagepathlist) {
         var partial_image_array = await Promise.all(partial_image_requests);
         image_array.push(...partial_image_array);
       }
-    } else {
+    }
+    else {
       // If number of images is less than MAX_SIMULTANEOUS_REQUESTS, request them all simultaneously:
       for (var i = 0; i < 3; i++) {
         var image_requests = imagepathlist.map(loadImagefromFirebase);
@@ -293,10 +330,18 @@ async function loadImageArrayfromFirebase(imagepathlist) {
         console.log('FIREBASE: Buffering ' + imagepathlist.length + ' images');
         var tstart = performance.now();
         var image_array = await Promise.all(image_requests)
-          .catch(function (error) {
-            console.log(error);
-          })
+          .catch(function (error) { console.log(error);})
           .then();
+
+        // var image_array = []
+        // for (q=0; q<=imagepathlist.length-1; q++){
+        //   console.log('trying to load ' + imagepathlist[q])
+        //   var p = loadImagefromFirebase(imagepathlist[q]);
+        //   // image_array[q] = await p.catch(function (error) { console.log(error);}).then();
+        //   let funcreturn = await p.catch(function (error) { console.log(error);}).then();
+        //    image_array[q] = funcreturn[0]
+        //    image_array[q].src = funcreturn[1]
+        // }//FOR q items
 
         var load_success = 1;
         for (var j = 0; j < image_array.length; j++) {
@@ -315,10 +360,8 @@ async function loadImageArrayfromFirebase(imagepathlist) {
           updateImageLoadingAndDisplayText(' ');
           break;
         } else if (load_success <= 0) {
-          await timeout(i * 250);
-          console.log(
-            'FIREBASE: RETRYING IMAGE LOAD for ' + i + 'th time!!!!!'
-          );
+          await sleep(i * 250);
+          console.log('FIREBASE: RETRYING IMAGE LOAD for ' + i + 'th time!!!!!');
         }
       } //for 3 retry attempts
     }
@@ -339,10 +382,7 @@ async function checkParameterFileStatusFirebase() {
       FLAGS.need2loadParameters = 1;
       updateEventDataonFirestore(EVENTS);
 
-      console.log(
-        'FIREBASE: Parameter file on disk was changed. New rev =' +
-          ENV.ParamFileRev
-      );
+      console.log( 'FIREBASE: Parameter file on disk was changed. New rev =' + ENV.ParamFileRev );
     } //if file updated
   } catch (error) {
     //try
@@ -361,24 +401,116 @@ async function loadParametersfromFirebase(paramfile_path) {
     }
     await loadAgentRFIDfromFirestore(ENV.Subject, TASK.Species);
 
-    if (typeof TASK.ImageRewardList != 'undefined') {
-      for (var i = 0; i <= TASK.ImageRewardList.length - 1; i++) {
-        var data = await loadTextfromFirebase(TASK.ImageRewardList[i]);
-        for (var j = 0; j <= data.ImageRewardList.length / 2 - 1; j++) {
-          ImageRewardList[data.ImageRewardList[2 * j + 1]] =
-            data.ImageRewardList[2 * j];
-        }
-      } //for i reward lists
-    }
-
     var filemeta = await getFileMetadataFirebase(paramfile_path);
     ENV.ParamFileName = '/' + filemeta.fullPath;
     ENV.ParamFileRev = filemeta.generation;
     ENV.ParamFileDate = new Date(filemeta.updated);
 
+    // FIXATION SCREEN OPTIONS
+    if (typeof TASK.FixationDotSizeInches == 'undefined'){TASK.FixationDotSizeInches = 0;}
+    if (typeof TASK.FixationDuration == 'undefined'){TASK.FixationDuration = 0;}
+    if (typeof TASK.NFixations == 'undefined'){TASK.NFixations = 1;}
+    if (typeof TASK.FixationUsesSample == 'undefined'){TASK.FixationUsesSample = 0;}
+    if (typeof TASK.FixationTimeOut == 'undefined'){TASK.FixationTimeOut = 3000;}
+    if (typeof TASK.FixationOutsideGracePeriod == 'undefined'){TASK.FixationOutsideGracePeriod = 0}
+
+    // TASK OPTONS
+    if (typeof TASK.RewardStage == 'undefined'){TASK.RewardStage = 0;}
+    if (typeof TASK.NRSVP == 'undefined'){TASK.NRSVP = 0;}
+    if (typeof TASK.SameDifferent == 'undefined'){TASK.SameDifferent = 0;}
+    if (typeof TASK.VisualSearch == 'undefined'){TASK.VisualSearch = 0;}
+
+    // SAMPLE SCREEN
+    if (typeof TASK.SampleGridIndex == 'undefined'){TASK.SampleGridIndex = 0;}
+    if (typeof TASK.SamplePRE == 'undefined'){TASK.SamplePRE = 0;}
+    if (typeof TASK.SampleOFF == 'undefined'){TASK.SampleOFF = 0;}
+    if (typeof TASK.SampleOutsideGracePeriod == 'undefined'){TASK.SampleOutsideGracePeriod = 0}
+    if (typeof TASK.ImageBagsSample == 'undefined'){
+      TASK.ImageBagsSample = [
+        "/mkturkfiles/scenebags/objectome3d/camel/20200709_camel_token.js",
+        "/mkturkfiles/scenebags/objectome3d/wrench/20200709_wrench_token.js"
+    ]}//IF ImageBagsSample undefined
+    if (typeof TASK.SampleHoldDuration == 'undefined'){TASK.SampleHoldDuration = 86400000}//24 hours in milliseconds
+
+    // TEST SCREEN
+    if (typeof TASK.ImageBagsTest == 'undefined'){
+      TASK.ImageBagsTest = []
+      for (let i=0; i<=TASK.ImageBagsSample.length-1; i++){
+        TASK.ImageBagsTest.push("/mkturkfiles/scenebags/objectome3d/camel/20200709_camel_token.js")
+      }//FOR i samplebags
+    }//IF ImageBagsTest undefined
+    if (typeof TASK.TestGridIndex == 'undefined'){ 
+      if (TASK.ImageBagsTest.length == 1){
+        TASK.TestGridIndex = [0]        
+      }
+      else{
+        TASK.TestGridIndex = [0,1]
+      }//ELSE 2-way task using first two gridpoints
+    }
+    if (typeof TASK.ObjectGridIndex == 'undefined'){TASK.ObjectGridIndex = [];}
+    if (typeof TASK.TestOFF == 'undefined'){TASK.TestOFF = 0;}
+    if (typeof TASK.KeepSampleON == 'undefined'){TASK.KeepSampleON = 0;}
+
+    // CHOICE SCREEN
+    if (typeof TASK.ChoiceGridIndex == 'undefined'){TASK.ChoiceGridIndex = [0,1];}
+    if (typeof TASK.ChoiceSizeInches == 'undefined'){TASK.ChoiceSizeInches = 1;}
+    if (typeof TASK.KeepTestON == 'undefined'){TASK.KeepTestON = 0;}
+
+    if (typeof TASK.ChoiceTimeOut == 'undefined'){TASK.ChoiceTimeOut = 5000;}
+    if (typeof TASK.HideChoiceDistractors == 'undefined'){TASK.HideChoiceDistractors = 0;}
+    if (typeof TASK.ChoiceOutsideGracePeriod == 'undefined'){TASK.ChoiceOutsideGracePeriod = TASK.ChoiceTimeOut+1}
+    if (typeof TASK.ChoiceHoldDuration == 'undefined'){TASK.ChoiceHoldDuration = 0}
+
+    // SAMPLING STRATEGY
+    if (typeof TASK.SamplingStrategy == 'undefined'){ TASK.SamplingStrategy = 'uniform_without_replacement'; }
+    if (typeof TASK.NStimuliPerBagBlock == 'undefined'){ TASK.NStimuliPerBagBlock = 0; }
+    if (typeof TASK.NSecondsPerBagBlock == 'undefined'){ TASK.NSecondsPerBagBlock = 0; }
+
+    // RESPONSE
+    if (typeof TASK.Target == 'undefined'){TASK.Target = 'object';}
+    if (typeof TASK.FixationWindowSizeInches == 'undefined'){TASK.FixationWindowSizeInches = 0;}
+    if (typeof TASK.NStickyResponse == 'undefined' || TASK.ImageBagsTest.length <= 1){TASK.NStickyResponse = 0;}
+    if (typeof TASK.BlinkGracePeriod == 'undefined'){TASK.BlinkGracePeriod = 200;}
+
+    // REWARD
+    if (typeof TASK.FeedbackPRE == 'undefined'){TASK.FeedbackPRE = 50}
+    if (typeof TASK.NConsecutiveHitsforBonus == 'undefined'){TASK.NConsecutiveHitsforBonus = 0;}
+    if (typeof TASK.NRewardMax == 'undefined'){TASK.NRewardMax = 1;}
+    if (typeof TASK.NRSVPMax == 'undefined'){TASK.NRSVPMax = 0;}
+    if (typeof TASK.RewardColor == 'undefined'){TASK.RewardColor = '#008000';}
+
+    // AUTOMATOR
+    if (typeof TASK.Automator == 'undefined'){TASK.Automator = 0;}
+    if (typeof TASK.AutomatorFilePath == 'undefined'){TASK.AutomatorFilePath = '';}
+    if (typeof TASK.CurrentAutomatorStage == 'undefined'){TASK.CurrentAutomatorStage = 0;}
+
+    // DISPLAY
+    if (typeof TASK.GridXOffsetInches == 'undefined'){TASK.GridXOffsetInches = 0}
+    if (typeof TASK.GridYOffsetInches == 'undefined'){TASK.GridYOffsetInches = 0}
+    if (typeof TASK.BackgroundColor2D == 'undefined') {TASK.BackgroundColor2D = '#7F7F7F';}
+    if (typeof TASK.HeadsupDisplayFraction == 'undefined') {TASK.HeadsupDisplayFraction = 0;}
+    if (typeof TASK.Photodiode == 'undefined'){TASK.Photodiode = 1;}
+    if (typeof TASK.THREEJScameraFOV == 'undefined'){TASK.THREEJScameraFOV=45;} 
+    if (typeof TASK.THREEJScameraZDist == 'undefined'){TASK.THREEJScameraZDist=10;} 
+    if (typeof TASK.THREEJSRenderRatio == 'undefined'){TASK.THREEJSRenderRatio=2;} 
+    if (typeof TASK.SaveImagesResolution == 'undefined'){TASK.SaveImagesResolution = 0;}
+    if (typeof TASK.DeviceConfig == 'undefined'){TASK.DeviceConfig = '';}
+
+    // DATA SAVING
+    if (typeof TASK.BQSaveDisplayTimes == 'undefined'){TASK.BQSaveDisplayTimes = 1;}
+    if (typeof TASK.BQSaveEye == 'undefined'){TASK.BQSaveEye = 1;}
+    if (typeof TASK.BQSaveTouch == 'undefined'){TASK.BQSaveTouch = 1;}
+
+    // MISCELLANEOUS
+    if (typeof TASK.CalibrateEye == 'undefined'){TASK.CalibrateEye = 0;}
+    if (typeof TASK.CalibrateEyeCrossTerms == 'undefined'){TASK.CalibrateEyeCrossTerms = 0;}
+    if (typeof TASK.CheckRFID == 'undefined'){TASK.CheckRFID = 0;}
+    if (typeof TASK.InterTrialInterval == 'undefined'){TASK.InterTrialInterval = 0}
+    if (typeof TASK.MinTrialDuration_AfterSampleCommandTrigger == 'undefined'){TASK.MinTrialDuration_AfterSampleCommandTrigger = -1}
+
     return 0; //need2loadParameters
   } catch (error) {
-    // 		console.error('loadParametersfromFirebase() error: ' + error)
+    console.error('loadParametersfromFirebase() error: ' + error)
     return 1; //need2loadParameters
   }
 }
@@ -406,19 +538,10 @@ async function saveParameterTexttoFirebase(parameter_text) {
           .child(ENV.ParamFileName)
           .put(blob, metadata);
         CURRTRIAL.lastFirebaseSave = new Date(response.metadata.timeCreated);
-        console.log(
-          'FIREBASE: Save TaskParams. Size:' +
-            Math.round(response.totalBytes / 1000) +
-            'kb'
-        );
+        console.log( 'FIREBASE: Save TaskParams. Size:' + Math.round(response.totalBytes / 1000) + 'kb');
       } catch (error) {
         console.log(error);
-        console.log(
-          'FIREBASE: Trying to write in ' +
-            timeout_seed * i +
-            'ms...on try ' +
-            i
-        );
+        console.log( 'FIREBASE: Trying to write in ' + timeout_seed * i + 'ms...on try ' + i);
         sleep(timeout_seed * i);
         i++;
         continue;
@@ -463,13 +586,7 @@ async function saveParameterstoFirebase() {
       ENV.ParamFileDate = new Date(filemeta.updated);
     } //if filemeta
 
-    console.log(
-      'FIREBASE: TASK written to disk as ' +
-        ENV.ParamFileName +
-        '. Size: ' +
-        Math.round(response.totalBytes / 1000) +
-        'kb'
-    );
+    console.log( 'FIREBASE: TASK written to disk as ' + ENV.ParamFileName + '. Size: ' + Math.round(response.totalBytes / 1000) + 'kb' );
     return 0; //need2saveParameters
   } catch (error) {
     console.error(error);
@@ -496,7 +613,8 @@ async function saveBehaviorDatatoFirebase(TASK, ENV, CANVAS, EVENTS) {
       },
       CLASSIFIERSTATS: EVENTS['trainseries'],
     };
-  } else if (TASK.Agent == 'SaveImages') {
+  }//IF Object training
+  else if (TASK.Agent == 'SaveImages') {
     dataObj = {
       TASK: TASK,
       ENV: ENV,
@@ -511,9 +629,7 @@ async function saveBehaviorDatatoFirebase(TASK, ENV, CANVAS, EVENTS) {
         // 'Arduino': EVENTS['timeseries']['Arduino'],
       },
     };
-    let dataFileName = ENV.DataFileName.split('/')
-      .slice(-1)[0]
-      .replaceAll(':', '_');
+    let dataFileName = ENV.DataFileName.split('/').slice(-1)[0].replaceAll(':', '_');
     // console.log(dataFileName);
     let dataFileHandle = await FLAGS.DirHandle.getFileHandle(dataFileName, {
       create: true,
@@ -525,7 +641,8 @@ async function saveBehaviorDatatoFirebase(TASK, ENV, CANVAS, EVENTS) {
     });
     await wrStream.write(blob);
     await wrStream.close();
-  } else {
+  }//ELSE IF saveImages
+  else {
     dataObj = {
       TASK: TASK,
       ENV: ENV,
@@ -537,10 +654,12 @@ async function saveBehaviorDatatoFirebase(TASK, ENV, CANVAS, EVENTS) {
         Battery: EVENTS['timeseries']['Battery'],
         RFIDTag: EVENTS['timeseries']['RFIDTag'],
         Weight: EVENTS['timeseries']['Weight'],
+        EffectorXY: EVENTS['timeseries']['EffectorData'],
+        DAQ: EVENTS['timeseries']['DAQ']
         // 'Arduino': EVENTS['timeseries']['Arduino'],
       },
-    };
-  }
+    };//dataObj
+  }//ELSE agent doing task (!model, !saveimages)
 
   // let datastr = JSON.stringify(dataObj); //no pretty print for now, saves space and data file is unwieldy to look at for larger numbers of trials
   let blob = new Blob([JSON.stringify(dataObj)], { type: 'application/json' });
@@ -549,15 +668,10 @@ async function saveBehaviorDatatoFirebase(TASK, ENV, CANVAS, EVENTS) {
   let metadata = { contentType: 'application/json' };
 
   // Upload the file and metadata
-  let response = await storage
-    .ref()
-    .child(ENV.DataFileName)
-    .put(blob, metadata);
+  let response = await storage.ref().child(ENV.DataFileName).put(blob, metadata);
   CURRTRIAL.lastFirebaseSave = new Date(response.metadata.updated);
-  console.log(
-    'FIREBASE: Save Data, ' + Math.round(response.totalBytes / 1000) + 'kb'
-  );
-} //UploadToFirebase
+  console.log('FIREBASE: Save Data, ' + Math.round(response.totalBytes / 1000) + 'kb');
+}//FUNCTION saveBehaviorDatatoFirebase
 
 //------------- LOAD AUDIO --------------//
 function loadSoundfromFirebase(src, idx) {

@@ -27,7 +27,7 @@
     "@types/lodash": "^4.14.175",
     "@types/lodash.clonedeep": "^4.5.6",
     "@types/mathjs": "^9.4.1",
-    "@types/tabulator-tables": "^4.9.4",
+    "@types/tabulator-tables": "^4.9.3",
     "@types/three": "^0.133.1",
     "@types/w3c-web-usb": "^1.0.5",
     "@types/web-bluetooth": "0.0.11",

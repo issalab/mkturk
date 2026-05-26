@@ -1,4 +1,4 @@
-function runCallibration() {
+function runcalibration() {
   let xactual = [];
   let yactual = [];
   let fixationMeanXY = [];
@@ -15,20 +15,12 @@ function runCallibration() {
   xtformInverse[2] = 0;
   ytformInverse[2] = 0;
 
-  for (
-    let i = 0, len = EVENTS['trialseries']['FixationGridIndex'].length;
-    i < len;
-    i++
-  ) {
-    if (EVENTS['trialseries']['FixationTouchEvent'][i] == 'theld') {
+  for (let i = 0, len = EVENTS['trialseries']['FixationGridIndex'].length; i < len; i++)
+  {
+    if (EVENTS['trialseries']['FixationTouchEvent'][i].includes('held')) {
       //ACTUAL TARGET LOCATIONS
-      xactual.push(
-        ENV.XGridCenter[EVENTS['trialseries']['FixationGridIndex'][i]]
-      );
-      yactual.push(
-        ENV.YGridCenter[EVENTS['trialseries']['FixationGridIndex'][i]] +
-          CANVAS.offsettop
-      );
+      xactual.push(ENV.XGridCenter[EVENTS['trialseries']['FixationGridIndex'][i]]);
+      yactual.push(ENV.YGridCenter[EVENTS['trialseries']['FixationGridIndex'][i]] + CANVAS.offsettop);
 
       //RAW EYE POSITIONS (invert back to raw coords)
       const xy = applyLinearTransform(
@@ -86,37 +78,59 @@ function runCallibration() {
 
 function evaluateCalibration() {
   // Only accumulate test trials and only if successful
-  let numHeld = 0;
   let xActual = [];
   let yActual = [];
   let xPred = [];
   let yPred = [];
-  for (let i = 0; i < EVENTS['trialseries']['FixationGridIndex'].length; i++) {
-    if (EVENTS['trialseries']['FixationTouchEvent'][i] == 'theld') {
-      numHeld += 1;
-      if (numHeld > TASK.CalibrateEye) {
-        //ACTUAL
-        xActual.push(
-          ENV.XGridCenter[EVENTS['trialseries']['FixationGridIndex'][i]]
-        );
-        yActual.push(
-          ENV.YGridCenter[EVENTS['trialseries']['FixationGridIndex'][i]] +
-            CANVAS.offsettop
-        );
 
-        //PREDICTED
-        xPred.push(EVENTS['trialseries']['FixationXYT'][0][i]);
-        yPred.push(EVENTS['trialseries']['FixationXYT'][1][i]);
-      } //IF test point
-    } //IF held
-  } //FOR i trials
+  let grididx
+  let xActualTarg = new Array(ENV.XGridCenter.length).fill([]).map(()=>new Array(0).fill([]));
+  let yActualTarg = new Array(ENV.XGridCenter.length).fill([]).map(()=>new Array(0).fill([]));
+  let xPredTarg = new Array(ENV.XGridCenter.length).fill([]).map(()=>new Array(0).fill([]));
+  let yPredTarg = new Array(ENV.XGridCenter.length).fill([]).map(()=>new Array(0).fill([]));
+
+  // xActualTarg = [ [], [] ]; // xActualTarg.fill([],0,ENV.XGridCenter.length);
+  // yActualTarg = [ [], [] ]; // yActualTarg.fill([],0,ENV.YGridCenter.length);
+  // xPredTarg = [ [], [] ]; // xPredTarg.fill([],0,ENV.XGridCenter.length);
+  // yPredTarg = [ [], [] ]; // yPredTarg.fill([],0,ENV.YGridCenter.length);
+  for (let i = 0; i < EVENTS['trialseries']['FixationGridIndex'].length; i++) {
+    if (EVENTS['trialseries']['FixationTouchEvent'][i].includes('held')) {
+      grididx = EVENTS['trialseries']['FixationGridIndex'][i]
+
+      //ACTUAL
+      xActual.push(ENV.XGridCenter[grididx]);
+      yActual.push(ENV.YGridCenter[grididx] + CANVAS.offsettop);
+
+      xActualTarg[grididx].push(ENV.XGridCenter[grididx]);
+      yActualTarg[grididx].push(ENV.YGridCenter[grididx] + CANVAS.offsettop);
+
+      //PREDICTED
+      xPred.push(EVENTS['trialseries']['FixationXYT'][0][i]);
+      yPred.push(EVENTS['trialseries']['FixationXYT'][1][i]);
+
+      xPredTarg[grididx].push(EVENTS['trialseries']['FixationXYT'][0][i]);
+      yPredTarg[grididx].push(EVENTS['trialseries']['FixationXYT'][1][i]);
+    }//IF held
+  }//FOR i trials
 
   // Compute GOF
   let mse = [];
   mse[0] = compute_mse(xPred, xActual);
   mse[1] = compute_mse(yPred, yActual);
+  mse[2] = xActual.length
 
-  return mse;
+  let mseTarg = [];
+  mseTarg[0] = [];
+  mseTarg[1] = [];
+  mseTarg[2] = [];
+  for (var i = 0; i <= yPredTarg.length-1; i++){
+    mseTarg[0][i] = compute_mse(xPredTarg[i], xActualTarg[i]);
+    mseTarg[1][i] = compute_mse(yPredTarg[i], yActualTarg[i]);
+    mseTarg[2][i] = xActualTarg[i].length
+  }//FOR i targets
+
+
+  return [mse, mseTarg];
 } //FUNCTION evaluateCalibration
 
 function fitLinearRegression(X, y) {
@@ -143,7 +157,7 @@ function applyLinearTransform(xEye, yEye, xform, yform) {
     yform
   );
   return [xScreen, yScreen];
-} //FUNCTION applyLinearTransform
+}//FUNCTION applyLinearTransform
 
 function compute_mse(predicted, actual) {
   if (predicted.length === undefined) {
@@ -155,6 +169,5 @@ function compute_mse(predicted, actual) {
   for (let i = 0, predLen = predicted.length; i < predLen; i++) {
     err += Math.pow(predicted[i] - actual[i], 2);
   }
-  console.log(err);
   return err / predicted.length; //compute mean
 } //FUNCTION	compute_mse

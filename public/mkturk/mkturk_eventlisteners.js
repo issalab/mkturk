@@ -1,310 +1,255 @@
-//================== TOUCH PROMISE ==================//
-// TouchHold either by clicking in or dragging in
-function hold_promise(touchduration, boundingBoxes, punishOutsideTouch) {
-  let boundingBoxesRtdb = {};
-  if (FLAGS.rtdbAgentNumConnections > 0) {
-    for (let i = 0; i < boundingBoxes.x.length; i++) {
-      boundingBoxesRtdb[`${i}`] = {};
-      for (let j = 0; j < boundingBoxes.x[i].length; j++) {
-        boundingBoxesRtdb[`${i}`][`x_${j}`] =
-          boundingBoxes.x[i][j] - CANVAS.offsetleft;
-      }
-      for (let k = 0; k < boundingBoxes.y[i].length; k++) {
-        boundingBoxesRtdb[`${i}`][`y_${k}`] =
-          ENV.ViewportPixels[1] - boundingBoxes.y[i][k];
-      }
-    }
-  }
-
-  if (FLAGS.rtdbAgentNumConnections > 0) {
-    let metaStr = 2;
-    FLAGS.rtdbDataRef.set({
-      x: -1,
-      y: -1,
-      boundingBoxes: boundingBoxesRtdb,
-      meta: metaStr,
-      timestamp: new Date().toJSON(),
-    });
-  }
+function hold_promise_simple(touchduration, outsideGracePeriod, broadcast_over_rtdb) {
   var resolveFunc;
   var errFunc;
+  let finished = false;
+  let cancel = () => finished = true;
+
   p = new Promise(function (resolve, reject) {
     resolveFunc = resolve;
     errFunc = reject;
+
+    cancel = () => {
+			// In case the promise has already resolved/rejected, don't run cancel behavior!
+			if (finished) { return; }
+
+			// Cancel-path scenario
+      // console.log('HoldPromise -- cancel (reject) promise since not finished yet')
+			reject();
+		};//CANCEL
   }).then(function (resolveval) {
     FLAGS.touchGeneratorCreated = 0;
+    finished = true
     return resolveval;
+  }).catch(e => {
+    // console.log('HoldPromise -- canceled promise throws error as return value of reject():' + e);
   });
+;
   function* waitforeventGenerator() {
     var touchevent;
     var return_event = { type: '', cxyt: [] };
     while (true) {
       touchevent = yield touchevent;
+      let boundingBoxes = FLAGS.bbTarget //fetch latest target bounding box
+      if (FLAGS.bbTarget.taskscreen.length == 0){
+        console.log('CONTINUE in hold_promise: no targets --> ignore agent event')
+        continue
+      }//IF no targets displayed yet, ignore any events (e.g., during transition between touchfix and sample)
 
-      if (ENV.Eye.TrackEye > 0) {
-        //Ignore touches if tracking eye, this will be removed in next commit since we want to use touches as surrogates when available
-        if (
-          touchevent.type.indexOf('touch') > 0 ||
-          touchevent.type.indexOf('mouse') > 0
-        ) {
-          continue;
-        }
-        touchevent.type = ENV.Eye.EventType;
+      if (typeof touchevent.type == 'undefined'){
+        console.log('Undefined touch event')
+        continue
+      }//IF no type specified
+
+      //0a-EVENT COORDS, 0b-EVENT BOX
+      //1a-INITIATE, 1b-CLICKED/DRAGGED, 1c-RELEASED
+      //2a-STORE VALS, 2b-LOG STATE & PLOT COORDS
+      
+    //==== 0a - EVENT COORDINATES ==================//
+      if (touchevent.type == 'touchstart' || touchevent.type == 'touchmove'){
+        var x = touchevent.targetTouches[0].pageX;
+        var y = touchevent.targetTouches[0].pageY;
+      }//IF touch
+      else if (touchevent.type == 'mousedown' || touchevent.type == 'mousemove' || touchevent.type == 'mouseup'){
+        var x = touchevent.pageX;
+        var y = touchevent.pageY;
+      }//IF mouse
+      else if (touchevent.type == 'touchend'){
+        x = FLAGS.effectorState.x
+        y = FLAGS.effectorState.y
+      }//IF touchend, it's a special case where need to store the prior touchmove value
+      else if (touchevent.type == 'eye'){
+        var x = touchevent.x_val;
+        var y = touchevent.y_val;
+      }//IF eye
+    //==== (END) 0a - EVENT COORDINATES ==================//
+
+    //==== 0b - EVENT BOX ================//
+      let boxID = -1;
+      let boxClass = -1;
+      let taskscreen = -1
+      for (var q = 0; q <= boundingBoxes.x.length - 1; q++) {
+        if ( x >= boundingBoxes.x[q][0] && x <= boundingBoxes.x[q][1] &&
+              y >= boundingBoxes.y[q][0] && y <= boundingBoxes.y[q][1]) {
+          boxID = q
+          boxClass = boundingBoxes.class[q];
+          taskscreen = boundingBoxes.taskscreen[q];
+        }//IF in bounding box
+      }//FOR q boxes
+
+      if (typeof(boundingBoxes.taskscreen[0]) == 'undefined'){
+        boxID = -1
+        boxClass = 99
+      }//IF no defined targets, default to inside
+    //==== (END) 0b - EVENT BOX ================//
+
+    //==== 1a - INITIATED ================//
+      let holdstart = FLAGS.effectorState.holdstart
+      if ( holdstart <= 0 && touchevent.type != 'touchend' && touchevent.type != 'mouseup'){
+        if (taskscreen == 'Touchfix' && touchevent.type != 'eye'
+        && touchevent.type != 'mousemove' && touchevent.type != 'touchmove'){
+          if (boxClass >= 0 && (touchevent.type == 'touchstart' || touchevent.type == 'mousedown') ){
+            holdstart = Date.now() - ENV.CurrentDate.valueOf();
+            CURRTRIAL.xhold = []
+            CURRTRIAL.yhold = []
+          }//IF clicked in box
+        }//ONLY IF fixation screen && mouse || touch, then have to click to initiate trial
+        else{
+          if (boxClass >= 0){
+            holdstart = Date.now() - ENV.CurrentDate.valueOf();
+            CURRTRIAL.xhold = []
+            CURRTRIAL.yhold = []
+          }//IF went into box or clicked in box  
+        }//ELSE in all other cases, can drag to activate target
+      }//IF hadn't moved into box or clicked in box yet
+    //==== (END) 1a - INITIATED ================//
+
+    //==== 1b - CLICKED/DRAGGED ================//
+      if ( touchevent.type == 'touchstart' || touchevent.type == 'mousedown' ||
+          touchevent.type == 'touchmove' || touchevent.type == 'mousemove' ||
+          touchevent.type == 'eye') {
+        if (boxClass >= 0) {
+          if ( holdstart >=0 && (Date.now()- ENV.CurrentDate.valueOf()) - holdstart >= touchduration){
+            return_event.type = 'held'
+          }//IF held long enough
+          else {
+            FLAGS.effectorState.timeOfLastGlanceInBox = Date.now() - ENV.CurrentDate.valueOf();
+            return_event.type = 'holding'  
+          }//ELSE
+        }//IF within a bounding box, just wait
+        else if ( boxClass<0 ){
+          if (performance.now() - tStartGenerator < outsideGracePeriod && holdstart <= 0){
+            holdstart = -1;
+            return_event.type = 'grace'
+          }//IF during start grace period, just wait
+          else if (Date.now() - ENV.CurrentDate.valueOf() - FLAGS.effectorState.timeOfLastGlanceInBox <= TASK.BlinkGracePeriod){
+            return_event.type = 'blinkgrace'
+          }//ELSE IF during eye blink grace period, just wait         
+          else {
+            return_event.type = 'broke_outside';
+          }//ELSE moved out not during grace
+        }//ELSE IF outside box
+      }//IF move
+    //==== (END) 1b - CLICKED/DRAGGED ================//
+
+    //==== 1c - RELEASED ================//
+      if (touchevent.type == 'touchend' || touchevent.type == 'mouseup') {
+        if (boxClass >= 0){
+          if (holdstart >= 0 && (Date.now()- ENV.CurrentDate.valueOf()) - holdstart >= touchduration){
+            return_event.type = 'held'
+          }//IF held long enough
+          else if (holdstart <= 0 && performance.now() - tStartGenerator < outsideGracePeriod){
+            //weird case: mouseup before initiated but most recently in box --> do nothing
+            return_event.type = 'weird_grace'
+          }
+          else {
+            return_event.type = 'broke_early'
+          }//ELSE released early
+        }//IF ended within box, state--> 'held'
+        else if (boxClass < 0){
+          if ( performance.now() - tStartGenerator < outsideGracePeriod && holdstart<=0){
+            holdstart = -1;
+            return_event.type = 'grace'
+          }//IF during start grace period, just wait
+          else {
+            return_event.type = 'broke_outside';
+          }//ELSE released outside of box not during grace  
+        }//ELSE IF outside box
+      }//IF touchend, mouseup
+    //==== (END) 1c - RELEASED ================//
+
+    //==== 2a - STORE VALS ==================//
+      let holdduration = 0
+      if (holdstart > 0){
+        holdduration = (Date.now()- ENV.CurrentDate.valueOf()) - holdstart
+
+        if (boxClass >= 0){
+          CURRTRIAL.xhold.push(x)
+          CURRTRIAL.yhold.push(y)
+        }//IF in box, also accumulate vals for current position  
+      }//IF started hold
+
+      let md_xy = [null,null]
+      if (CURRTRIAL.xhold.length >0){
+        md_xy = [math.median(CURRTRIAL.xhold), math.median(CURRTRIAL.yhold)]
       }
 
-      // THE END of touch or fixation, either held or broke
-      if (touchevent.type == 'theld' || touchevent.type == 'tbroken') {
-        return_event.type = touchevent.type;
+      FLAGS.effectorState.x = x
+      FLAGS.effectorState.y = y
+      FLAGS.effectorState.xmedian = md_xy[0]
+      FLAGS.effectorState.ymedian = md_xy[1]
+      FLAGS.effectorState.chosenbox = boxID
+      FLAGS.effectorState.choice = boxClass
+      FLAGS.effectorState.holdduration = holdduration
+      FLAGS.effectorState.holdstart = holdstart
+      FLAGS.effectorState.touchevent = touchevent.type
+      FLAGS.effectorState.state = return_event.type
+      FLAGS.effectorState.timestamp = Date.now() - ENV.CurrentDate.valueOf()
+    //==== (END) 2a - STORE VALS ==================//
 
-        if (ENV.Eye.TrackEye > 0) {
-          ENV.Eye.EventType = 'eyestart'; //Reset eye state
-        }
-        break; //EXIT LOOP
-      } //IF end of touch/fixation
-      else {
-        //keep processing touchstart, touchmove, touchend events
+    //==== 2b - LOG STATE, PLOT COORDS ==================//
+    if (!isNaN(x) && !isNaN(y)) {
+      if (touchevent.type != 'eye') {
+        logEVENTS('TouchData', [x, y, boxClass],'timeseries');
+      }//IF !eye event
+    }//IF x,y
+
+    // let holdGeneratorStatus = 
+    //       touchevent.type + ' ' + return_event.type + '__' +
+    //       'choice: ' + boxID + ',' + boxClass + '__' +
+    //       '(' + Math.round(x) + ',' + Math.round(y) + ', ' + holdduration + 'ms)' 
+    // console.log(holdGeneratorStatus)        
+
+    if (broadcast_over_rtdb){
+      broadcastBoundingBoxes(FLAGS.bbDisplay, 0)
+      broadcastBoundingBoxes(FLAGS.bbTarget, 1)  
+    }//IF not called along with displayTrial, then go ahead and broadcast from here
+
+    //PLOT ON PRACTICE SCREEN (depends on GLOBAL var xyplot)
+    if (FLAGS.savedata == 0) {
+      //old dots in blue
+      if (typeof xyplot != 'undefined') {
+        renderDotOnCanvas('blue', xyplot, 2, EYETRACKERCANVAS);
       }
+      xyplot = [x - CANVAS.offsetleft, y - CANVAS.offsettop];
 
-      //================== 1-GET XYT & CHOSEN BOX ==================//
-      //RECOVER X,Y coordinates from eye, touch, or click
-      if (
-        touchevent.type == 'touchstart' ||
-        touchevent.type == 'touchmove' ||
-        touchevent.type == 'eyestart' ||
-        touchevent.type == 'eyemove'
-      ) {
-        if (ENV.Eye.TrackEye > 0) {
-          var x = touchevent.x_val;
-          var y = touchevent.y_val;
-        } //IF eye
-        else {
-          var x = touchevent.targetTouches[0].pageX;
-          var y = touchevent.targetTouches[0].pageY;
-        } //ELSE touch
-      } //IF touchstart/move, eyestart/move
-      else if (
-        touchevent.type == 'mousedown' ||
-        touchevent.type == 'mousemove'
-      ) {
-        var x = touchevent.clientX;
-        var y = touchevent.clientY;
-      } //IF mousedown/move
-      var touchcxyt = [-1, x, y, Date.now() - ENV.CurrentDate.valueOf()];
+      //if x coordinate out-of-bounds, draw on border
+      if (xyplot[0] < 0) { xyplot[0] = 0 + 1; }
+      else if (xyplot[0] > EYETRACKERCANVAS.clientWidth) { xyplot[0] = EYETRACKERCANVAS.clientWidth - 1; }
 
-      //CHECK if in box
-      if (
-        FLAGS.waitingforTouches > 0 &&
-        touchevent.type != 'touchend' &&
-        touchevent.type != 'mouseup'
-      ) {
-        var chosenbox = -1;
+      //if y coordinate out-of-bounds, draw on border
+      if (xyplot[1] < 0) { xyplot[1] = 0 + 1; }
+      else if (xyplot[1] > EYETRACKERCANVAS.clientHeight) { xyplot[1] = EYETRACKERCANVAS.clientHeight - 1; }
 
-        //RECOVER BOX, if any
-        for (var q = 0; q <= boundingBoxes.x.length - 1; q++) {
-          if (
-            x >= boundingBoxes.x[q][0] &&
-            x <= boundingBoxes.x[q][1] &&
-            y >= boundingBoxes.y[q][0] &&
-            y <= boundingBoxes.y[q][1]
-          ) {
-            chosenbox = q;
-          } //if in bounding box
-        } //for q boxes
-        touchcxyt[0] = chosenbox;
+      //new dot in red if in box, otherwise yellow
+      if (boxClass != -1) { renderDotOnCanvas('red', xyplot, 2, EYETRACKERCANVAS); }
+      else { renderDotOnCanvas('yellow', xyplot, 2, EYETRACKERCANVAS); }
+    }//IF practice mode, overlay dots      
+    //==== (END) 2b - LOG STATE, PLOT COORDS ==================//
 
-        let touchDataObj = {
-          x: x - CANVAS.offsetleft,
-          y: ENV.ViewportPixels[1] - y,
-          boundingBoxes: boundingBoxesRtdb,
-          meta: chosenbox >= 0 ? 1 : 0,
-          timestamp: new Date().toJSON(),
-        };
-
-        if (!isNaN(touchDataObj.x) && !isNaN(touchDataObj.y)) {
-          if (FLAGS.rtdbAgentNumConnections > 0) {
-            FLAGS.rtdbDataRef.set(touchDataObj);
-          }
-
-          if (
-            !ENV.Eye.TrackEye &&
-            (TASK.BQSaveTouch === undefined || TASK.BQSaveTouch > 0)
-          ) {
-            logEVENTS(
-              'TouchData',
-              [touchDataObj.x, touchDataObj.y, touchDataObj.meta],
-              'timeseries'
-            );
-          }
-        }
-
-        //Accumulate cxyt in box for greater eyetracker accuracy
-        if (chosenbox != -1) {
-          CURRTRIAL.cxyt.push(touchcxyt); //also accumulate for current trial
-        } //IF in box, accumulate cxyt
-
-        // Plot the point on the screen if hold generator is on & in practice mode
-        if (FLAGS.savedata == 0) {
-          //old dots in blue
-          if (typeof xyplot != 'undefined') {
-            renderDotOnCanvas('blue', xyplot, 2, EYETRACKERCANVAS);
-          }
-          xyplot = [x - CANVAS.offsetleft, y - CANVAS.offsettop];
-
-          //IF out-of-bounds, draw on border
-          if (xyplot[0] < 0) {
-            xyplot[0] = 0 + 1;
-          } else if (xyplot[0] > EYETRACKERCANVAS.clientWidth) {
-            xyplot[0] = EYETRACKERCANVAS.clientWidth - 1;
-          }
-
-          if (xyplot[1] < 0) {
-            xyplot[1] = 0 + 1;
-          } else if (xyplot[1] > EYETRACKERCANVAS.clientHeight) {
-            xyplot[1] = EYETRACKERCANVAS.clientHeight - 1;
-          }
-
-          //new dot in yellow
-          if (chosenbox != -1) {
-            renderDotOnCanvas('red', xyplot, 2, EYETRACKERCANVAS);
-          } else {
-            renderDotOnCanvas('yellow', xyplot, 2, EYETRACKERCANVAS);
-          }
-        } //IF practice mode
-      } //IF acquired, get cxyt data
-      //================== (END) 1-GET XYT & CHOSEN BOX ==================//
-
-      //================== 2-INIATE HOLD ==================//
-      if (
-        !FLAGS.acquiredTouch &&
-        touchevent.type != 'touchend' &&
-        touchevent.type != 'mouseup' &&
-        ((TASK.DragtoRespond == 0 &&
-          touchevent.type != 'touchmove' &&
-          touchevent.type != 'mousemove') || //click in
-          TASK.DragtoRespond == 1) //drag in
-      ) {
-        //IF clicked outside box
-        if (TASK.DragtoRespond == 0 && chosenbox == -1) {
-          if (punishOutsideTouch) {
-            FLAGS.acquiredTouch = 0;
-            clearTimeout(touchTimer);
-            return_event.type = 'tbroken';
-            break;
-          } //IF touched outside fixation, advance to punish
-          else {
-            //do nothing for touching outside boxes
-            touchcxyt[0] = -1;
-          } //ELSE ignore outside touch if choice screen
-        } //IF touched outside box
-        else if (chosenbox >= 0) {
-          FLAGS.acquiredTouch = 1;
-
-          //EYE ENTERED BOX
-          if (ENV.Eye.TrackEye > 0) {
-            ENV.Eye.timeOfLastGlanceInBB = touchcxyt[3];
-            ENV.Eye.EventType = 'eyemove'; //in box, so future states are "eyemove" (from "undefined" in usb code)
-          }
-          //START TIMER touchduration milliseconds
-          if (touchduration > 0) {
-            if (touchTimer != null) {
-              window.clearTimeout(touchTimer);
-              touchTimer = null;
-            }
-
-            touchTimer = setTimeout(function () {
-              FLAGS.waitingforTouches--;
-              FLAGS.acquiredTouch = 0;
-              FLAGS.touchGeneratorCreated = 0; //block other callbacks
-              if (ENV.Eye.TrackEye > 0) {
-                ENV.Eye.EventType = 'theld';
-              }
-              waitforEvent.next({ type: 'theld' });
-            }, touchduration);
-          } //IF touch hold required
-          else {
-            FLAGS.waitingforTouches--;
-            FLAGS.acquiredTouch = 0;
-            FLAGS.touchGeneratorCreated = 0; //block other callbacks
-            return_event.type = 'theld';
-            break;
-          } //IF no touch hold required
-        } //IF touched inside box
-      } //IF !acquiredTouch
-      //================== (END) 2-INIATE HOLD ==================//
-
-      //================== 3-HOLDING ==================//
-      if (
-        (touchevent.type == 'touchmove' || touchevent.type == 'eyemove') &&
-        FLAGS.acquiredTouch
-      ) {
-        if (chosenbox >= 0) {
-          ENV.Eye.timeOfLastGlanceInBB = touchcxyt[3];
-        } //IF moving within a touch bounding box, just wait
-        else if (
-          ENV.Eye.TrackEye > 0 &&
-          Date.now() -
-            ENV.CurrentDate.valueOf() -
-            ENV.Eye.timeOfLastGlanceInBB <=
-            ENV.Eye.BlinkGracePeriod
-        ) {
-          console.log('outside but blink');
-        } //IF during eye blink grace period, just wait
-        else if (
-          chosenbox == -1 &&
-          (ENV.Eye.TrackEye == 0 ||
-            Date.now() -
-              ENV.CurrentDate.valueOf() -
-              ENV.Eye.timeOfLastGlanceInBB >
-              ENV.Eye.BlinkGracePeriod)
-        ) {
-          FLAGS.acquiredTouch = 0;
-          clearTimeout(touchTimer);
-          if (ENV.Eye.TrackEye > 0) {
-            ENV.Eye.EventType = 'eyestart';
-          }
-          return_event.type = 'tbroken';
-          break;
-        } //IF moved out of box
-      } //IF touch/eyemove
-      //================== (END) 3-HOLDING ==================//
-
-      //================== 4-END HOLD prematurely ==================//
-      if (
-        (touchevent.type == 'touchend' || touchevent.type == 'mouseup') &&
-        FLAGS.acquiredTouch
-      ) {
-        FLAGS.acquiredTouch = 0;
-        clearTimeout(touchTimer);
-        return_event.type = 'tbroken';
-        break;
-      } //IF ended touch early
-      //================== (END) 4-END HOLD prematurely ==================//
-    } //WHILE events
-    if (ENV.Eye.TrackEye) {
-      //Median x,y = final eye position estimate
-      var xs = [];
-      var ys = [];
-      if (CURRTRIAL.cxyt.length > 0) {
-        for (var q = 0; q <= CURRTRIAL.cxyt.length - 1; q++) {
-          xs.push(CURRTRIAL.cxyt[q][1]);
-          ys.push(CURRTRIAL.cxyt[q][2]);
-        } //FOR q samples
-        touchcxyt[1] = math.median(xs);
-        touchcxyt[2] = math.median(ys);
-      } //IF xy data
-      else {
-        console.log('NO EYE POINTS ' + CURRTRIAL.cxyt);
-      } //ELSE no xy samples
-    }
-    return_event.cxyt = touchcxyt;
+      if (return_event.type.includes('held') || return_event.type.includes('broke')){
+        break
+      }//IF held or broke, break out of loop
+    }//WHILE events
+    return_event.cxyt = [ FLAGS.effectorState.choice,
+      FLAGS.effectorState.xmedian, FLAGS.effectorState.ymedian,
+      FLAGS.effectorState.timestamp
+    ];
+    console.log('RESOLVE HOLD_PROMISE_SIMPLE --> ' + return_event.type + '__' + return_event.cxyt)
+    FLAGS.bbTarget = { taskscreen: [], indscreen: [], grid: [], x: [], y: [], ID: [], class: [], asset: [] } //Stale since have used and need to refresh with new ones from new display
     resolveFunc(return_event);
-  } //generator
+  }//Generator
+  FLAGS.effectorState.holdstart = -1
+  CURRTRIAL.xhold = [];
+  CURRTRIAL.yhold = [];
+
   waitforEvent = waitforeventGenerator(); // start async function
+  let tStartGenerator = performance.now()
   FLAGS.touchGeneratorCreated = 1;
-  CURRTRIAL.cxyt = [];
+  console.log('STARTING HOLD_PROMISE_SIMPLE')
+    
   waitforEvent.next(); //move out of default state
-  return p;
-} //FUNCTION hold_promise(touchduration,boundingBoxes,punishOutsideTouch)
+  return {p, cancel};
+}//FUNCTION hold_promise(touchduration,outsideGracePeriod)
 
 //================== MOUSE & TOUCH EVENTS ==================//
 function touchstart_listener(event) {
@@ -342,15 +287,7 @@ function touchend_listener(event) {
   }
 } //touchend_listener
 
-function doneEditingParams_listener(event) {
-  editParamsWaitforClick.next(1);
-  return;
-}
-function headsuptext_listener(event) {
-  FLAGS.need2saveParameters = 1;
-  return;
-}
-function doneTestingTask_listener(event) {
+async function donePracticingTask_listener(event) {
   event.preventDefault();
   console.log('START SAVING DATA');
   FLAGS.savedata = 1;
@@ -359,7 +296,7 @@ function doneTestingTask_listener(event) {
   FLAGS.purge = 0;
 
   document.querySelector('p[id=imageloadingtext]').style.display = 'none'; //if do style.visibility=hidden, element will still occupy space
-  document.querySelector('button[id=doneTestingTask]').style.display = 'none';
+  document.querySelector('button[id=donePracticingTask]').style.display = 'none';
   document.querySelector('button[id=stressTest]').style.display = 'none';
   document.querySelector('button[id=gridPoints]').style.display = 'none';
   EYETRACKERCANVAS.style.display = 'none';
@@ -368,7 +305,7 @@ function doneTestingTask_listener(event) {
 
 function stressTest_listener(event) {
   event.preventDefault();
-  console.log('User is done testing. Performing STRESS TEST');
+  console.log('User is done practicing. Performing STRESS TEST');
   FLAGS.savedata = 1;
   FLAGS.createnewfirestore = 1;
   FLAGS.purge = 1;
@@ -382,7 +319,7 @@ function stressTest_listener(event) {
   }
 
   document.querySelector('p[id=imageloadingtext]').style.display = 'none'; //if do style.visibility=hidden, element will still occupy space
-  document.querySelector('button[id=doneTestingTask]').style.display = 'none';
+  document.querySelector('button[id=donePracticingTask]').style.display = 'none';
   document.querySelector('button[id=gridPoints').style.display = 'none';
   return;
 }
@@ -395,11 +332,9 @@ function gridPoints_listener(event) {
     FLAGS.underlayGridPoints = 1;
     event.currentTarget.innerHTML = '<font color = red>G</font>';
     document.querySelector('p[id=imageloadingtext]').style.display = 'block';
-    document.querySelector('p[id=imageloadingtext]').style.visibility =
-      'visible';
+    document.querySelector('p[id=imageloadingtext]').style.visibility = 'visible';
     document.querySelector('button[id=stressTest]').style.display = 'block';
-    document.querySelector('button[id=stressTest]').style.visibility =
-      'visible';
+    document.querySelector('button[id=stressTest]').style.visibility = 'visible';
   } else if (FLAGS.underlayGridPoints == 1) {
     FLAGS.underlayGridPoints = 0;
     event.currentTarget.innerHTML = '<font color = black>G</font>';
@@ -440,32 +375,6 @@ function subjectIDPromise() {
 
   waitforClick = waitforclickGenerator(); // start async function
   waitforClick.next(); //move out of default state
-  return p;
-}
-
-//================== EDIT PARAMS PROMISE ==================//
-// Promise: Edit Parameters Text
-function editParamsPromise() {
-  var resolveFunc;
-  var errFunc;
-  p = new Promise(function (resolve, reject) {
-    resolveFunc = resolve;
-    errFunc = reject;
-    if (ENV.MTurkWorkerId) {
-      resolveFunc(ENV.MTurkWorkerId);
-    }
-  }).then(function (resolveval) {
-    console.log('User is done editing parameters.');
-  });
-  function* waitforclickGenerator() {
-    var imclicked = [-1];
-    while (true) {
-      imclicked = yield imclicked;
-      resolveFunc(imclicked);
-    }
-  }
-  editParamsWaitforClick = waitforclickGenerator(); // start async function
-  editParamsWaitforClick.next(); //move out of default state
   return p;
 }
 
@@ -567,7 +476,7 @@ async function moviefinish_promise() {
   waitforMovieFinish = waitforMovieGenerator(); // start async function
   waitforMovieFinish.next(); //move out of default state
   return p;
-} //FUNCTION moviefinish_promise
+}//FUNCTION moviefinish_promise
 
 function preemptRFID_listener(event) {
   event.preventDefault();
@@ -583,7 +492,7 @@ function quickLoad_listener(event) {
   waitforClick.next(1);
 
   if (ENV.WebUSBAvailable) {
-    if (QuickLoad.connectusb == 1 && port.connect == false) {
+    if (QuickLoad.connectusb == 1 && port.connected == false) {
       findUSBDevice(event);
     } //automatically call USB device finder
     else if (QuickLoad.connectusb == 0) {

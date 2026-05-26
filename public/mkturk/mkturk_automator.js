@@ -50,8 +50,7 @@ async function automateTask(automatorData, trialhistory) {
   // Read transition criteria from automatorData
   ENV.MinPercentCriterion = automatorData[currentStageIdx].MinPercentCriterion;
   ENV.MinTrialsCriterion = automatorData[currentStageIdx].MinTrialsCriterion;
-  ENV.CurrentAutomatorStageName =
-    automatorData[currentStageIdx].CurrentAutomatorStageName;
+  ENV.CurrentAutomatorStageName = automatorData[currentStageIdx].CurrentAutomatorStageName;
 
   // Calculate current pctcorrect and ntrials
   const runningHistoryStats = computeRunningHistory(
@@ -63,27 +62,23 @@ async function automateTask(automatorData, trialhistory) {
   ENV.StagePctCorrect = runningHistoryStats[0];
   ENV.StageNTrials = runningHistoryStats[1];
 
-  console.log(
-    `Performance history: ${ENV.StageNTrials} trials, pctcorrect=${ENV.StagePctCorrect}`
-  );
+  console.log(`Performance history: ${ENV.StageNTrials} trials, pctcorrect=${ENV.StagePctCorrect}`);
 
   // ---------- CHANGE TASK.STUFF TO AUTOMATOR DATA [ NEXT_STAGE ] ----------------------
   // If transition criteria are met,
-  if (
-    (TASK.Agent != "SaveImages" &&
-      ENV.StagePctCorrect > ENV.MinPercentCriterion &&
-      ENV.StageNTrials >= ENV.MinTrialsCriterion) ||
-    (TASK.Agent == "SaveImages" &&
-      TASK.NRSVP > 1 &&
-      typeof TQS != "undefined" &&
-      CURRTRIAL.num >= Math.ceil(TQS.samplebag_indices.length / TASK.NRSVP)) ||
-    (TASK.Agent == "SaveImages" &&
-      !(TASK.NRSVP > 1) &&
-      typeof TQS != "undefined" &&
+  if (    
+    ( TASK.Agent !='SaveImages' &&
+      ENV.StagePctCorrect >= ENV.MinPercentCriterion && ENV.StageNTrials >= ENV.MinTrialsCriterion )
+    ||
+    ( TASK.Agent =='SaveImages' && TASK.NRSVP>1 && typeof(TQS) !='undefined' &&
+      CURRTRIAL.num >= Math.ceil(TQS.samplebag_indices.length/TASK.NRSVP) - 1
+      )
+    ||
+    ( TASK.Agent =='SaveImages' && !(TASK.NRSVP>1) && typeof(TQS) !='undefined' &&
       CURRTRIAL.num >= TQS.samplebag_indices.length - 1)
   ) {
     // If finished final stage of automator,
-    if (automatorData.length <= TASK.CurrentAutomatorStage + 1) {
+    if (TASK.CurrentAutomatorStage + 1 >= automatorData.length) {
       // Stay in current stage settings, and turn automator off
       TASK.Automator = 0;
       FLAGS.need2saveParameters = 1;
@@ -132,8 +127,7 @@ async function automateTask(automatorData, trialhistory) {
 
     // Otherwise, advance to the next stage.
     TASK.CurrentAutomatorStage += 1;
-    automator_bool += 1;
-    const automatorEventStr = `SUBJECT ADVANCED TO STAGE ${
+    const automatorEventStr = `SUBJECT ADVANCED TO STAGE IDX ${
       currentStageIdx + 1
     } of ${automatorData.length - 1} with ${
       ENV.StagePctCorrect
@@ -146,7 +140,6 @@ async function automateTask(automatorData, trialhistory) {
     purgeTrackingVariables();
 
     // Update TASK
-
     const updatedTaskTransition = Object.fromEntries(
       Object.entries(
         Object.assign({}, TASK, automatorData[currentStageIdx + 1])
@@ -174,7 +167,7 @@ async function automateTask(automatorData, trialhistory) {
 
     FLAGS.need2saveParameters = 1;
     FLAGS.need2loadParameters = 1;
-  } //IF stage transition
+  }//IF stage transition
 
   FLAGS.automatortext = updateHeadsUpDisplayAutomator(
     ENV.CurrentAutomatorStageName,
@@ -186,12 +179,12 @@ async function automateTask(automatorData, trialhistory) {
   );
   updateHeadsUpDisplay();
   return;
-} //FUNCTION automateTask(automatorData,trialhistory)
+}//FUNCTION automateTask(automatorData,trialhistory)
 
 function stageHash(task) {
   // Returns a value that uniquely describes the automator and stage of the automator
-  let currentStageHashStr = "";
-  if (task.Automator != 0) {
+  let currentStageHashStr = '';
+  if (task.Automator > 0) {
     currentStageHashStr = `${task.AutomatorFilePath}_stage${task.CurrentAutomatorStage}`;
   } else {
     currentStageHashStr = "automator_off";

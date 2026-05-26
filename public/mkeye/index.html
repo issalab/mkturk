@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport">
+    <meta content="width=device-width, initial-scale=1">
+    <meta http-equiv="Content-Type">
+    <title>MkEye</title>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  </head>
+  <body>
+    <div>
+      <h3 id="titletext">MkEye</h3>
+    </div>
+
+    <div>
+      <h1 id="basicstatstext">---</h1>
+    </div>
+
+    <div>
+      <h2 id="effectortext">---</h2>
+    </div>
+
+    <div>
+      <h2 id="targettext">---</h2>
+    </div>
+
+    <div>
+      <label>Data Files:
+        <select id="file-list">
+        </select>
+      </label>
+    </div>
+
+    <div><canvas id="realtimeXYCanvas"></canvas></div>
+
+    <div>
+      <label for="xgain">g_x:</label>
+      <input type="text" id="xgain" name="xgain" placeholder="0">
+      <label for="ycross">g_yx:</label>
+      <input type="text" id="ycross" name="ycross" placeholder="0">
+      <label for="xoffset">x0:</label>
+      <input type="text" id="xoffset" name="xoffset" placeholder="0">      
+    </div>
+
+    <div>
+      <label for="xcross">g_xy:</label>
+      <input type="text" id="xcross" name="xcross" placeholder="0">
+      <label for="ygain">g_y:</label>
+      <input type="text" id="ygain" name="ygain" placeholder="0">
+      <label for="yoffset">y0:</label>
+      <input type="text" id="yoffset" name="yoffset" placeholder="0">      
+      <button type="button" id="uploadCalib"> UPLOAD to mkturk</button>
+    </div>
+
+
+    <div><canvas id="fixationXYCanvas"></canvas></div>
+    <div>
+      <textarea id="instantCalibFixation_text" name="instantCalibFixation_text" rows="7" cols="60" readonly placeholder="[]"  style="visibility:hidden"></textarea>
+    </div>
+
+    <div><canvas id="samplefixationXYCanvas"></canvas></div>
+    <div>
+      <textarea id="instantCalibSampleFixation_text" name="instantCalibSampleFixation_text" rows="7" cols="60" readonly placeholder="[]" style="visibility:hidden"></textarea>
+    </div>
+
+    <div><canvas id="choiceXYCanvas"></canvas></div>
+
+    <div><canvas id="trajectoryXYCanvas"></canvas></div>
+
+    <div><canvas id="boundingBoxesCanvas"></canvas></div>
+    
+	  <!-- ======== FIREBASE ======== -->
+    <!-- Import and initialize the Firebase SDK (on-demand SDK configuration)-->
+    <script src="/__/firebase/8.2.3/firebase-app.js"></script>
+    <script src="/__/firebase/8.2.3/firebase-auth.js"></script>
+    <script src="/__/firebase/8.2.3/firebase-storage.js"></script>
+		<script src="/__/firebase/8.2.3/firebase-database.js"></script>
+    <script src="/__/firebase/8.2.3/firebase-firestore.js"></script>
+		<script src="/__/firebase/init.js"></script>
+
+		<!-- <script src="/__/firebase/8.2.3/firebase-functions.js"></script> -->
+  	<!-- ======== (END) FIREBASE ======== -->
+
+    <!-- Math package -->
+	  <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjs/11.4.0/math.min.js"></script>
+    <script src="mkeye_charts.js"></script>
+    <script src="mkeye_fileutils.js"></script>
+    <script src="mkeye_analysis.js"></script>
+    <script src="mkeye_callbacks.js"></script>
+    <script src="mkeye.js"></script>
+  </body>
+</html>

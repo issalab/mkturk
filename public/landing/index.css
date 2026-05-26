@@ -1,7 +1,6 @@
 
 
 #mkfiles-link {
-  
   display: block;
   font-family: Roboto;
   color: white;
@@ -13,7 +12,46 @@
   text-align: center;
 }
 
-#liveplot2-link {
+#mkguide-link {
+  display: block;
+  font-family: Roboto;
+  /* color: #DC96BE; */
+  color: #afdfff;
+  font-style: normal;
+  font-weight: 700;
+  font-size: 70px;
+  line-height: 70px;
+  text-decoration: none;
+  text-align: center;
+}
+
+#mkdictionary-link {
+  display: block;
+  font-family: Roboto;
+  /* color: #DC96BE; */
+  color: #afdfff;
+  font-style: normal;
+  font-weight: 600;
+  font-size: 40px;
+  line-height: 40px;
+  text-decoration: none;
+  text-align: center;
+}
+
+
+#mkeye-link {
+  display: block;
+  font-family: Roboto;
+  color: white;
+  font-style: normal;
+  font-weight: 700;
+  font-size: 60px;
+  line-height: 60px;
+  text-decoration: none;
+  text-align: center;
+}
+
+#liveplot-link {
   display: block;
   font-family: Roboto;
   color: white;
@@ -61,13 +99,13 @@
   text-align: center;
 }
 
-#mkphotodiode-link {
+#mksensor-link {
   display: block;
   font-family: Roboto;
   color: white;
   font-style: normal;
   font-weight: 700;
-  font-size: 40px;
+  font-size: 50px;
   line-height: 40px;
   text-decoration: none;
   text-align: center;
@@ -79,8 +117,8 @@
   color: white;
   font-style: normal;
   font-weight: 700;
-  font-size: 40px;
-  line-height: 40px;
+  font-size: 50px;
+  line-height: 50px;
   text-decoration: none;
   text-align: center;
 }

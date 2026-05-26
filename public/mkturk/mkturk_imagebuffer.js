@@ -22,7 +22,6 @@ constructor(){
 
 // ------- Image blob getting functions ----------------------------
 async get_by_name(filename){
-
 	try{
 		// Requested image not in buffer. Add it, then return. 
 		if (filename in this.cache_dict){
@@ -37,7 +36,7 @@ async get_by_name(filename){
 	catch(error){
 		console.error("get_by_name failed with error:", error)
 	}
-}
+}//FUNCTION get_by_name
 
 // ------- Buffer-related functions --------------------------------
 // Add specific image, or list of images, to cache before moving on.
@@ -45,15 +44,14 @@ async remove_image_from_cache(filename){
 	window.URL.revokeObjectURL(this.cache_dict[filename].src)
 	delete this.cache_dict[filename];
 	return
-}
+}//FUNCTION remove_image_from_cache
 
 async clear_cache(){
 	return
-}
+}//FUNCTION clear_cache
 
 async cache_these_images(imagenames){
 	try{
-
 		if (typeof(imagenames) == "string" && imagenames != ""){
 			var filename = imagenames; 
 			if (!(filename in this.cache_dict)){
@@ -68,7 +66,6 @@ async cache_these_images(imagenames){
 				return 
 			}
 		}
-
 		else if (typeof(imagenames) == "object"){
 			var requested_imagenames = []
 			for (var i = 0; i < imagenames.length; i ++){
@@ -103,5 +100,5 @@ async cache_these_images(imagenames){
 	catch(error){
 		console.error("cache_these_images failed with error:", error)
 	}
-}
-}
+}//FUNCTION cache_these_images
+}//CLASS ImageBuffer

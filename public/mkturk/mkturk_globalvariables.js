@@ -19,12 +19,18 @@ var IMAGES = {
     Ordered_Testbag_Filenames: {},
   },
 };
+IMAGEMETA = {};
+
+var audiotcontext
+var gainNode
+var automator_data = {};
+var trialhistory = {};
+var mkm; // XXconverted to globalvar, not sure about this (Oct 29, 2022, EI)
 
 var OBJECTS = {};
 var CAMERAS = {};
 var LIGHTS = {};
 
-var ImageRewardList = {};
 var QuickLoad = { load: 0, agent: '', connectusb: 0 };
 
 ENV.ResearcherDisplayName = '';
@@ -34,8 +40,11 @@ ENV.USBDeviceType = '';
 ENV.USBDeviceName = '';
 ENV.Subject = '';
 ENV.AgentRFID = 'XX';
+ENV.AgentBirthdate = '';
+ENV.AgentSex = '';
 ENV.CurrentDate = new Date();
 ENV.CanvasRatio = 1;
+ENV.BackingStoreRatio = 1;
 ENV.DevicePixelRatio = 1;
 ENV.THREEJStoInches = 1;
 ENV.FixationRadius = 0;
@@ -47,7 +56,6 @@ ENV.ChoiceRadius = 0;
 ENV.ChoiceColor = 'white';
 ENV.XGridCenter = [];
 ENV.YGridCenter = [];
-ENV.RewardDuration = NaN;
 ENV.ParamFileName = '';
 ENV.ParamFileRev = '';
 ENV.ParamFileDate = ''; //stores complete path to subject parameter file
@@ -92,6 +100,8 @@ ENV.PhysicalPPI = -1;
 ENV.FrameRateDisplay = 60;
 ENV.FrameRateMovie = 60;
 ENV.PrimeScenes = 1;
+ENV.NumPrebufferTrials = 300;
+ENV.MaxTrialsPerFile = 500;
 
 ENV.Task = '';
 
@@ -106,9 +116,6 @@ ENV.Eye = {};
 
 //Eye states
 ENV.Eye.TrackEye = 0;
-ENV.Eye.EventType = 'eyestart';
-ENV.Eye.timeOfLastGlanceInBB = -1;
-ENV.Eye.BlinkGracePeriod = 200;
 
 //Calibration
 ENV.Eye.calibration = 0;
@@ -119,10 +126,18 @@ ENV.Eye.NCalibPointsTrain = 0;
 ENV.Eye.NCalibPointsTest = 0;
 ENV.Eye.CalibTrainMSE = [];
 ENV.Eye.CalibTestMSE = [];
+ENV.Eye.CalibTestMSETarg = {x: [], y: [], n: []};
+
+ENV.EffectorSaveJSONDataRelativetoFixationDotDisplayMS = -500;
 
 ENV.PhotodiodeSquareSizeInches = 1;
 ENV.PhotodiodeSquareX = 0;
 ENV.PhotodiodeSquareY = 0;
+
+ENV.RewardSquareSizeInches = 0 //will be set to one-third size of visiblecanvas
+ENV.PunishSquareSizeInches = 0 //will be set to full size of visiblecanvas
+ENV.RewardSquareXY = [];
+ENV.PunishSquareXY = [];
 
 //================ OTHER GLOBALS (NOT SAVED) ================//
 var FLAGS = {}; // Global that keeps track of the task's requests to the Dropbox/server/disk/whatever; buffering requests; etc.
@@ -139,11 +154,18 @@ FLAGS.savedata = 0;
 FLAGS.stage = 0;
 FLAGS.imagesPresent = 0;
 FLAGS.stickyresponse = 0;
+FLAGS.bbTarget = { taskscreen: [], indscreen: [], grid: [], x: [], y: [], ID: [], class: [], asset: [] }
+FLAGS.bbDisplay = { taskscreen: [], indscreen: [], grid: [], x: [], y: [], ID: [], class: [], asset: [] } //accumulate all bounding boxes for this frame
+FLAGS.effectorState = {x: 0, y: 0, xmedian: 0, ymedian: 0,
+                        chosenbox: -1, choice: -1,
+                        holdstart: -1, holdduration: 0,
+                        touchevent: '', state: '',
+                        timestamp: Date.now() - ENV.CurrentDate.valueOf(),
+                        event_xytt: [],
+                      }//FLAGS.effectorState
+
 
 FLAGS.waitingforTouches = 0;
-FLAGS.touchduration = -1;
-FLAGS.punishOutsideTouch = 0;
-FLAGS.acquiredTouch = 0;
 FLAGS.touchGeneratorCreated = 0;
 FLAGS.runPump = 0;
 FLAGS.firestorecreatedoc = 0;
@@ -152,10 +174,11 @@ FLAGS.firestoretimeron = 0;
 FLAGS.underlayGridPoints = 0;
 FLAGS.RFIDGeneratorCreated = 0;
 FLAGS.automatortext = '';
-FLAGS.rtdbAgentNumConnections = null;
-FLAGS.pingedBQEyeTable=0;
-FLAGS.pingedBQTouchTable=0;
-FLAGS.pingedBQDisplayTimesTable=0;
+FLAGS.rtdbAgentNumConnections = 1;
+
+FLAGS.filecodeSent = 0;
+FLAGS.filecode = [-1,-1,-1,-1,-1,-1];
+FLAGS.pulse_tstart = -1;
 
 var CANVAS = {};
 var CANVAS = {
@@ -177,18 +200,39 @@ var EYETRACKERCANVAS = document.getElementById('canvaseyetracker');
 var frame = {
   current: 0,
   shown: [],
+  frames: [],
 };
+frame.reset = function(framesequence) {
+  this.shown = [];
+  this.frames = [];
+  this.current = 0;
+  for (let i in framesequence) {
+    this.shown[i] = 0;
+    this.frames[i] = [i];
+  }//FOR i frames
+}//frame_prime.reset(framesequence)
 
 var frame_prime = {
   current: 0,
   shown: [],
+  frames: [],
 };
+frame_prime.reset = function(framesequence) {
+  this.shown = [];
+  this.frames = [];
+  this.current = 0;
+  for (let i in framesequence) {
+    this.shown[i] = 0;
+    this.frames[i] = [i];
+  }//FOR i frames
+}//frame_prime.reset(framesequence)
 
 
 // States of the current trial, entered into running trialhistory
 var CURRTRIAL = {};
 CURRTRIAL.reset = function () {
   this.num = 0;
+  this.blocknum = 0;
   this.starttime = NaN;
   this.reinforcementtime = NaN;
   this.endtime = NaN;
@@ -207,6 +251,8 @@ CURRTRIAL.reset = function () {
   this.correctitem = NaN;
   this.correct = [];
   this.nreward = NaN;
+  this.nclipshown = NaN;
+  this.samplereward = NaN;
   this.fixationtouchevent = '';
   this.samplefixationtouchevent = '';
   this.responsetouchevent = '';
@@ -216,7 +262,8 @@ CURRTRIAL.reset = function () {
   this.tsequencedesired = [];
   this.tsequenceactualclip = [];
   this.tsequencedesiredclip = [];
-  this.xyt = [];
+  this.xhold = [];
+  this.yhold = [];
 
   this.sample_scenebag_label = [];
   this.sample_scenebag_index = [];
@@ -229,6 +276,7 @@ EVENTS.reset_trialseries = function () {
   this.trialnum = CURRTRIAL.num;
   this.trialseries = {};
   this.imageseries = {};
+  this.trialseries.BlockNum = {};
   this.trialseries.Sample = {};
   this.trialseries.Test = {};
   this.trialseries.CorrectItem = {};
@@ -262,23 +310,29 @@ EVENTS.reset_timeseries = function () {
   this.timeseries.EyeData = {};
   this.timeseries.Arduino = {};
   this.timeseries.TouchData = {};
+  this.timeseries.EffectorData= {t: [],x: [],y: [], w: [], a: [] };
+  this.timeseries.DAQ = {}
+  this.timeseries.DAQ['d0'] = {treceived:[],trial:[],tstart:[],tend:[],filecode:[],mktrial:[],mkblock:[],mkfilecode:[]}
+  this.timeseries.DAQ['d1'] = {treceived:[],trial:[],tstart:[],tend:[],filecode:[],mktrial:[],mkblock:[],mkfilecode:[]}
+  this.timeseries.DAQ['ph'] = {treceived:[],trise:[],tdrop:[],threshrise:[],threshdrop:[],dursamplecommand:[],mktrial:[],mkblock:[],mkfilecode:[]}
+
+  //Initialize EffectordataLocal
+  for (var i=0; i<ENV.MaxTrialsPerFile; i++){
+    this.timeseries.EffectorData.t[i] = new Int16Array(0)
+    this.timeseries.EffectorData.x[i] = new Int16Array(0)
+    this.timeseries.EffectorData.y[i] = new Int16Array(0)
+    this.timeseries.EffectorData.w[i] = new Int16Array(0)
+    this.timeseries.EffectorData.a[i] = new Int16Array(0)
+  }//FOR i max trials per file
 
   // Initialize battery value
   if (ENV.BatteryAPIAvailable) {
     //Monitor Battery - from: http://www.w3.org/TR/battery-status/
     navigator.getBattery().then(function (batteryobj) {
-      logEVENTS(
-        'Battery',
-        [batteryobj.level, batteryobj.dischargingTime],
-        'timeseries'
-      );
+      logEVENTS( 'Battery', [batteryobj.level, batteryobj.dischargingTime],'timeseries');
 
       batteryobj.addEventListener('levelchange', function () {
-        logEVENTS(
-          'Battery',
-          [batteryobj.level, batteryobj.dischargingTime],
-          'timeseries'
-        );
+        logEVENTS('Battery',[batteryobj.level, batteryobj.dischargingTime],'timeseries');
       }); //batteryobj.addEventListener
     }); //navigator.getBattery()
   } //IF battery API present
@@ -299,8 +353,6 @@ var sounds = {
   serial: [0, 1, 2, 3, 4],
   buffer: [],
 };
-var boundingBoxesFixation = { x: [], y: [] }; //where the fixation touch targets are on the canvas
-var boundingBoxesSampleFixation = { x: [], y: [] };
 var waitforClick; //variable to hold generator
 var waitforEvent; //variable to hold generator
 var touchTimer; //variable to hold timer
@@ -321,9 +373,9 @@ function updateTrialHistory() {
   trialhistory.starttime.push(CURRTRIAL.starttime);
   trialhistory.response.push(CURRTRIAL.response);
   trialhistory.correct.push(CURRTRIAL.correct);
-}
+}//FUNCTION updateTrialHistory
 
-function logEVENTS(eventname, eventval, eventtype) {
+function logEVENTS(eventname, eventval, eventtype,timestamp = Date.now()) {
   //log events for a trial
   if (eventtype == 'trialseries' || eventtype == 'imageseries') {
     //index by trial
@@ -349,11 +401,10 @@ function logEVENTS(eventname, eventval, eventtype) {
   } else if (eventtype == 'timeseries') {
     //running index
     var indevent = Object.keys(EVENTS[eventtype][eventname]).length;
-    var trialtime = [EVENTS.trialnum, new Date(Date.now()).toJSON()];
-    EVENTS[eventtype][eventname][indevent.toString()] =
-      trialtime.concat(eventval);
+    var trialtime = [EVENTS.trialnum, new Date(timestamp).toJSON()];
+    EVENTS[eventtype][eventname][indevent.toString()] = trialtime.concat(eventval);
   }
-}
+}//FUNCTION logEVENTS
 
 function purgeTrackingVariables(src) {
   // Purges heresies committed in the test period
@@ -371,20 +422,16 @@ function purgeTrackingVariables(src) {
     )}_${ENV.Subject}.json`;
   } else {
     ENV.DataFileName =
-      DATA_SAVEPATH +
-      ENV.Subject +
-      '/' +
-      datestr.slice(0, datestr.indexOf('.')) +
-      '_' +
-      ENV.Subject +
-      '.json';
+      DATA_SAVEPATH + ENV.Subject +
+      '/' + datestr.slice(0, datestr.indexOf('.')) +
+      '_' + ENV.Subject + '.json';
   }
-  ENV.FirestoreDocRoot =
-    datestr.slice(0, datestr.indexOf('.')) + '_' + ENV.Subject;
+  ENV.FirestoreDocRoot = datestr.slice(0, datestr.indexOf('.')) + '_' + ENV.Subject;
 
   if (FLAGS.waitingforTouches > 0 || FLAGS.purge == 1) {
     // purge requested by user at beginning of trial during fixation (most likely)
     CURRTRIAL.num = 0;
+    CURRTRIAL.blocknum = 0;
     EVENTS.trialnum = 0;
     CURRTRIAL.starttime = Date.now() - ENV.CurrentDate.valueOf();
     logEVENTS('StartTime', CURRTRIAL.starttime, 'trialseries');
@@ -393,8 +440,10 @@ function purgeTrackingVariables(src) {
     CURRTRIAL.num = -1;
   }
 
-  FLAGS.sampleblockcount = 0;
   FLAGS.consecutivehits = 0;
+  FLAGS.firestorelastsavedtrial=0;
+  FLAGS.filecodeSent = 0;
+  FLAGS.filecode = [-1,-1,-1,-1,-1,-1];
 
   return;
-}
+}//FUNCTION purgeTrackingVariables

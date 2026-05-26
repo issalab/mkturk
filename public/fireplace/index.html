@@ -21,7 +21,7 @@
   // Initialize Firebase
   var config = {
     apiKey: "AIzaSyA0fbv2VqE-AfF6V_nxSSXCEqaTlBlZnTI",
-    authDomain: "sandbox-ce2c5.firebaseapp.com",
+    authDomain: "https://mkturk.com",
     databaseURL: "https://sandbox-ce2c5.firebaseio.com",
     projectId: "sandbox-ce2c5",
     storageBucket: "sandbox-ce2c5.appspot.com",
@@ -191,10 +191,10 @@ async function queryFirestoreCallback(querySnapshot){
               console.log('Doc contains no response data, skipping')
           }
       }
-      else if (doc.data().Agent == "Eliaso" || doc.data().Agent == "Sophieo" 
+      else if (doc.data().Agent == "Eliasoo" || doc.data().Agent == "Sophieo" 
                 || doc.data().Agent == "Youno" || doc.data().Agent == "Hectoro"
                 || doc.data().Agent == "Ericao" || doc.data().Agent == "Tahereho"
-                || doc.data.Agent == "Alexo"){
+                || doc.data().Agent == "Alexo" || doc.data().Agent == "Ashleyo"){
         console.log('Doc is debug file of Eliaso/Sophieo/Youno, skipping')
       }
       else //contains trial data

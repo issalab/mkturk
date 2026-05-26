@@ -3,100 +3,44 @@ var port = {
   statustext_sent: '',
   statustext_received: '',
   connected: false,
-};
-var serial = {};
-var eyebuffer = {
-  accumulateEye: 0,
-  maxbufferlength_HARDCODED: 17,
-  buffer: '',
-  numeyes_HARDCODED: 2,
-  fail: 0,
-  success: 0,
-  dt: 0,
-  tstart: 0,
+
+  USBDeviceType: '',
+  USBDeviceName: '',
 };
 
-navigator.usb.onconnect = function (device) {
-  if (typeof port.connected == 'undefined' || port.connected == false) {
-    port.statustext_connect = 'ATTEMPTING TO RECONNECT USB DEVICE...';
-    console.log(port.statustext_connect);
-    updateHeadsUpDisplayDevices();
+let usbDeviceWorker = new Worker('mkturk_usbworker.js');
 
-    var event = {};
-    event.type = 'Reconnect';
-    findUSBDevice(event);
-  }
-};
+async function usbAutoConnectPromise(){
+  return new Promise((res, rej) => {
+    const channel = new MessageChannel(); 
 
-// function autoconnectLoop(device){
-// 	if (typeof(port.connected) == 'undefined' || port.connected == false){
-// 		navigator.usb.onconnect(device)
-// 		setTimeout(autoconnectLoop, 5000) //attempt to autoreconnect every 5 seconds
-// 	}
-// } //FUNCTION autoconnectLoop
+    channel.port1.onmessage = ({data}) => {
+      if (data.connected == true){
+        port.connected = true
+        localStorage.setItem('ConnectUSB', 1);
+        hideHardwareButton()
+      }
+      else { port.connected = false }
+      port.statustext_connect = data.val
+      updateHeadsUpDisplayDevices();
+  
+      channel.port1.close();
+      if (data.error) {
+        rej(data.error);
+      }
+      else {
+        res(data.val);
+      }
+    };//channel.onmessage
+    usbDeviceWorker.postMessage({action: 'connect', val: 'AutoConnect'},[channel.port2]);
+  })
+}//FUNCTION usbAutoConnectPromise()
 
-navigator.usb.ondisconnect = function (device) {
-  // USB device disconnected
-  port.connected = false;
-  port.statustext_connect = 'USB DEVICE DISCONNECTED';
-  FLAGS.runPump = 0;
-  console.log(port.statustext_connect);
-  updateHeadsUpDisplayDevices();
 
-  // Expose button in case need to manually reconnect (navigator.usb.onconnect doesn't seem to work on all chrome for android)
-  document.querySelector('button[id=connectusb]').style.display = 'block';
-  document.querySelector('button[id=connectusb]').style.visibility = 'visible';
-  document.querySelector('button[id=connectusb]').style.top = '5%';
-
-  // 	// Attempt to auto-reconnect
-  // 	autoconnectLoop(device)
-};
-
-// STEP 0: Port Initialization - Open (instantiate) port before assigning callbacks to it
 async function findUSBDevice(event) {
-  // STEP 1A: Auto-Select first port
-  if (event.type == 'AutoConnect' || event.type == 'Reconnect') {
-    // 		ports = await getPorts()
-    //STEP 1A: GetPorts - Automatic at initialization
-    // -Enumerate all attached devices
-    // -Check for permission based on vendorID & productID
-    devices = await navigator.usb.getDevices();
-    ports = devices.map((device) => new serial.Port(device)); //return port
-
-    if (ports.length == 0) {
-      port.statustext_connect =
-        'NO USB DEVICE automatically found on page load';
-      console.log(port.statustext_connect);
-      updateHeadsUpDisplayDevices();
-    } else {
-      var statustext = '';
-      if (event.type == 'AutoConnect') {
-        statustext = 'AUTO-CONNECTED USB DEVICE ON PAGE LOAD!';
-      } else if (event.type == 'Reconnect') {
-        statustext = 'RECONNECTED USB DEVICE!';
-      }
-      port = ports[0];
-      try {
-        await port.connect();
-      } catch (error) {
-        console.log(error);
-      }
-      port.statustext_connect = statustext;
-      console.log(port.statustext_connect);
-      updateHeadsUpDisplayDevices();
-      localStorage.setItem('ConnectUSB', 1);
-
-      //Hide manual connect button upon successful connect
-      document.querySelector('button[id=connectusb]').style.display = 'none';
-    }
-  }
-
-  // STEP 1B: User connects to Port
-  if (
-    event.type == 'pointerup' ||
-    event.type == 'touchend' ||
-    event.type == 'mouseup'
-  ) {
+  //User manually connects to Port
+  if ( event.type == 'pointerup' || event.type == 'touchend' || event.type == 'mouseup')
+  {
     event.preventDefault(); //prevents additional downstream call of click listener
     try {
       //STEP 1B: RequestPorts - User based
@@ -112,103 +56,124 @@ async function findUSBDevice(event) {
       ];
 
       device = await navigator.usb.requestDevice({ filters: filters });
-      port = new serial.Port(device); //return port
-
-      await port.connect();
-
-      port.statustext_connect = 'USB DEVICE CONNECTED BY USER ACTION!';
-      console.log(port.statustext_connect);
-      updateHeadsUpDisplayDevices();
-      localStorage.setItem('ConnectUSB', 1);
-
-      //Hide manual connect button upon successful connect
-      document.querySelector('button[id=connectusb]').style.display = 'none';
+      if (port.connected == false){
+        usbDeviceWorker.postMessage({action: 'connect', val: 'ManualConnect'})//postMessage(get-device)        
+      }//(in case of a reconnect event) IF hadn't allready reconnected in time it took user to select
     } catch (error) {
       console.log(error);
     }
     waitforClick.next(1);
-  }
-} //FUNCTION findUSBDevice
+  }//IF user select
+}//FUNCTION findUSBDevice
 
-//============= SERIAL OBJECT =====================//
+//Update upon message output from the device
+usbDeviceWorker.onmessage = function(event) {
+  if (event.data.message == 'USBDisconnect'){
+    port.connected = false
+    FLAGS.runPump = 0;
+    showHardwareButton()
 
-//PORT - attach device(s)
-serial.Port = function (device) {
-  this.device_ = device;
-};
-
-//PORT - connect
-serial.Port.prototype.connect = async function () {
-  await this.device_.open();
-
-  if (this.device_.configuration === null) {
-    return this.device_.selectConfiguration(1);
-  }
-
-  await this.device_.claimInterface(2);
-  await this.device_.selectAlternateInterface(2, 0);
-  await this.device_.controlTransferOut({
-    requestType: 'class',
-    recipient: 'interface',
-    request: 0x22, //vendor-specific request (i.e. enable channels)
-    value: 0x01, //requested channels
-    index: 0x02, //interface 2 is the recipient
-  }); //send controlTransferOut to work with channels
-
-  ENV.USBDeviceType = 'microcontroller';
-  ENV.USBDeviceName = 'Arduino Leonardo';
-
-  this.connected = true;
-  readLoop(this);
-  // pingUSB()
-}; //port.connect
-
-//PORT  - onReceive
-serial.Port.prototype.onReceive = (data) => {
-  let textDecoder = new TextDecoder();
-  let onReceiveTime = Date.now();
-  let textReceived = textDecoder.decode(data);
-  port.statustext_received = textReceived;
+    console.log(event.data.val);
+    port.statustext_connect = event.data.val
+    updateHeadsUpDisplayDevices();
+    return
+  }//IF disconnected usb
   
-  if (textReceived.includes('sa')) {
-    if (textReceived.includes('1')) {
-      logEVENTS('SampleCommandReturnTime',onReceiveTime - ENV.CurrentDate.valueOf(),'trialseries');
-    } else if (textReceived.includes('0')) {
-      logEVENTS('SampleCommandOffReturnTime',onReceiveTime - ENV.CurrentDate.valueOf(),'trialseries');
-    } //IF 1
-    return;
-  }//IF "sa", samplecommand
+  if (event.data.message == 'USBConnect'){
+    port.connected = true
+    localStorage.setItem('ConnectUSB', 1);
+    hideHardwareButton()
 
-  //EYE
-  if ( port.statustext_received.includes('///') ) {
-    if (port.statustext_received.length > 40){
-      console.log('eyetracker fell behind')
-      return;
-    }
-    
-    for (var q = 0; q <= port.statustext_received.length - 1; q++) {
-      if (port.statustext_received[q] == '/') {
-        var lastslash = q;
-      }
-    }//FOR q char
+    console.log(event.data.val);
+    port.statustext_connect = event.data.val
+    updateHeadsUpDisplayDevices();
+    return
+  }//IF connected usb
 
-    //strip start characters (eg, '/') up front
-    port.statustext_received = port.statustext_received.slice(
-      lastslash + 1,
-      port.statustext_received.length
-    );
+  if (event.data.message == 'SerialPortConnect'){
+    port.connected = true
+    ENV.USBDeviceType = event.data.devicetype;//XX
+    ENV.USBDeviceName = event.data.devicename;
+    return
+  }//IF serialportconnect
+
+  if (event.data.message == 'EyeRead'){
     ENV.Eye.TrackEye = 1;
-    eyebuffer.accumulateEye=3;
-  } //IF '///'
+    for (let i=0; i<=event.data.x.length-1; i++){
+      let x = event.data.x[i]
+      let y = event.data.y[i]
+      let w = event.data.w[i]
+      let a = event.data.a[i]
+      let numeyes = event.data.numeyes
+      let timestamp = event.data.time[i]
 
-  //RFID
-  var tagstart = port.statustext_received.indexOf('{tag', 0);
+      if (ENV.Eye.CalibXTransform.length > 0) {
+        var xy = applyLinearTransform(x,y,ENV.Eye.CalibXTransform,ENV.Eye.CalibYTransform); //Calibrated
+      }
+      else {
+        xy = ['null', 'null'];
+        console.log('recording null eye values')
+      }
+      // STORE calibrated eye signal
+      logEVENTS('EyeData',[ numeyes,xy[0],xy[1],w,a,null,null,null,null ],'timeseries',timestamp);
+    }//FOR i received samples
 
-  //=============== RFID ===============//
-  if (tagstart >= 0) {
-    //rfid: arduino sends whole tag at once
-    var tagend = port.statustext_received.indexOf('}', 0);
-    logEVENTS('RFIDTag',port.statustext_received.slice(tagstart + 4, tagend),'timeseries');
+    if (ENV.Eye.TrackEye > 0 && FLAGS.touchGeneratorCreated == 1) {
+      //Send calibrated signal, convert from eye coordinates to tablet coordinates
+
+      // DISPLAY median filtered calibrated eye signal
+      //EVENTS[idx] -- 3:X 4:Y 5:Diameter 6:Aspect
+      var eyedatalen = Object.keys(EVENTS['timeseries']['EyeData']).length;
+      if (eyedatalen >= 4) {
+        var X_mdn = math.median([
+          EVENTS['timeseries']['EyeData'][eyedatalen - 4][3],
+          EVENTS['timeseries']['EyeData'][eyedatalen - 3][3],
+          EVENTS['timeseries']['EyeData'][eyedatalen - 2][3],
+          EVENTS['timeseries']['EyeData'][eyedatalen - 1][3],
+        ]);
+
+        var Y_mdn = math.median([
+          EVENTS['timeseries']['EyeData'][eyedatalen - 4][4],
+          EVENTS['timeseries']['EyeData'][eyedatalen - 3][4],
+          EVENTS['timeseries']['EyeData'][eyedatalen - 2][4],
+          EVENTS['timeseries']['EyeData'][eyedatalen - 1][4],
+        ]);
+
+        xy[0] = X_mdn;
+        xy[1] = Y_mdn;
+      }//IF >=4 samples, compute median
+
+      var event_xytt = {
+        x_val: xy[0],
+        y_val: xy[1],
+        time: Date.now(),
+        type: 'eye',
+      };
+      FLAGS.effectorState.event_xytt = event_xytt; //hold value, wait for display (updateCanvas calls event listener)
+    }//IF TrackEye
+    return
+  }//IF EyeRead
+
+  if (event.data.message == 'EyeSuccessRate'){
+    console.log(event.data.val);
+    eyedataratestr = event.data.val
+    if (FLAGS.savedata == 0) {
+      updateImageLoadingAndDisplayText('');
+    }
+    return
+  }//IF EyeSuccessRate
+
+  if (event.data.message == 'OtherRead'){
+    console.log(event.data.val);
+    port.statustext_received = event.data.val
+    updateHeadsUpDisplayDevices()
+    return
+  }//IF OtherRead
+
+  if (event.data.message == 'RFIDRead'){
+    let tagstart = event.data.val.indexOf('{tag', 0);
+    let tagend = event.data.val.indexOf('}', 0);
+    logEVENTS('RFIDTag',event.data.val.slice(tagstart + 4, tagend),'timeseries');
 
     var nrfid = Object.keys(EVENTS['timeseries']['RFIDTag']).length;
     if (nrfid >= 2) {
@@ -216,15 +181,34 @@ serial.Port.prototype.onReceive = (data) => {
         new Date(EVENTS['timeseries']['RFIDTag'][nrfid - 1][1]) -
         new Date(EVENTS['timeseries']['RFIDTag'][nrfid - 2][1]);
     }
-    port.statustext_received =
-      'Parsed TAG ' +
-      EVENTS['timeseries']['RFIDTag'][nrfid - 1][2] +
-      ' @ ' +
-      new Date().toLocaleTimeString('en-US') +
-      ' dt=' +
-      dt +
-      'ms';
-
+    port.statustext_received = 
+      'Parsed TAG <br>' + EVENTS['timeseries']['RFIDTag'][nrfid - 1][2] +
+      ' @ ' + new Date().toLocaleTimeString('en-US') +
+      ' dt=' + dt + 'ms';
+    
+    var textobj = document.getElementById('headsuptext'); //hijack the headsup loading text to show subject
+    if (ENV.Subject == ''){
+      textobj.innerHTML =
+        '<font size=+2>' + '<br>' + '<br>' + '<br>' + '<br>' +
+          port.statustext_received +
+        '</font>'
+    }//IF no subject chosen or detected yet
+    else if (ENV.Subject != '' && !FLAGS.savedata){
+      textobj.innerHTML = 
+        '<font size=+2>' + '<br>' + '<br>' + '<br>' + '<br>' + 
+          '<font color=red><bold>' + ENV.Subject + '</bold></font><br>' +
+          '<font color=red>'+ ENV.AgentBirthdate + '<br>' +
+          ENV.AgentSex + '<br>' + 
+          ENV.AgentRFID + '<br>' + 
+        '</font>' +
+        '<font color=white>' +
+          port.statustext_received +
+        '</font>'
+    }
+    else if (ENV.Subject != '' && FLAGS.savedata){
+      updateHeadsUpDisplay()
+    }//stop hijacking
+      
     if (FLAGS.RFIDGeneratorCreated == 1) {
       var event = {
         tag: EVENTS['timeseries']['RFIDTag'][nrfid - 1][2],
@@ -234,284 +218,38 @@ serial.Port.prototype.onReceive = (data) => {
     }
     if (ENV.Subject == '') {
       queryRFIDTagonFirestore(EVENTS['timeseries']['RFIDTag'][nrfid - 1][2]);
-    } //IF no subject chosen yet, auto-find in firestore based on their RFIDTag, which will then QuickLoad the page
+    }//IF no subject chosen yet, auto-find in firestore based on their RFIDTag, which will then QuickLoad the page
     updateHeadsUpDisplayDevices();
-  } //IF RFID Tag
+    return 
+  }//IF RFIDRead
 
-  //=============== EYE ===============//
-  else if (eyebuffer.accumulateEye >= 3) {
-    // eye: arduino sends one character at a time, but have to handle the case of receiving 2 characters
-
-    eyebuffer.buffer = port.statustext_received; //accumulate ascii vals
-    var n_character_close = 0;
-    if (
-      port.statustext_received.indexOf('}') >= 0 &&
-      eyebuffer.buffer.length >= eyebuffer.maxbufferlength_HARDCODED
-    ) {
-      n_character_close = 1;
-      eyebuffer.buffer = eyebuffer.buffer.slice(0, eyebuffer.buffer.length - 1);
-    } else if (
-      port.statustext_received == '}/' &&
-      eyebuffer.buffer.length == eyebuffer.maxbufferlength_HARDCODED - 1
-    ) {
-      n_character_close = 2;
-      eyebuffer.buffer = eyebuffer.buffer.slice(0, eyebuffer.buffer.length - 2);
+  if (event.data.message == 'SampleCommandReturn'){
+    if (event.data.val.includes('1')){
+      logEVENTS('SampleCommandReturnTime',event.data.time - ENV.CurrentDate.valueOf(),'trialseries');
     }
+    else if (event.data.val.includes('0')){
+      logEVENTS('SampleCommandOffReturnTime',event.data.time - ENV.CurrentDate.valueOf(),'trialseries');
+    }
+    return
+  }//IF SampleCommandReturn
 
-    //=============== PARSED EYE (X,Y,D,A) ===============//
-    if (n_character_close > 0) {
-      var x = eyebuffer.buffer.slice(0, 4); //pupil x_center
-      var y = eyebuffer.buffer.slice(4, 8); //pupil y_center
-      var w = eyebuffer.buffer.slice(9, 12); //pupil diameter
-      var a = eyebuffer.buffer.slice(13, 16); //pupil aspect ratio
+  if (event.data.message == 'SerialPortWrite'){
+    console.log(event.data.val)
+    port.statustext_sent = event.data.val
+    updateHeadsUpDisplayDevices()
+    return
+  }//IF SerialPortWrite
+};//FUNCTION usbDeviceWorker.onmessage
 
-      x = parseInt('0x' + x) / 32767; //Raw
-      y = parseInt('0x' + y) / 32767; //Raw
-      w = parseInt('0x' + w) / 32767; //Raw
-      a = parseInt('0x' + a) / 32767; //Raw
-      if (ENV.Eye.CalibXTransform.length > 0) {
-        var xy = applyLinearTransform(
-          x,
-          y,
-          ENV.Eye.CalibXTransform,
-          ENV.Eye.CalibYTransform
-        ); //Calibrated
-      } else {
-        xy = ['null', 'null'];
-        console.log('recording null eye values')
-      }
+function hideHardwareButton(){
+  //Hide manual connect button upon successful connect
+  document.querySelector('button[id=connectusb]').style.display = 'none';
+}//FUNCTION hideHardwareButton
 
-      // STORE calibrated eye signal
-      logEVENTS(
-        'EyeData',
-        [
-          eyebuffer.numeyes_HARDCODED,
-          xy[0],
-          xy[1],
-          w,
-          a,
-          null,
-          null,
-          null,
-          null,
-        ],
-        'timeseries'
-      );
-
-      if (FLAGS.touchGeneratorCreated == 1 && ENV.Eye.TrackEye > 0) {
-        //Send calibrated signal, convert from eye coordinates to tablet coordinates
-
-        // DISPLAY median filtered calibrated eye signal
-        //EVENTS[idx] -- 3:X 4:Y 5:Diameter 6:Aspect
-        var eyedatalen = Object.keys(EVENTS['timeseries']['EyeData']).length;
-        if (eyedatalen >= 4) {
-          var X_mdn = math.median([
-            EVENTS['timeseries']['EyeData'][eyedatalen - 4][3],
-            EVENTS['timeseries']['EyeData'][eyedatalen - 3][3],
-            EVENTS['timeseries']['EyeData'][eyedatalen - 2][3],
-            EVENTS['timeseries']['EyeData'][eyedatalen - 1][3],
-          ]);
-
-          var Y_mdn = math.median([
-            EVENTS['timeseries']['EyeData'][eyedatalen - 4][4],
-            EVENTS['timeseries']['EyeData'][eyedatalen - 3][4],
-            EVENTS['timeseries']['EyeData'][eyedatalen - 2][4],
-            EVENTS['timeseries']['EyeData'][eyedatalen - 1][4],
-          ]);
-
-          var D_mdn = math.median([
-            EVENTS['timeseries']['EyeData'][eyedatalen - 4][5],
-            EVENTS['timeseries']['EyeData'][eyedatalen - 3][5],
-            EVENTS['timeseries']['EyeData'][eyedatalen - 2][5],
-            EVENTS['timeseries']['EyeData'][eyedatalen - 1][5],
-          ]);
-
-          var A_mdn = math.median([
-            EVENTS['timeseries']['EyeData'][eyedatalen - 4][6],
-            EVENTS['timeseries']['EyeData'][eyedatalen - 3][6],
-            EVENTS['timeseries']['EyeData'][eyedatalen - 2][6],
-            EVENTS['timeseries']['EyeData'][eyedatalen - 1][6],
-          ]);
-          xy[0] = X_mdn;
-          xy[1] = Y_mdn;
-        } //compute median
-
-        var event_xytt = {
-          x_val: xy[0],
-          y_val: xy[1],
-          time: Date.now(),
-          type: 'undefined',
-        };
-        waitforEvent.next(event_xytt); //send to hold_promise generator
-      } //if generated created
-
-      eyebuffer.success = eyebuffer.success + 1;
-
-      if (n_character_close == 1) {
-        eyebuffer.buffer = '';
-        eyebuffer.accumulateEye = 0;
-      } else if (n_character_close == 2) {
-        eyebuffer.buffer = '';
-        eyebuffer.accumulateEye = 1;
-      }
-    } //IF found end character
-
-    //=============== FAILED TO PARSE EYE DATA ===============//
-    else if (eyebuffer.buffer.length >= eyebuffer.maxbufferlength_HARDCODED) {
-      eyebuffer.fail = eyebuffer.fail + 1;
-      eyebuffer.buffer = '';
-      eyebuffer.accumulateEye = 0;
-    } //ELSE didn't receive end character
-
-    //DISPLAY STATS FOR EYE DATASTREAM
-    if (eyebuffer.fail + eyebuffer.success >= 900) {
-      eyedataratestr =
-        '<font color=green>' +
-        'EYE: Success=' +
-        Math.round(
-          (1000 * eyebuffer.success) / (eyebuffer.fail + eyebuffer.success)
-        ) /
-          10 +
-        '%' +
-        ' (dt_u = ' +
-        Math.round(
-          (10 * (performance.now() - eyebuffer.tstart)) /
-            (eyebuffer.success + eyebuffer.fail)
-        ) /
-          10 +
-        ' ms)' +
-        '</font>';
-      if (FLAGS.savedata == 0) {
-        updateImageLoadingAndDisplayText('');
-      }
-      // console.log(eyedataratestr)
-
-      port.statustext_received = eyedataratestr;
-      updateHeadsUpDisplayDevices();
-      eyebuffer.fail = 0;
-      eyebuffer.success = 0;
-      eyebuffer.dt = 0;
-      eyebuffer.tstart = performance.now();
-    } // IF display eye stats
-  } //IF EYE
-
-  //=============== NOT RFID/EYE ===============//
-  else {
-    updateHeadsUpDisplayDevices();
-  } //ELSE not RFID or EYE
-}; //port.onReceive
-
-serial.Port.prototype.onReceiveError = (error) => {
-  console.log(error);
-};
-
-//PORT - transferOut
-serial.Port.prototype.writepumpdurationtoUSB = async function (data) {
-  let msgstr = '{' + data.toString() + '}'; // start(<), end(>) characters
-  let textEncoder = new TextEncoder();
-  await this.device_.transferOut(4, textEncoder.encode(msgstr));
-
-  port.statustext_sent = 'TRANSFERRED CHAR --> USB:' + msgstr;
-  updateHeadsUpDisplayDevices();
-}; //port.writepumpdurationUSB
-
-//PORT - pause eyetracker
-serial.Port.prototype.writepumptopauseeyetoUSB = async function (data) {
-  let msgstr = '{' + data + '}'; // start(<), end(>) characters
-  let textEncoder = new TextEncoder();
-  await this.device_.transferOut(4, textEncoder.encode(msgstr));
-
-  port.statustext_sent = 'TRANSFERRED CHAR --> USB:' + msgstr;
-  updateHeadsUpDisplayDevices();
-}; //port.writepumpdurationUSB
-
-//PORT - transferOut sample command to external devices (eg, Camera)
-serial.Port.prototype.writeSampleCommandTriggertoUSB = async function (data) {
-  let msgstr = '$' + data.toString() + '%'; // start($), end(%) characters
-  let textEncoder = new TextEncoder();
-
-  await this.device_.transferOut(4, textEncoder.encode(msgstr)); //SANITY CHECK what the 4 is
-
-  port.statustext_sent = 'TRANSFERRED SampleCommandSignal --> USB:' + msgstr;
-  updateHeadsUpDisplayDevices();
-}; //port.writepumpdurationUSB
-
-//PORT - disconnect
-serial.Port.prototype.disconnect = async function () {
-  await this.device_.controlTransferOut({
-    requestType: 'class',
-    recipient: 'interface',
-    request: 0x22,
-    value: 0x00,
-    index: 0x02,
-  });
-  this.device_.close();
-
-  port.statustext_connect = 'USB DEVICE DISCONNECTED';
-  console.log(port.statustext_connect);
-  updateHeadsUpDisplayDevices();
-}; //port.disconnect
-
-//PORT - readloop
-async function readLoop(port) {
-  try {
-    let result = await port.device_.transferIn(5, 128); //(endpoint#,length)->requesting a 64 byte buffer
-    // serial.tread=performance.now()
-    // serial.dt.push(performance.now()-serial.treadOld); //-serial.twrite)
-    // serial.treadOld=performance.now()
-    // var textstr = 'Serial roundtrip write->read << ' +
-    //           Math.round(serial.tread - serial.twrite) + 'ms'
-    // console.log(textstr)
-    port.onReceive(result.data); //calls TextDecoder to parse data
-    // slider_callback()
-    readLoop(port);
-  } catch (error) {
-    port.onReceiveError(error);
-  }
-} //FUNCTION readLoop
-
-function pingUSB() {
-  if (port.connected == true) {
-    var pingdur = 100;
-    let msgstr = '{' + pingdur.toString() + '}'; // start({), end(}) characters
-    let textEncoder = new TextEncoder();
-    port.device_.transferOut(4, textEncoder.encode(msgstr));
-
-    port.statustext_sent = 'PINGING! TRANSFERRED CHAR --> USB:' + msgstr;
-    updateHeadsUpDisplayDevices();
-
-    pingTimer = setTimeout(function () {
-      clearTimeout(pingTimer);
-      pingUSB();
-    }, 5000);
-  }
-} //FUNCTION pingUSB
-
-//____________________LEGACY________________________
-//____________________LEGACY________________________
-//____________________LEGACY________________________
-
-//PORT - send pump duration to arduino
-serial.Port.prototype.writepumpdurationtoUSBBYTE = async function (data) {
-  serial.twrite_pumpduration = Date.now() - ENV.CurrentDate.valueOf();
-  let view = new Uint16Array(1);
-  view[0] = parseInt(data, 10);
-  view[0] = parseInt('5000', 10);
-  await this.device_.transferOut(4, view);
-
-  port.statustext_sent = 'TRANSFERRED BYTE --> USB:' + view;
-  updateHeadsUpDisplayDevices();
-};
-
-function pingUSBBYTE() {
-  if (port.connected == true) {
-    let view = new Uint8Array(1);
-    view[0] = parseInt('200', 10);
-    port.device_.transferOut(4, view);
-
-    pingTimer = setTimeout(function () {
-      clearTimeout(pingTimer);
-      pingUSB();
-    }, 3000);
-  }
-}
+function showHardwareButton(){
+  // Expose button in case need to manually reconnect
+  // (note: navigator.usb.onconnect doesn't seem to work on all chrome for android)
+  document.querySelector('button[id=connectusb]').style.display = 'block';
+  document.querySelector('button[id=connectusb]').style.visibility = 'visible';
+  document.querySelector('button[id=connectusb]').style.top = '5%';
+}//FUNCTION showHardwareButton
