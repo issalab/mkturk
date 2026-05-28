@@ -67,9 +67,26 @@ console.log('mturkUserConfig:', mturkUserConfig);
 let provider = new firebase.auth.GoogleAuthProvider();
 provider.addScope('https://www.googleapis.com/auth/contacts.readonly');
 
+// Wire the sign-in button for initial authentication (before index.js loads).
+// index_init() re-wires it to firebaseRedirectSignIn after the app starts.
+function _initialSignInHandler() {
+  auth.signInWithPopup(provider)
+    .then((result) => {
+      if (result.user) {
+        ENV.ResearcherDisplayName = result.user.displayName;
+        ENV.ResearcherEmail = result.user.email;
+        ENV.ResearcherID = result.user.uid;
+        console.log(`Popup Sign-In, USER ${result.user.email} is signed in`);
+      }
+    })
+    .catch((err) => console.error('[Popup Sign-In Error]:', err));
+}
+document.getElementById('googlesignin').addEventListener('pointerup', _initialSignInHandler, false);
+document.getElementById('googlesignin').addEventListener('click', _initialSignInHandler, false); // Safari
+
 auth.getRedirectResult().then((redirectResult) => {
     if (redirectResult.user) {
-      // User just signed in
+      // Handle any redirect result (e.g., from production where redirect may be used)
       ENV.ResearcherDisplayName = redirectResult.user.displayName;
       ENV.ResearcherEmail = redirectResult.user.email;
       ENV.ResearcherID = redirectResult.user.uid;
@@ -79,17 +96,15 @@ auth.getRedirectResult().then((redirectResult) => {
       );
       updateHeadsUpDisplay();
     } else if (auth.currentUser) {
-      // User already signed in.
+      // Persisted session — user already signed in
       ENV.ResearcherDisplayName = auth.currentUser.displayName;
       ENV.ResearcherEmail = auth.currentUser.email;
       ENV.ResearcherID = auth.currentUser.uid;
 
-      console.log(`Sign-In Redirect Result, USER ${auth.currentUser.email} is signed in`);
+      console.log(`Persisted session, USER ${auth.currentUser.email} is signed in`);
       updateHeadsUpDisplay();
     } else {
-      // User not yet authenticated
-      console.log('User Not Yet Authenticated');
-      auth.signInWithRedirect(provider);
+      console.log('User not authenticated. Click the sign-in button to continue.');
     }
   })//.then
   .catch((authError) => {
@@ -162,11 +177,9 @@ auth.onAuthStateChanged((user) => {
 });
 
 function firebaseRedirectSignIn() {
-  //log out and show the redirect sign-in screen
-  //default behavior of redirect ui is to automatically log-in if there is one user
-  //go to accounts.google.com to log-in a second user
-
+  // Sign out then re-authenticate via popup (avoids redirect loop issues)
   auth.signOut().then(() => {
-    auth.signInWithRedirect(provider);
+    auth.signInWithPopup(provider)
+      .catch((err) => console.error('[Popup Sign-In Error]:', err));
   });
 }
