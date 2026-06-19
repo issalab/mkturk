@@ -817,6 +817,49 @@ export class Mkfinder {
   }
 
   private displayStorageTable(metadataArr: any[]) {
+    const openStorageRow = async (row: any) => {
+      if (row.getData().contentType === 'folder') {
+        console.log('openStorageRow(folder)', row.getData().fullPath);
+      } else if (
+        row.getData().contentType.includes('text') ||
+        row.getData().contentType.includes('json')
+      ) {
+        this.mkt.destroy();
+        this.mki.removeImages();
+
+        this.mke.editorDivElement.style.zIndex = '3';
+        this.mki.imgCanvasDiv.style.zIndex = '2';
+        this.mkt.canvas.style.zIndex = '1';
+
+        let fileRef = ref(this.storageRef, row.getData().fullPath);
+        this.mke.displayStorageTextFile(fileRef);
+      } else if (row.getData().contentType.includes('image')) {
+        this.mkt.destroy();
+        this.mki.removeImages();
+
+        this.mki.imgCanvasDiv.style.zIndex = '3';
+        this.mke.editorDivElement.style.zIndex = '2';
+        this.mkt.canvas.style.zIndex = '1';
+
+        let imgRef = ref(this.storageRef, row.getData().fullPath);
+        let imgName = row.getData().name;
+        this.mki.displayImage(imgRef, imgName);
+      } else if (
+        row.getData().contentType === 'application/octet-stream' &&
+        row.getData().name.includes('.glb')
+      ) {
+        this.mkt.destroy();
+        this.mki.removeImages();
+
+        this.mkt.canvas.style.zIndex = '3';
+        this.mke.editorDivElement.style.zIndex = '2';
+        this.mki.imgCanvasDiv.style.zIndex = '1';
+
+        let meshRef = ref(this.storageRef, row.getData().fullPath);
+        this.mkt.displayMesh(meshRef);
+      }
+    };
+
     this.finder.destroy();
     this.finder = new Tabulator('#finder', {
       data: metadataArr,
@@ -845,6 +888,8 @@ export class Mkfinder {
           console.log('rowDblClick', row.getData().fullPath);
           // this.listStorageFiles(this.storageRef.child(row.getData().fullPath));
           this.listStorageFiles(ref(this.storageRef, row.getData().fullPath));
+        } else {
+          openStorageRow(row);
         }
       },
       rowDblTap: (ev, row) => {
@@ -854,52 +899,16 @@ export class Mkfinder {
           console.log(row.getData().fullPath);
           // this.listStorageFiles(this.storageRef.child(row.getData().fullPath));
           this.listStorageFiles(ref(this.storageRef, row.getData().fullPath));
+        } else {
+          openStorageRow(row);
         }
       },
       rowClick: async (ev, row) => {
         ev.stopPropagation();
         if (row.getData().contentType === 'folder') {
           console.log('rowClick', row.getData().fullPath);
-        } else if (
-          row.getData().contentType.includes('text') ||
-          row.getData().contentType.includes('json')
-        ) {
-          this.mkt.destroy();
-          this.mki.removeImages();
-
-          this.mke.editorDivElement.style.zIndex = '3';
-          this.mki.imgCanvasDiv.style.zIndex = '2';
-          this.mkt.canvas.style.zIndex = '1';
-
-          // let fileRef = this.storageRef.child(row.getData().fullPath);
-          let fileRef = ref(this.storageRef, row.getData().fullPath);
-          this.mke.displayStorageTextFile(fileRef);
-        } else if (row.getData().contentType.includes('image')) {
-          this.mkt.destroy();
-          this.mki.removeImages();
-
-          this.mki.imgCanvasDiv.style.zIndex = '3';
-          this.mke.editorDivElement.style.zIndex = '2';
-          this.mkt.canvas.style.zIndex = '1';
-
-          // let imgRef = this.storageRef.child(row.getData().fullPath);
-          let imgRef = ref(this.storageRef, row.getData().fullPath);
-          let imgName = row.getData().name;
-          this.mki.displayImage(imgRef, imgName);
-        } else if (
-          row.getData().contentType === 'application/octet-stream' &&
-          row.getData().name.includes('.glb')
-        ) {
-          this.mkt.destroy();
-          this.mki.removeImages();
-
-          this.mkt.canvas.style.zIndex = '3';
-          this.mke.editorDivElement.style.zIndex = '2';
-          this.mki.imgCanvasDiv.style.zIndex = '1';
-
-          // let meshRef = this.storageRef.child(row.getData().fullPath);
-          let meshRef = ref(this.storageRef, row.getData().fullPath);
-          this.mkt.displayMesh(meshRef);
+        } else {
+          openStorageRow(row);
         }
       },
       rowSelectionChanged: (data, rows) => {

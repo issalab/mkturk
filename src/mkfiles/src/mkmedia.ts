@@ -200,6 +200,14 @@ export class Mkeditor {
     this.fileNameInput.disabled = false;
     this.fileRenameBtn.style.display = 'inline-block';
     this.fileNameInput.value = '';
+    this.genBtn.value = 'generate';
+    this.genBtn.textContent = 'Vectorize Param';
+    this.expandBtn.value = 'expand';
+    this.expandBtn.textContent = 'Expand Param';
+    this.svSceneBtn.style.display = 'none';
+    this.paramGenBtnBox.style.display = 'none';
+    this.updateBtn.style.display = 'inline-block';
+    this.btnBoxDiv.style.gridTemplateAreas = '"update-btn update-btn"';
 
     const sceneParamPath = 'mkturkfiles/scenebags/objectome3d';
     const taskParamPath = 'mkturkfiles/parameterfiles';
@@ -489,13 +497,12 @@ export class Mkeditor {
     // let file = await response.json();
 
     if (fileRef.fullPath.includes(sceneParamPath)) {
+      this.paramGenBtnBox.style.display = 'flex';
       if (fileRef.fullPath.includes('template')) {
         this.fileDupBtn.style.display = 'inline-block';
-        // this.genSceneParamBtn.style.display = 'inline-block';
         options = sceneTemplateOptions;
       } else {
         this.fileDupBtn.style.display = 'inline-block';
-        // this.genSceneParamBtn.style.display = 'none';
       }
     } else if (fileRef.fullPath.includes(taskParamPath)) {
       console.log('FILEEEE:', file);
@@ -532,11 +539,8 @@ export class Mkeditor {
         file = Object.assign(json, json2);
       }
       options = taskParamOptions;
-
-      // this.genSceneParamBtn.style.display = 'none';
     } else {
       this.fileDupBtn.style.display = 'none';
-      // this.genSceneParamBtn.style.display = 'none';
     }
 
     this.editor.destroy();
@@ -985,10 +989,7 @@ export class Mkeditor {
         );
         this.genBtn.value = 'revert';
         this.genBtn.textContent = 'Revert';
-        this.updateBtn.style.display = 'none';
         this.svSceneBtn.style.display = 'inline-block';
-        this.btnBoxDiv.style.gridTemplateAreas =
-          '"param-gen-btn-box sv-scene-param-btn"';
       } else if (this.genBtn.value == 'revert') {
         this.editor.destroy();
         this.generatedSceneParam = {};
@@ -1003,9 +1004,6 @@ export class Mkeditor {
         this.genBtn.value = 'generate';
         this.genBtn.textContent = 'Vectorize Param';
         this.svSceneBtn.style.display = 'none';
-        this.updateBtn.style.display = 'inline-block';
-        this.btnBoxDiv.style.gridTemplateAreas =
-          '"param-gen-btn-box update-btn"';
       }
     });
 
@@ -1027,10 +1025,7 @@ export class Mkeditor {
         );
         this.expandBtn.value = 'revert';
         this.expandBtn.textContent = 'Revert';
-        this.updateBtn.style.display = 'none';
         this.svSceneBtn.style.display = 'inline-block';
-        this.btnBoxDiv.style.gridTemplateAreas =
-          '"param-gen-btn-box sv-scene-param-btn"';
       } else if (this.expandBtn.value == 'revert') {
         this.editor.destroy();
         this.generatedSceneParam = {};
@@ -1045,9 +1040,6 @@ export class Mkeditor {
         this.expandBtn.value = 'expand';
         this.expandBtn.textContent = 'Expand Param';
         this.svSceneBtn.style.display = 'none';
-        this.updateBtn.style.display = 'inline-block';
-        this.btnBoxDiv.style.gridTemplateAreas =
-          '"param-gen-btn-box update-btn"';
       }
     });
   }
