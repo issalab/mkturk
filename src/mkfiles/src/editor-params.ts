@@ -237,6 +237,11 @@ export const taskParamSchema = {
       default: '0',
       examples: ['overrides NStimuliPerBagBlock'],
     },
+    NoFeedback: {
+      type: 'integer',
+      default: '0',
+      examples: ['0=reward/punish, 1=no feedback'],
+    },
     NRewardMax: {
       type: 'integer',
       default: '1',
