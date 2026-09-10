@@ -224,15 +224,23 @@ serial.Port.prototype.onReceive = (data) => {
     eyebuffer.accumulateEye=3;
   }//IF '///'
 
-  //RFID
-  var tagstart = usbport.statustext_received.indexOf('{tag', 0);
 
   //=============== RFID ===============//
+  var tagstart = usbport.statustext_received.indexOf('{tag', 0);
   if (tagstart >= 0) {
     //rfid: arduino sends whole tag at once
     var tagend = usbport.statustext_received.indexOf('}', 0);
-    postMessage({message: 'RFIDRead', val: usbport.statustext_received})
+    postMessage({message: 'RFIDRead', val: usbport.statustext_received.slice(tagstart, tagend+1), time: onReceiveTime})
   }//IF RFID Tag
+
+  //=============== Weight ===============//
+  var wtstart = usbport.statustext_received.indexOf('[wt', 0);
+
+  if (wtstart >= 0) {
+    var wtend = usbport.statustext_received.indexOf(']', 0);
+    postMessage({message: 'WeightValue', val: usbport.statustext_received.slice(wtstart, wtend+1), time: onReceiveTime})
+    return;
+  }//IF "wt", weight value
 
   //=============== EYE ===============//
   else if (eyebuffer.accumulateEye >= 3) {

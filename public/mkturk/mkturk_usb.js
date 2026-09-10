@@ -170,6 +170,26 @@ usbDeviceWorker.onmessage = function(event) {
     return
   }//IF OtherRead
 
+  if (event.data.message == 'WeightValue'){
+    let wtstart = event.data.val.indexOf('[wt', 0);
+    let wtend = event.data.val.indexOf(']', 0);
+    let weight = event.data.val.slice(wtstart + 3, wtend);
+    logEVENTS("Weight",weight,"timeseries");
+
+    var nweights = Object.keys(EVENTS['timeseries']['Weight']).length;
+    if (nweights >= 2) {
+      var dt =
+        new Date(EVENTS['timeseries']['Weight'][nweights - 1][1]) -
+        new Date(EVENTS['timeseries']['Weight'][nweights - 2][1]);
+    }
+
+    port.statustext_received = 
+      'WEIGHT <br>' + EVENTS['timeseries']['Weight'][nweights - 1][2] +
+      ' @ ' + new Date().toLocaleTimeString('en-US') +
+      ' dt=' + dt + 'ms';
+    updateHeadsUpDisplayDevices();
+  }//IF WeightValue
+
   if (event.data.message == 'RFIDRead'){
     let tagstart = event.data.val.indexOf('{tag', 0);
     let tagend = event.data.val.indexOf('}', 0);
@@ -207,7 +227,7 @@ usbDeviceWorker.onmessage = function(event) {
     }
     else if (ENV.Subject != '' && FLAGS.savedata){
       updateHeadsUpDisplay()
-    }//stop hijacking
+    }//stop hijacking when saving data, so that the headsup display can show the task info instead of the RFID tag
       
     if (FLAGS.RFIDGeneratorCreated == 1) {
       var event = {

@@ -679,7 +679,11 @@ index_init();
     //REWARD PUNISH    REWARD PUNISH    REWARD PUNISH    REWARD PUNISH    REWARD PUNISH    //
     //REWARD PUNISH    REWARD PUNISH    REWARD PUNISH    REWARD PUNISH    REWARD PUNISH    //
 
-    index_determine_numrewards();
+    if (TASK.NoFeedback > 0) {
+      CURRTRIAL.nreward = -1;
+    } else {
+      index_determine_numrewards();
+    }
     logEVENTS('NReward', CURRTRIAL.nreward, 'trialseries');
 
     //============ DELIVER REWARD/PUNISH ============//
