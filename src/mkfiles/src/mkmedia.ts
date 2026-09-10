@@ -266,6 +266,7 @@ export class Mkeditor {
         'NConsecutiveHitsforBonus',
         'NFixations',
         'NMillisecondsPerBagBlock',
+        'NoFeedback',
         'NRewardMax',
         'NRSVPMax',
         'NStickyResponse',
