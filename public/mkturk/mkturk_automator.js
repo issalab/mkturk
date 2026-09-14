@@ -118,7 +118,14 @@ async function automateTask(automatorData, trialhistory) {
             `https://mkturk.com/mturksurvey/?WID=${ENV.MTurkWorkerId}&AID=${ENV.AssignmentId}&HID=${ENV.HITId}`
           );
         }
-      }
+      }//IF Amazon MTurk
+      else if (ENV.ProlificId) {
+        // Exit survey, saved before we navigate away -- then redirect with the study's completion code.
+        await prolificSurveyPromise();
+        window.location.replace(
+          `https://app.prolific.com/submissions/complete?cc=${ENV.CompletionCode}`
+        );
+      }//IF Prolific
       return;
     } //IF finished final automator state
 
@@ -209,10 +216,46 @@ async function readTrialHistoryFromFirebase(filepaths) {
   for (var i = 0; i < filepaths.length; i++) {
     const data = await loadTextfromFirebase(filepaths[i]);
 
+    // Prolific-only: skip consent/calibration/survey records that share this
+    // same folder -- they have no ENV/TRIALEVENTS shape. MTurk and regular
+    // subjects never have non-trial files here, so this never applies to them.
+    if (ENV.ProlificId && (!data || !data.ENV || !data.TRIALEVENTS)) {
+      continue;
+    }
+
     // if mturk, only load trialhistory if same hitid
     if (ENV.MTurkWorkerId) {
       if (ENV.HITId) {
         if (data.ENV.HITId == ENV.HITId) {
+          let numTrials = data.TRIALEVENTS.Response.length;
+          // Iterate over TRIALs
+          for (let i_trial = 0; i_trial < numTrials; i_trial++) {
+            //Correct/incorrect trial
+            const correct =
+              data.TRIALEVENTS.Response[i_trial] ==
+              data.TRIALEVENTS.CorrectItem[i_trial]
+                ? 1
+                : 0;
+            trialhistory.correct.push(correct);
+
+            //Response
+            const response = data.TRIALEVENTS.Response[i_trial];
+            trialhistory.response.push(response);
+
+            //Current automator stage
+            const currentStage = stageHash(data.TASK);
+            trialhistory.trainingstage.push(currentStage);
+
+            //Start time (fixation dot appears) of trial
+            const starttime = data.TRIALEVENTS.StartTime[i_trial];
+            trialhistory.starttime.push(starttime);
+          }
+        }
+      }
+    } else if (ENV.ProlificId) {
+      // if prolific, only load trialhistory if same studyid
+      if (ENV.StudyId) {
+        if (data.ENV.StudyId == ENV.StudyId) {
           let numTrials = data.TRIALEVENTS.Response.length;
           // Iterate over TRIALs
           for (let i_trial = 0; i_trial < numTrials; i_trial++) {

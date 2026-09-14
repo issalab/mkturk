@@ -1,10 +1,10 @@
 function index_init(){
   // Check Availability of APIs
-  if (!ENV.MTurkWorkerId) {
+  if (!ENV.ExternalSubjectId) {
     if (typeof navigator.usb == 'object') { ENV.WebUSBAvailable = 1; }
     if (typeof navigator.bluetooth == 'object') { ENV.WebBluetoothAvailable = 1; }
     if (typeof navigator.getBattery == 'function') { ENV.BatteryAPIAvailable = 1; }
-  }//IF !AmazonMTurk
+  }//IF !remote (MTurk/Prolific) subject
 
   //Set SampleCommand line back to 0 before close window
   window.addEventListener('beforeunload', async (evt) => {
@@ -176,6 +176,9 @@ async function index_init_params_screen_automator(){
     ENV.ParamFileName = PARAM_DIRPATH + ENV.MTurkWorkerId + '_' +
                         ENV.AssignmentId + '_' + ENV.HITId + '_params.json';
   }//IF Amazon MTurk agent
+  else if (ENV.ProlificId) {
+    ENV.ParamFileName = PARAM_DIRPATH + ENV.ProlificId + '_' + ENV.SessionId + '_params.json';
+  }//IF Prolific agent
   else {
     ENV.ParamFileName = PARAM_DIRPATH + ENV.Subject + '_params.json';
   }//ELSE standard agent
@@ -215,7 +218,21 @@ async function index_init_params_screen_automator(){
     FLAGS.SaveImagesCtx = FLAGS.SaveImagesCvs.getContext('2d');
   } //IF SaveImages, ask to stream to local disk
 
-  if (TASK.DeviceConfig !== '') {
+  if (ENV.ProlificId) {
+    // IRB consent gate: must run before anything else. If declined, this promise
+    // never resolves, so calibration and the task itself never start.
+    await consentPromise();
+
+    // Prolific subjects are never in firestore/devices (unknown personal devices),
+    // so DeviceConfig/queryDevice would just fall through to findDPI() anyway --
+    // calibrate against a physical object directly instead of guessing.
+    ENV.ViewportPPI = await calibratePPIPromise();
+    ENV.PhysicalPPI = ENV.ViewportPPI;
+    ENV.ViewportPixels[0] = document.body.clientWidth;
+    ENV.ViewportPixels[1] = document.body.clientHeight;
+    await saveScreenCalibrationtoFirebase();
+  }//IF Prolific agent, calibrate PPI directly
+  else if (TASK.DeviceConfig !== '') {
     screenSpecs = await queryDevice(TASK.DeviceConfig, 'docname');
     if (screenSpecs.isEmpty) {
       console.error(`TASK.DeviceConfig was defined but no record of ${TASK.DeviceConfig} was found in firestore/devices. Behavior of all downstream display code is no longer guaranteed`);
@@ -346,7 +363,7 @@ async function index_init_params_screen_automator(){
   //============= AWAIT READ SUBJECT PERFORMANCE HISTORY =============//
   // Read performance history
   var subject_behavior_save_directory = DATA_SAVEPATH + ENV.Subject + '/';
-  if (ENV.MTurkWorkerId) {
+  if (ENV.ExternalSubjectId) {
     subject_behavior_save_directory = DATA_SAVEPATH;
   }
   if (TASK.Automator != 0) {

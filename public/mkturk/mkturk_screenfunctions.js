@@ -981,10 +981,12 @@ function bufferChoiceUsingCircleSquare(choice_color,choice_radius,choice_grid_in
     if (i == 0) {
       var funcreturn = renderDotOnCanvas(choice_color,choice_grid_indices[i],choice_radius,canvasobj);
       boundingBoxes.class.push(0)
+      if (ENV.ProlificId) { drawChoiceLabel('SAME', funcreturn, canvasobj); }
     } //same = circle
     else if (i == 1) {
       var funcreturn = renderSquareOnCanvas(choice_color,choice_grid_indices[i],2 * choice_radius,canvasobj);
       boundingBoxes.class.push(1)
+      if (ENV.ProlificId) { drawChoiceLabel('DIFFERENT', funcreturn, canvasobj); }
     } //different = square
     boundingBoxes.x.push(funcreturn.x[0]);
     boundingBoxes.y.push(funcreturn.y[0]);
@@ -994,6 +996,27 @@ function bufferChoiceUsingCircleSquare(choice_color,choice_radius,choice_grid_in
   }//FOR i choices
   return boundingBoxes;
 }//FUNCTION bufferChoiceUsingCircleSquare
+
+// Prolific-only: label the SAME (circle) / DIFFERENT (square) choice targets so
+// participants don't have to rely on remembering which shape means which
+// response. funcreturn.x/y are in real (CanvasRatio-scaled, offset-added)
+// coordinates -- convert back to the canvas's own drawing space before printing.
+function drawChoiceLabel(text, funcreturn, canvasobj) {
+  if (!funcreturn || !funcreturn.x || !funcreturn.x[0]) { return; }
+  const ctx = canvasobj.getContext('2d');
+  const centerXReal = (funcreturn.x[0][0] + funcreturn.x[0][1]) / 2;
+  const centerYReal = (funcreturn.y[0][0] + funcreturn.y[0][1]) / 2;
+  const xCanvas = (centerXReal - CANVAS.offsetleft) / ENV.CanvasRatio;
+  const yCanvas = (centerYReal - CANVAS.offsettop) / ENV.CanvasRatio;
+
+  ctx.save();
+  ctx.font = 'bold ' + Math.round(13 / ENV.CanvasRatio) + 'px Arial, Helvetica, sans-serif';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillStyle = '#000000';
+  ctx.fillText(text, xCanvas, yCanvas);
+  ctx.restore();
+} //FUNCTION drawChoiceLabel
 
 // Dot render using gridindex
 function renderDotOnCanvas(color, gridindex, dot_pixelradius, canvasobj){

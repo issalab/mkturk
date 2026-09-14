@@ -10,10 +10,10 @@ index_init();
   EVENTS.trialnum = 0;
   FLAGS.savedata = 0; // practice trials can be performed, but data won't be saved
 
-  // IF MTurkWorker, start immediately in Test mode
-  if (ENV.MTurkWorkerId) {
+  // IF a remote (MTurk/Prolific) subject arrived via direct task link, start immediately in Test mode
+  if (ENV.ExternalSubjectId) {
     document.querySelector('button[id=donePracticingTask]').dispatchEvent(new Event('pointerup'));
-  }//IF Amazon MTurk
+  }//IF external subject
 
   // =========================================================================================================== //
   // ============ MAIN TASK LOOP ==================================================================================== //

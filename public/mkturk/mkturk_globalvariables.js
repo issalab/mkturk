@@ -109,6 +109,16 @@ ENV.MTurkWorkerId = '';
 ENV.AssignmentId = '';
 ENV.HITId = '';
 
+ENV.ProlificId = '';
+ENV.StudyId = '';
+ENV.SessionId = '';
+ENV.CompletionCode = '';
+
+// Set to MTurkWorkerId or ProlificId once authenticated via a direct task link.
+// Anything gated on "is this a direct-link external subject, skip the subject picker"
+// should check this rather than ENV.MTurkWorkerId directly.
+ENV.ExternalSubjectId = '';
+
 ENV.StressTest = 0;
 
 //================ EYE GLOBALS ================//
@@ -415,7 +425,7 @@ function purgeTrackingVariables(src) {
   }
 
   var datestr = ENV.CurrentDate.toISOString();
-  if (ENV.MTurkWorkerId) {
+  if (ENV.ExternalSubjectId) {
     ENV.DataFileName = `${DATA_SAVEPATH}${datestr.slice(
       0,
       datestr.indexOf('.')
