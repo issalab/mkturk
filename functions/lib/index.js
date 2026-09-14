@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.bqInsertDisplayTimes = exports.submitAssignment = exports.submitSurvey = exports.testOnCall = exports.testOnRequest = exports.sayHello = exports.listAllUsers = exports.copyParamFile = exports.processMturkUser = exports.isMturkUser = exports.createTokenOnServer = exports.isLabMember = exports.detectDevice = exports.bqListDatasets = exports.listTables = exports.bqQuery = exports.bqInsertEyeData = exports.bqInsertTouchData = void 0;
+exports.bqInsertDisplayTimes = exports.submitAssignment = exports.submitSurvey = exports.testOnCall = exports.testOnRequest = exports.sayHello = exports.listAllUsers = exports.copyParamFile = exports.processProlificUser = exports.processMturkUser = exports.isMturkUser = exports.createTokenOnServer = exports.isLabMember = exports.detectDevice = exports.bqListDatasets = exports.listTables = exports.bqQuery = exports.bqInsertEyeData = exports.bqInsertTouchData = void 0;
 const functions = require("firebase-functions");
 const bigquery_1 = require("@google-cloud/bigquery");
 const DeviceDetector = require("device-detector-js");
@@ -488,6 +488,108 @@ exports.processMturkUser = functions.https.onCall(async (data) => {
                 console.error(`[mturkuser=${data.wid}] Params Copy Error: ${e}`);
                 throw new ProcessMTurkUserError(`[mturkuser=${data.wid}] Params Copy Error: ${e}`);
             });
+        });
+    }
+    catch (error) {
+        return { status: 'error', message: error.message };
+    }
+    return { status: 'success', message: '' };
+});
+exports.processProlificUser = functions.https.onCall(async (data) => {
+    class ProcessProlificUserError extends Error {
+        constructor(message) {
+            super(message);
+            Object.setPrototypeOf(this, new.target.prototype);
+            this.name = ProcessProlificUserError.name;
+        }
+    }
+    const firestore = admin.firestore();
+    const bucket = admin.storage().bucket();
+    // Prolific participants sign in anonymously (no linked Google identity, no
+    // custom claims) -- verifying the token just confirms it's a live Firebase session.
+    try {
+        await admin.auth().verifyIdToken(data.token);
+    }
+    catch (e) {
+        console.error('[verifyIdToken] Decode Error:', e);
+        return { status: 'error', message: `[verifyIdToken] Decode Error: ${e}` };
+    }
+    let sessionEntry = {
+        studyId: data.studyId,
+        sessionId: data.sessionId,
+        task: data.task,
+        startTime: admin.firestore.Timestamp.fromDate(new Date()),
+    };
+    // user creation OR existing user update, keyed directly by Prolific's participant id
+    try {
+        let userDoc = firestore.collection('prolificusers').doc(data.pid);
+        let userSnapshot = await userDoc.get();
+        if (!userSnapshot.exists) {
+            await userDoc.set({
+                participantId: data.pid,
+                sessionList: [sessionEntry],
+            });
+            console.log('[prolificusers] New User Created');
+        }
+        else {
+            let prolificUser = userSnapshot.data();
+            let sessionList = prolificUser.sessionList || [];
+            let lastEntry = sessionList[sessionList.length - 1];
+            if (!lastEntry || lastEntry.sessionId !== data.sessionId) {
+                sessionList.push(sessionEntry);
+                await userDoc.update({ sessionList });
+                console.log('[prolificusers] Existing User Entry Updated');
+            }
+            else {
+                return { status: 'error', message: 'session entry already exists' };
+            }
+        }
+    }
+    catch (error) {
+        return { status: 'error', message: error.message };
+    }
+    // register Study & clone the researcher-staged task template into a per-participant params file
+    try {
+        let studyDoc = firestore.collection('prolificstudies').doc(data.studyId);
+        let studySnapshot = await studyDoc.get();
+        if (!studySnapshot.exists) {
+            await studyDoc.set({
+                studyId: data.studyId,
+                task: data.task,
+                path: `mkturkfiles/parameterfiles/prolific_params/${data.task}_params.json`,
+                participantIds: [data.pid],
+            });
+            console.log('[prolificstudies] Created a new Study entry');
+        }
+        else {
+            await studyDoc.update({
+                participantIds: admin.firestore.FieldValue.arrayUnion(data.pid),
+            });
+            console.log('[prolificstudies] Registration Success');
+        }
+        const paramfilePath = `mkturkfiles/parameterfiles/prolific_params/${data.task}_params.json`;
+        const paramFile = await bucket
+            .file(paramfilePath)
+            .download()
+            .then((value) => {
+            let tmp = JSON.parse(value[0].toString('utf8'));
+            tmp.Agent = data.pid;
+            tmp.StudyId = data.studyId;
+            tmp.SessionId = data.sessionId;
+            return tmp;
+        })
+            .catch((e) => {
+            console.error('[paramfile] Find Param File Error:', e);
+            throw new ProcessProlificUserError(`[paramfile] Find Param File Error: ${e}`);
+        });
+        const dest = `mkturkfiles_prolific/userfiles/${data.pid}/params/${data.pid}_${data.sessionId}_params.json`;
+        await bucket
+            .file(dest)
+            .save(JSON.stringify(paramFile, null, 2))
+            .then(() => console.log(`[prolificuser=${data.pid}] Params Copy Success`))
+            .catch((e) => {
+            console.error(`[prolificuser=${data.pid}] Params Copy Error: ${e}`);
+            throw new ProcessProlificUserError(`[prolificuser=${data.pid}] Params Copy Error: ${e}`);
         });
     }
     catch (error) {
