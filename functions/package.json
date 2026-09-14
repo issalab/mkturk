@@ -10,7 +10,7 @@
     "logs": "firebase functions:log"
   },
   "engines": {
-    "node": "14"
+    "node": "20"
   },
   "main": "lib/index.js",
   "dependencies": {
@@ -19,7 +19,7 @@
     "cors": "^2.8.5",
     "device-detector-js": "^3.0.0",
     "firebase-admin": "^10.0.0",
-    "firebase-functions": "^3.16.0"
+    "firebase-functions": "^3.24.1"
   },
   "devDependencies": {
     "firebase-functions-test": "^0.3.3",
