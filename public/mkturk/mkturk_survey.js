@@ -84,7 +84,9 @@ function prolificSurveyPromise() {
           SameDifferentIdentityCount: parseInt(sameDiffCountEl.value, 10),
           Timestamp: new Date().toISOString(),
         };
-        const path = `${DATA_SAVEPATH}${ENV.ProlificId}_${ENV.SessionId}_survey.json`;
+        // Mirrors MTurk's mkturkfiles_mturk/userfiles/{wid}/surveys/{wid}_{aid}_{hid}.json --
+        // its own sibling folder next to data/ and params/, not mixed into data/.
+        const path = `/mkturkfiles_prolific/userfiles/${ENV.ProlificId}/surveys/${ENV.ProlificId}_${ENV.SessionId}.json`;
         try {
           const blob = new Blob([JSON.stringify(record, null, 2)], { type: 'application/json' });
           await storage.ref().child(path).put(blob, { contentType: 'application/json' });
