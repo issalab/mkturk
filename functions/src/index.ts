@@ -672,7 +672,13 @@ export const processProlificUser = functions.https.onCall(
       startTime: admin.firestore.Timestamp.fromDate(new Date()),
     };
 
-    // user creation OR existing user update, keyed directly by Prolific's participant id
+    // user creation OR existing user update, keyed directly by Prolific's participant id.
+    // A repeat call for the same pid+session (e.g. Prolific reusing the same preview
+    // IDs across clicks) is NOT treated as fatal -- it just skips re-adding the
+    // bookkeeping entry, but always falls through to the param-file step below so a
+    // clone that failed on an earlier attempt still gets retried instead of silently
+    // masked as "already exists".
+    let sessionAlreadyExisted = false;
     try {
       let userDoc = firestore.collection('prolificusers').doc(data.pid);
       let userSnapshot = await userDoc.get();
@@ -693,7 +699,8 @@ export const processProlificUser = functions.https.onCall(
           await userDoc.update({ sessionList });
           console.log('[prolificusers] Existing User Entry Updated');
         } else {
-          return { status: 'error', message: 'session entry already exists' };
+          sessionAlreadyExisted = true;
+          console.log('[prolificusers] Session entry already exists -- continuing to verify param file');
         }
       }
     } catch (error: any) {
@@ -720,6 +727,19 @@ export const processProlificUser = functions.https.onCall(
         console.log('[prolificstudies] Registration Success');
       }
 
+      const dest = `mkturkfiles_prolific/userfiles/${data.pid}/params/${data.pid}_${data.sessionId}_params.json`;
+
+      // Idempotent: if this pid+session already has a real params file (from an
+      // earlier successful call), don't re-clone -- just confirm it's there and
+      // let the client proceed. This is what actually prevents the "session
+      // already exists" bookkeeping state from ever masking a genuinely missing
+      // params file the way it did before this fix.
+      const [destExists] = await bucket.file(dest).exists();
+      if (destExists && sessionAlreadyExisted) {
+        console.log(`[prolificuser=${data.pid}] Params file already present, skipping re-clone`);
+        return { status: 'success', message: '' };
+      }
+
       const paramfilePath = `mkturkfiles/parameterfiles/prolific_params/${data.task}_params.json`;
 
       const paramFile = await bucket
@@ -738,8 +758,6 @@ export const processProlificUser = functions.https.onCall(
             `[paramfile] Find Param File Error: ${e}`
           );
         });
-
-      const dest = `mkturkfiles_prolific/userfiles/${data.pid}/params/${data.pid}_${data.sessionId}_params.json`;
 
       await bucket
         .file(dest)
