@@ -725,7 +725,16 @@ async function getMostRecentBehavioralFilePathsFromFirebase(
 
     var q2 = 0;
     for (var q = 0; q <= response.length - 1; q++) {
-      if (response[q].indexOf(subject_id) != -1) {
+      // Prolific-only: exclude non-trial records that share this folder (consent/
+      // calibration/survey files) -- only real trial-data files should count
+      // toward "most recent N". MTurk/regular subjects never have these files,
+      // so isNonTrialRecord is always false for them.
+      var isNonTrialRecord =
+        ENV.ProlificId &&
+        (response[q].endsWith('_consent.json') ||
+          response[q].endsWith('_calibration.json') ||
+          response[q].endsWith('_survey.json'));
+      if (response[q].indexOf(subject_id) != -1 && !isNonTrialRecord) {
         file_list[q2] = response[q];
         q2++;
       }

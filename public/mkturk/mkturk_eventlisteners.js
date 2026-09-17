@@ -358,8 +358,8 @@ function subjectIDPromise() {
   p = new Promise(function (resolve, reject) {
     resolveFunc = resolve;
     errFunc = reject;
-    if (ENV.MTurkWorkerId) {
-      resolveFunc(ENV.MTurkWorkerId);
+    if (ENV.ExternalSubjectId) {
+      resolveFunc(ENV.ExternalSubjectId);
     }
   }).then(function (resolveval) {
     console.log('User selected agent ' + resolveval);

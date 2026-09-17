@@ -18,6 +18,7 @@ const bqInsertTouchData = functions.httpsCallable('bqInsertTouchData');
 const detectDevice = functions.httpsCallable('detectDevice');
 const processMturkUser = functions.httpsCallable('processMturkUser');
 const submitAssignment = functions.httpsCallable('submitAssignment');
+const processProlificUser = functions.httpsCallable('processProlificUser');
 
 // ------ Save location settings ------
 var DATA_SAVEPATH = '/mkturkfiles/datafiles/';
@@ -36,6 +37,7 @@ var ndatafiles2read = 5; // todo: change to trials. and use as upper bound (stop
 var subjectlist = [];
 
 let mturkUserConfig = {};
+let prolificUserConfig = {};
 
 // console.log('window.location.search:', window.location.search);
 
@@ -54,8 +56,19 @@ if (window.location.search) {
         // WID: workerId
         mturkUserConfig.wid = pair[1];
       } else if (pair[0] == 'TASK') {
-        // TASK: name of task in params_storage
+        // TASK: name of the pre-staged params template (mkturkfiles/parameterfiles/{mturk,prolific}_params/{TASK}_params.json)
         mturkUserConfig.task = pair[1];
+        prolificUserConfig.task = pair[1];
+      } else if (pair[0] == 'PROLIFIC_PID') {
+        // Prolific's own participant-id placeholder; unique per participant
+        prolificUserConfig.pid = pair[1];
+      } else if (pair[0] == 'STUDY_ID') {
+        prolificUserConfig.studyId = pair[1];
+      } else if (pair[0] == 'SESSION_ID') {
+        prolificUserConfig.sessionId = pair[1];
+      } else if (pair[0] == 'CC') {
+        // CC: Prolific completion code, set ahead of time per Study
+        prolificUserConfig.completionCode = pair[1];
       }
     });
   } catch (e) {
@@ -63,6 +76,7 @@ if (window.location.search) {
   }
 }
 console.log('mturkUserConfig:', mturkUserConfig);
+console.log('prolificUserConfig:', prolificUserConfig);
 
 let provider = new firebase.auth.GoogleAuthProvider();
 provider.addScope('https://www.googleapis.com/auth/contacts.readonly');
@@ -111,9 +125,16 @@ auth.getRedirectResult().then((redirectResult) => {
     console.error(`[Authentication Error]: ${authError}`);
   });
 
+// Prolific participants arrive via a direct task link (?PROLIFIC_PID=...) and should
+// never see the sign-in button or subject picker -- authenticate anonymously right away.
+// (Requires the "Anonymous" provider enabled in Firebase Console > Authentication > Sign-in method.)
+if (prolificUserConfig.pid && !auth.currentUser) {
+  auth.signInAnonymously().catch((err) => console.error('[Anonymous Sign-In Error]:', err));
+}
+
 auth.onAuthStateChanged((user) => {
-  // console.log('user:', user);
-  if (user && Object.keys(mturkUserConfig).length) {
+  console.log('[onAuthStateChanged] fired. user:', user ? user.uid : null, 'mturkUserConfig keys:', Object.keys(mturkUserConfig).length, 'prolificUserConfig keys:', Object.keys(prolificUserConfig).length);
+  if (user && mturkUserConfig.wid) {
     user.getIdToken(true).then(async (idToken) => {
       mturkUserConfig.token = idToken;
       // console.log(`Auth Token: ${idToken}`);
@@ -131,6 +152,7 @@ auth.onAuthStateChanged((user) => {
             ENV.MTurkWorkerId = mturkUserConfig.wid;
             ENV.HITId = mturkUserConfig.hid;
             ENV.AssignmentId = mturkUserConfig.aid;
+            ENV.ExternalSubjectId = ENV.MTurkWorkerId;
             ENV.Subject = ENV.MTurkWorkerId;
             localStorage.setItem('Agent', ENV.MTurkWorkerId);
             DATA_SAVEPATH = `/mkturkfiles_mturk/userfiles/${ENV.MTurkWorkerId}/data/`;
@@ -144,6 +166,40 @@ auth.onAuthStateChanged((user) => {
         .catch((error) => {
           console.error(`[processMturkUser] Error: ${error}`);
         });
+    });
+  } else if (user && prolificUserConfig.pid) {
+    console.log('[Prolific] onAuthStateChanged matched, user.uid =', user.uid, '- requesting ID token...');
+    user.getIdToken(true).then(async (idToken) => {
+      console.log('[Prolific] Got ID token, calling processProlificUser...');
+      prolificUserConfig.token = idToken;
+      // console.log(`Auth Token: ${idToken}`);
+      await processProlificUser(prolificUserConfig)
+        .then(async (res) => {
+          console.log('res:', res);
+          if (
+            (await res.data.status) == 'success' ||
+            (await res.data.message) == 'session entry already exists'
+          ) {
+            ENV.ProlificId = prolificUserConfig.pid;
+            ENV.StudyId = prolificUserConfig.studyId;
+            ENV.SessionId = prolificUserConfig.sessionId;
+            ENV.CompletionCode = prolificUserConfig.completionCode;
+            ENV.ExternalSubjectId = ENV.ProlificId;
+            ENV.Subject = ENV.ProlificId;
+            localStorage.setItem('Agent', ENV.ProlificId);
+            DATA_SAVEPATH = `/mkturkfiles_prolific/userfiles/${ENV.ProlificId}/data/`;
+            PARAM_DIRPATH = `/mkturkfiles_prolific/userfiles/${ENV.ProlificId}/params/`;
+            FIRESTORECOLLECTION.DATA = 'prolificdata';
+            const tag = document.createElement('script');
+            tag.src = 'index.js';
+            document.getElementsByTagName('body')[0].appendChild(tag);
+          }
+        })
+        .catch((error) => {
+          console.error(`[processProlificUser] Error: ${error}`);
+        });
+    }).catch((error) => {
+      console.error('[Prolific] getIdToken Error:', error);
     });
   } else {
     storageRef
