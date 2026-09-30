@@ -187,28 +187,13 @@
 		</div>
 		<div id="survey_overlay" style="display:none; z-index: 502; position: absolute; top:0; left:0; width:100%; height:100%; background: rgba(10,10,10,0.97); color:white; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; flex-direction: column; align-items:center; justify-content:center; padding: 20px;">
 			<div style="max-width:480px; width:100%; text-align:left;">
-				<p style="text-align:center; font-size:13px; letter-spacing:0.05em; text-transform:uppercase; color:#7d8aa0; margin-bottom:18px;">Before you finish, a few quick questions</p>
+				<p id="survey_title" style="text-align:center; font-size:13px; letter-spacing:0.05em; text-transform:uppercase; color:#7d8aa0; margin-bottom:18px;">Before you finish, a few quick questions</p>
 
-				<p style="font-size:14px; margin-bottom:6px;">1. What internet browser did you use?</p>
-				<select id="survey_browser" class="form-select" style="margin-bottom:16px;"></select>
-
-				<p style="font-size:14px; margin-bottom:6px;">2. What operating system is your device running?</p>
-				<select id="survey_os" class="form-select" style="margin-bottom:16px;"></select>
-
-				<p style="font-size:14px; margin-bottom:6px;">3. On a scale of 1 to 5 (1 = very easy, 5 = very hard), how would you rate the difficulty of the same/different task?</p>
-				<div id="survey_difficulty" style="display:flex; gap:8px; margin-bottom:16px;">
-					<button class="btn btn-light" data-val="1" style="flex:1;">1</button>
-					<button class="btn btn-light" data-val="2" style="flex:1;">2</button>
-					<button class="btn btn-light" data-val="3" style="flex:1;">3</button>
-					<button class="btn btn-light" data-val="4" style="flex:1;">4</button>
-					<button class="btn btn-light" data-val="5" style="flex:1;">5</button>
-				</div>
-
-				<p style="font-size:14px; margin-bottom:6px;">4. How many separate identities do you think were in the scene?</p>
-				<input type="number" id="survey_scene_count" class="form-control" min="0" max="20" style="margin-bottom:16px;">
-
-				<p style="font-size:14px; margin-bottom:6px;">5. How many separate identities do you think were in the same/different task?</p>
-				<input type="number" id="survey_samediff_count" class="form-control" min="0" max="20" style="margin-bottom:20px;">
+				<!-- Populated at runtime from a survey-definition JSON fetched from Firebase
+				     Storage (mkturkfiles/parameterfiles/prolific_surveys/) - see
+				     mkturk_survey.js. Editing/adding a survey is just uploading a new JSON
+				     file there; no code change needed. -->
+				<div id="survey_questions_container"></div>
 
 				<button class="btn btn-primary" id="survey_submit" style="width:100%; padding:12px 0; border-radius:10px; font-weight:600;" disabled>SUBMIT</button>
 			</div>
