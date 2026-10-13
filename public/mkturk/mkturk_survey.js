@@ -85,6 +85,17 @@ function buildQuestionEl(q, index) {
     const sel = document.createElement('select');
     sel.className = 'form-select';
     sel.style.marginBottom = '16px';
+    // Without an autodetect default, a plain <select> auto-selects its
+    // first <option> natively - which would silently satisfy isComplete()
+    // below without the participant ever having chosen anything. A
+    // disabled placeholder option keeps the field genuinely empty until
+    // they actually pick one.
+    if (q.autodetect !== 'browser' && q.autodetect !== 'os') {
+      const placeholder = new Option('— Select —', '');
+      placeholder.disabled = true;
+      placeholder.selected = true;
+      sel.appendChild(placeholder);
+    }
     (q.options || []).forEach((o) => sel.appendChild(new Option(o, o)));
     if (q.autodetect === 'browser') sel.value = detectBrowserName();
     else if (q.autodetect === 'os') sel.value = detectOSName();
