@@ -95,6 +95,7 @@ index_init();
     logEVENTS('Sample', CURRTRIAL.sampleindex_nonarray, 'trialseries');
     logEVENTS('Test', CURRTRIAL.testindices[0], 'trialseries');
     logEVENTS('BlockNum',CURRTRIAL.blocknum,'trialseries');
+    if (SCENESOUNDS.enabled) { index_prepare_scenesounds(); }
     //============(END) SELECT SAMPLE & TEST IMAGES ============//
 
     //============ SET UP SAMPLE & TEST SEQUENCE ============//
@@ -419,6 +420,11 @@ index_init();
       CURRTRIAL.samplefixationtouchevent = '';
       CURRTRIAL.samplefixationxyt = [];
 
+      if (SCENESOUNDS.enabled) {
+        index_set_scenesound_onsets();
+        await SCENESOUNDS.context.resume(); // scene sounds' own context, never the shared audiocontext
+      }//IF scene sounds
+
       let p1 = hold_promise_simple(TASK.SampleHoldDuration, TASK.SampleOutsideGracePeriod,0);
       let p2 = displayTrial(
         CURRTRIAL.tsequencedesired,
@@ -439,6 +445,7 @@ index_init();
       }//ELSE STRESSTEST
       waitforEvent.return();
       p1.cancel()
+      if (SCENESOUNDS.enabled) { stopSceneSounds(); } //stop immediately if trial was cut off
 
       //Determine number of clips fixated
       CURRTRIAL.nclipshown = frame.shown.lastIndexOf(1) !== undefined ? CURRTRIAL.sequenceclip[frame.shown.lastIndexOf(1)] : 0;
@@ -472,6 +479,7 @@ index_init();
       logEVENTS('SampleFixationXYT',CURRTRIAL.samplefixationxyt,'trialseries');
 
       index_log_displaytimes();
+      if (SCENESOUNDS.enabled) { logSceneSoundEvents(); }
       audiocontext.suspend();
 
       //CHOICE    CHOICE    CHOICE    CHOICE    CHOICE    CHOICE    CHOICE    //

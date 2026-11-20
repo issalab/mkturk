@@ -712,6 +712,101 @@ function loadSoundfromFirebase(src, idx) {
   }); //promise
 } //loadSoundfromFirebase
 
+//------------- LOAD SCENE SOUNDS --------------//
+// Loads the clips referenced by the optional SOUNDS block of Sample scene files.
+// Scenes without a SOUNDS block are skipped, so tasks that don't use sounds make no requests.
+async function loadSceneSoundsfromFirebase(scenes) {
+  SCENESOUNDS.enabled = 0;
+  SCENESOUNDS.paths = [];
+  SCENESOUNDS.buffers = {};
+  SCENESOUNDS.active = [];
+  SCENESOUNDS.onsetframes = {};
+
+  let neededpaths = new Set();
+  for (let i = 0; i < scenes.length; i++) {
+    let snd = scenes[i].SOUNDS;
+    if (typeof snd == 'undefined') { continue; }
+    SCENESOUNDS.enabled = 1;
+
+    let bag = snd.soundbag.endsWith('/') ? snd.soundbag : snd.soundbag + '/';
+    let files = await getFileListRecursiveFirebase(bag);
+    SCENESOUNDS.paths[i] = files.filter((f) =>
+      SCENESOUND_EXTENSIONS.some((ext) => f.toLowerCase().endsWith(ext))
+    );
+    if (SCENESOUNDS.paths[i].length < files.length) {
+      console.warn('SOUNDS: skipped ' + (files.length - SCENESOUNDS.paths[i].length) +
+        ' non-audio file(s) in ' + bag + ' (allowed: ' + SCENESOUND_EXTENSIONS.join(', ') + ')');
+    }//IF non-audio files in soundbag
+
+    for (let key of ['soundidx', 'volume']) {
+      if (Array.isArray(snd[key]) && snd[key].length > scenes[i].nimages) {
+        console.warn('SOUNDS: scene ' + i + ' ' + key + ' has ' + snd[key].length +
+          ' entries but the scene has ' + scenes[i].nimages + ' stimuli; extra entries are ignored');
+      }//IF longer than # of stim
+    }//FOR key
+
+    for (let j = 0; j < scenes[i].nimages; j++) {
+      let idx = chooseArrayElement(snd.soundidx, j, 0);
+      if (idx === '' || idx === undefined || idx === null || isNaN(idx)) { continue; }
+      let path = SCENESOUNDS.paths[i][Math.round(idx)];
+      if (typeof path == 'undefined') {
+        console.warn('SOUNDS: scene ' + i + ' stim ' + j + ' soundidx ' + idx + ' is out of range (' +
+          SCENESOUNDS.paths[i].length + ' sound files in ' + bag + '); no sound will play');
+        continue;
+      }//IF index out of range
+      neededpaths.add(path);
+
+      let volume = chooseArrayElement(snd.volume, j, 0);
+      if (typeof volume == 'number' && (volume < 0 || volume > 1)) {
+        console.warn('SOUNDS: scene ' + i + ' stim ' + j + ' volume ' + volume + ' is outside 0-1; it will be clamped');
+      }//IF volume out of range
+    }//FOR j stim
+  }//FOR i scenes
+
+  if (!SCENESOUNDS.enabled) { return; }
+
+  // Scene sounds get their own AudioContext. Built-in sounds (trial start, reward, punish) use the
+  // shared audiocontext, which is suspended after each Sample display; a built-in sound played while
+  // it's suspended waits until it's resumed. Resuming the shared one for scene sounds would release
+  // those waiting sounds at Sample onset, so the scene sound code never touches it.
+  if (SCENESOUNDS.context === null) {
+    SCENESOUNDS.context = new (window.AudioContext || window.webkitAudioContext)();
+  }//IF first time scene sounds are used
+
+  // Decode each referenced clip once, in parallel
+  // A clip that fails to download or decode is skipped (no sound) rather than blocking the task
+  console.log('SOUNDS: loading ' + neededpaths.size + ' clip(s)...');
+  await Promise.all([...neededpaths].map(async (path) => {
+    try {
+      let url = await storage.ref().child(path).getDownloadURL();
+      let arraybuffer = await (await fetch(url)).arrayBuffer();
+      SCENESOUNDS.buffers[path] = await new Promise((resolve, reject) => {
+        SCENESOUNDS.context.decodeAudioData(arraybuffer, resolve, reject); // callback form for Safari
+      });
+      console.log('SOUNDS: loaded ' + path + ' (' + Math.round(SCENESOUNDS.buffers[path].duration * 1000) + 'ms)');
+    } catch (error) {
+      console.warn('SOUNDS: could not load ' + path + '; stimuli using it will be silent:', error);
+    }
+  }));
+
+  // Warn (once per scene) about clips that will be cut off at durationMS
+  for (let i = 0; i < scenes.length; i++) {
+    if (typeof scenes[i].SOUNDS == 'undefined') { continue; }
+    let ncutoff = 0;
+    for (let j = 0; j < scenes[i].nimages; j++) {
+      let snd = getSceneSound(i, j);
+      if (snd !== null && snd.buffer.duration * 1000 > snd.durationMS) { ncutoff++; }
+    }//FOR j stim
+    if (ncutoff > 0) {
+      console.warn('SOUNDS: scene ' + i + ': ' + ncutoff + ' stimuli have a clip longer than durationMS; those clips will be cut off');
+    }//IF clips longer than stim
+  }//FOR i scenes
+
+  ENV.SoundSampleRate = SCENESOUNDS.context.sampleRate;
+  ENV.SoundBaseLatency = typeof SCENESOUNDS.context.baseLatency == 'number' ? Math.round(SCENESOUNDS.context.baseLatency * 100000) / 100 : -1; // ms
+  console.log('SOUNDS: loaded ' + Object.keys(SCENESOUNDS.buffers).length + ' of ' + neededpaths.size + ' clip(s)');
+} //loadSceneSoundsfromFirebase
+
 //------------- GET RECENT BEHAVIOR FILE PATHS --------------//
 async function getMostRecentBehavioralFilePathsFromFirebase(
   num_files_to_get,
