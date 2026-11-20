@@ -363,6 +363,20 @@ var sounds = {
   serial: [0, 1, 2, 3, 4],
   buffer: [],
 };
+
+// Scene sounds: optional SOUNDS block in Sample scene files (soundbag, soundidx, volume)
+// Kept separate from IMAGES so decoded audio is never written into the data file's SCENES
+var SCENESOUNDS = {
+  enabled: 0, // 1 if any Sample scene has a SOUNDS block; every scene sound code path checks this
+  context: null, // own AudioContext, so resuming it never releases built-in sounds queued on the shared audiocontext
+  paths: [], // paths[scenebag] = sound file paths in that scene's soundbag, in storage listing order (same as imagebag)
+  buffers: {}, // decoded AudioBuffers, keyed by sound file path
+  active: [], // clips currently playing
+  onsetframes: {}, // frame# -> RSVP clip#, set only for the duration of the Sample display
+};
+var SCENESOUND_DEFAULTVOLUME = 0.15; // same as reward sounds
+var SCENESOUND_FADEMS = 5; // fade-out when a clip is cut at durationMS, avoids an audible click
+var SCENESOUND_EXTENSIONS = ['.wav', '.mp3', '.m4a'];
 var waitforClick; //variable to hold generator
 var waitforEvent; //variable to hold generator
 var touchTimer; //variable to hold timer

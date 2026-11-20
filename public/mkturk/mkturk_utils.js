@@ -585,6 +585,9 @@ async function index_loadScenes(){
     FLAGS.movieper['Sample'][i] = [];
     FLAGS.movieper['Test'][i] = [];
   } //FOR i samplebags
+
+  // Scene sounds (Sample only); no-op unless a Sample scene has a SOUNDS block
+  await loadSceneSoundsfromFirebase(IMAGES.Sample);
   //============ (END) 0: LOAD SCENES from JSON ============//
 
 if (!FLAGS.usecanvas2D)
@@ -1351,6 +1354,128 @@ async function playSound(idx) {
   source.start(0); // play the source now
 }
 
+//================== SCENE SOUNDS ==================//
+// Optional SOUNDS block in Sample scene files. Every function below is only reached when
+// SCENESOUNDS.enabled, so tasks without SOUNDS blocks behave exactly as before.
+
+// Sound for one Sample stimulus, or null if it has none
+function getSceneSound(label, index) {
+  let scene = IMAGES.Sample[label];
+  if (typeof scene == 'undefined' || typeof scene.SOUNDS == 'undefined') { return null; }
+
+  let idx = chooseArrayElement(scene.SOUNDS.soundidx, index, 0);
+  if (idx === '' || idx === undefined || idx === null || isNaN(idx)) { return null; }
+  let path = SCENESOUNDS.paths[label][Math.round(idx)];
+  if (typeof path == 'undefined' || typeof SCENESOUNDS.buffers[path] == 'undefined') { return null; }
+
+  let volume = chooseArrayElement(scene.SOUNDS.volume, index, 0);
+  if (typeof volume != 'number' || isNaN(volume)) { volume = SCENESOUND_DEFAULTVOLUME; }
+  volume = Math.min(Math.max(volume, 0), 1);
+
+  return {
+    path: path,
+    buffer: SCENESOUNDS.buffers[path],
+    volume: volume,
+    durationMS: chooseArrayElement(scene.durationMS, index, 0),
+  };
+}//FUNCTION getSceneSound
+
+// Look up this trial's sound for each RSVP clip and log the planned values
+// (start time & played duration are overwritten after the Sample display)
+function index_prepare_scenesounds() {
+  CURRTRIAL.scenesounds = [];
+  for (let i = 0; i < CURRTRIAL.sample_scenebag_index.length; i++) {
+    CURRTRIAL.scenesounds[i] = {
+      sound: getSceneSound(CURRTRIAL.sample_scenebag_label[i][0], CURRTRIAL.sample_scenebag_index[i][0]),
+      starttime: -1, playedms: 0, latency: -1,
+    };
+  }//FOR i RSVP clips
+  SCENESOUNDS.onsetframes = {};
+  logSceneSoundEvents();
+}//FUNCTION index_prepare_scenesounds
+
+// Mark the first Sample frame of each RSVP clip; displayTrial starts that clip's sound when the frame is shown
+function index_set_scenesound_onsets() {
+  SCENESOUNDS.onsetframes = {};
+  if (TASK.Agent == 'SaveImages' || TASK.Species == 'model') { return; }
+  let sc = CURRTRIAL.sequencetaskscreen;
+  let cl = CURRTRIAL.sequenceclip;
+  for (let k = 0; k < sc.length; k++) {
+    if (sc[k] == 'Sample' && !Object.values(SCENESOUNDS.onsetframes).includes(cl[k])) {
+      SCENESOUNDS.onsetframes[k] = cl[k];
+    }//IF first Sample frame of this clip
+  }//FOR k frames
+}//FUNCTION index_set_scenesound_onsets
+
+// Start an RSVP clip's sound; it plays once and is cut off at durationMS if longer
+function startSceneSound(clip, tshown) {
+  let entry = CURRTRIAL.scenesounds[clip];
+  if (typeof entry == 'undefined' || entry.sound === null) { return; }
+  let snd = entry.sound;
+  let clipms = snd.buffer.duration * 1000;
+  let playms = Math.min(clipms, snd.durationMS);
+  if (!(playms > 0)) { return; }
+
+  let ac = SCENESOUNDS.context; // own context, never the shared audiocontext used by built-in sounds
+  let source = ac.createBufferSource();
+  source.buffer = snd.buffer;
+  let gain = ac.createGain(); // own gain node, so reward sound volume is never affected
+  gain.gain.value = snd.volume;
+  source.connect(gain);
+  gain.connect(ac.destination);
+
+  let t0 = ac.currentTime;
+  source.start(t0);
+  if (clipms > snd.durationMS) {
+    let tstop = t0 + snd.durationMS / 1000;
+    let fade = Math.min(SCENESOUND_FADEMS, snd.durationMS) / 1000;
+    gain.gain.setValueAtTime(snd.volume, tstop - fade);
+    gain.gain.linearRampToValueAtTime(0, tstop);
+    source.stop(tstop);
+  }//IF clip longer than stim, cut off at durationMS
+
+  entry.starttime = tshown;
+  entry.playedms = Math.round(playms);
+  entry.latency = typeof ac.outputLatency == 'number' && ac.outputLatency > 0
+    ? Math.round(ac.outputLatency * 100000) / 100 : -1; // ms
+
+  let active = { source: source, entry: entry, t0: t0 };
+  SCENESOUNDS.active.push(active);
+  source.onended = () => { SCENESOUNDS.active = SCENESOUNDS.active.filter((a) => a !== active); };
+}//FUNCTION startSceneSound
+
+// Stop all scene sounds immediately (trial cut off or Sample display ended)
+function stopSceneSounds() {
+  let now = SCENESOUNDS.context.currentTime;
+  for (let a of SCENESOUNDS.active) {
+    let elapsedms = Math.round((now - a.t0) * 1000);
+    if (elapsedms < a.entry.playedms) { a.entry.playedms = Math.max(0, elapsedms); }
+    try { a.source.stop(); } catch (e) {}
+  }//FOR a active clips
+  SCENESOUNDS.active = [];
+  SCENESOUNDS.onsetframes = {};
+  SCENESOUNDS.context.suspend(); // idle between Sample displays, like the shared audiocontext
+}//FUNCTION stopSceneSounds
+
+function logSceneSoundEvents() {
+  let fields = {
+    SoundFile: [], SoundVolume: [], SoundClipDurationMS: [],
+    SoundPlayedMS: [], SoundStartTime: [], SoundOutputLatency: [],
+  };
+  for (let e of CURRTRIAL.scenesounds) {
+    fields.SoundFile.push(e.sound !== null ? e.sound.path : '');
+    fields.SoundVolume.push(e.sound !== null ? e.sound.volume : 0);
+    fields.SoundClipDurationMS.push(e.sound !== null ? Math.round(e.sound.buffer.duration * 1000) : 0);
+    fields.SoundPlayedMS.push(e.playedms);
+    fields.SoundStartTime.push(e.starttime);
+    fields.SoundOutputLatency.push(e.latency);
+  }//FOR e RSVP clips
+  for (let key in fields) {
+    if (typeof EVENTS.trialseries[key] == 'undefined') { EVENTS.trialseries[key] = {}; }
+    logEVENTS(key, fields[key], 'trialseries');
+  }//FOR key
+}//FUNCTION logSceneSoundEvents
+
 // Promise: choice time-out
 function choiceTimeOut(timeout) {
   return new Promise(function (resolve, reject) {
@@ -1547,7 +1672,7 @@ function getLongestArray(x) {
   } //if not an enumerable object
   else {
     for (keys in x) {
-      if (keys != 'baseVertexInd') {
+      if (keys != 'baseVertexInd' && keys != 'SOUNDS') {
         if (Array.isArray(x[keys])) {
           var n_new = x[keys].length;
         } //IF array

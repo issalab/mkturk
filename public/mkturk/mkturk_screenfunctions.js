@@ -102,6 +102,10 @@ function displayTrial(ti, gr, cl, fr, sc, ob, id, ims, mkm, trig) {
       CURRTRIAL.tsequenceactual[frame.current - 1] = Math.round(100 * (timestamp - start)) / 100; //rounded to nearest hundredth of a millisecond
       frame.shown[frame.current - 1] = 1;
 
+      if (SCENESOUNDS.enabled && typeof SCENESOUNDS.onsetframes[frame.current - 1] != 'undefined') {
+        startSceneSound(SCENESOUNDS.onsetframes[frame.current - 1], Math.round(100 * (performance.now() - start)) / 100);
+      }//IF first frame of a Sample clip shown, start its sound (same clock as tsequenceactual)
+
       if ( frame.current==1 && (typeof(trig) != "undefined" && trig == 1) ){
         CURRTRIAL.samplestarttime = Date.now() - ENV.CurrentDate.valueOf();
         CURRTRIAL.samplestarttime_string = new Date(CURRTRIAL.samplestarttime + ENV.CurrentDate.valueOf()).toJSON();
